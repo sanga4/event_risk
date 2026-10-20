@@ -585,7 +585,7 @@ def web():
 
 EXCEL = Path(__file__).parent / "excel"
 
-ADDIN_ID, LOCAL_ADDIN_ID = "eeb823d5-3150-4ee3-a983-57ef26e13f0b", "5c0e7a3e-8f2b-4d61-9a47-1b6e2d0c9f14"
+ADDIN_ID, LOCAL_ADDIN_ID = "f00e7ab3-6d20-4316-90ad-9c1e8074af20", "b4e05e2d-7ac9-47a2-949b-e53d76299c2b"
 
 def excel_template(request: Request, name: str) -> str:
     """An excel/ template with {BASE} = this server's origin (Office requires HTTPS; Railway terminates
@@ -595,9 +595,9 @@ def excel_template(request: Request, name: str) -> str:
     base = f"{scheme}://{request.headers.get('host', request.url.netloc)}"
     local = request.url.hostname in ("localhost", "127.0.0.1")
     text = (EXCEL / name).read_text().replace("{BASE}", base).replace("{ID}", LOCAL_ADDIN_ID if local else ADDIN_ID) \
-                                     .replace("{FILE}", "event-risk-local.xml" if local else "event-risk-manifest.xml")
+                                     .replace("{FILE}", "eventrisk-analyst-local.xml" if local else "eventrisk-analyst-manifest.xml")
     return text.replace(ADDIN_ID, LOCAL_ADDIN_ID).replace(
-        '<DisplayName DefaultValue="Event Risk"/>', '<DisplayName DefaultValue="Event Risk (local)"/>') if local else text
+        '<DisplayName DefaultValue="EventRisk Analyst"/>', '<DisplayName DefaultValue="EventRisk Analyst (local)"/>') if local else text
 
 @app.get("/excel/manifest.xml", include_in_schema=False)
 def excel_manifest(request: Request):
