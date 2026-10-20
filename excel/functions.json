@@ -3,7 +3,7 @@
     {
       "id": "PROB",
       "name": "PROB",
-      "description": "Probability (0-1) of a proposition, or of a question's headline (most-traded live) rung, e.g. =EVENTRISK.PROB(A2) where A2 holds an id from EVENTRISK.QUESTIONS.",
+      "description": "Latest probability for a q: question headline or a prop: event contract; uses the API's validated same-as market blend.",
       "result": {
         "type": "number",
         "dimensionality": "scalar"
@@ -236,7 +236,7 @@
     {
       "id": "HISTORY",
       "name": "HISTORY",
-      "description": "Spills probability over time (date, prob, markets) for a proposition, or a question's current headline rung. Format the date column as a date.",
+      "description": "Restated historical probability of a prop: event, or the currently selected headline rung of a q: question. Returns date, probability, and contributing market count.",
       "result": {
         "type": "any",
         "dimensionality": "matrix"
@@ -268,6 +268,109 @@
           "type": "string",
           "dimensionality": "scalar",
           "optional": true
+        }
+      ]
+    },
+    {
+      "id": "FIELD",
+      "name": "FIELD",
+      "description": "Market observation field, e.g. volume (24h), open_interest, observed_at or probability. mkt: IDs select a single source market.",
+      "result": {
+        "type": "any",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question q:, event prop:, or source market mkt: ID",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "field",
+          "description": "Field name such as volume",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "ASKNOWN",
+      "name": "ASKNOWN",
+      "description": "Probability observable at the specified date using as_of=known_as_of; no hindsight graph mapping.",
+      "result": {
+        "type": "number",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question q:, event prop:, or source market mkt: ID",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "date",
+          "description": "Excel date cell or ISO date",
+          "type": "any",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "EVENT",
+      "name": "EVENT",
+      "description": "Get event metadata such as title, status or venue.",
+      "result": {
+        "type": "any",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question q:, event prop:, or source market mkt: ID",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "field",
+          "description": "Metadata field, e.g. title",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "SEARCH",
+      "name": "SEARCH",
+      "description": "Search event propositions; spills a table with event IDs, contract titles and probabilities.",
+      "result": {
+        "type": "any",
+        "dimensionality": "matrix"
+      },
+      "parameters": [
+        {
+          "name": "term",
+          "description": "Keyword or topic, e.g. Taiwan",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "UPDATED",
+      "name": "UPDATED",
+      "description": "Latest underlying market observation timestamp as an Excel serial date/time; format cell as date/time.",
+      "result": {
+        "type": "number",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question q:, event prop:, or source market mkt: ID",
+          "type": "string",
+          "dimensionality": "scalar"
         }
       ]
     }
