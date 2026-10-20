@@ -5,7 +5,7 @@ on:
       - 'feat/er-excel-seven-formulas-isolated-*'
   workflow_dispatch:
 jobs:
-  excel:
+  excel-functions:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,6 +13,12 @@ jobs:
         with:
           node-version: 22
       - run: npm test
-      - name: Live upstream API read-only smoke
-        continue-on-error: true
+  live-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check existing production API (may fail while MotherDuck trial is suspended)
         run: node excel/tests/live-upstream-smoke.mjs
