@@ -226,7 +226,7 @@ def map_question(question: dict, entities: list[dict] | None = None,
                  "Explicit BOJ rate-policy question.", "contract names the BOJ and a rate action")
     if _INFLATION.search(title):
         # A CPI release is not itself an inflation breakeven expectation.
-        fid = "INFLATION.US_5Y_BE" if "US" in countries or re.search(r"\b(u\.s\.|united states|american)\b", title, re.I) else "INFLATION.GLOBAL_INFLATION"
+        fid = "INFLATION.US_5Y_BE" if ("US" in countries or re.search(r"\bUS\b", title) or re.search(r"\b(u\.s\.|united states|american)\b", title, re.I)) else "INFLATION.GLOBAL_INFLATION"
         link(fid, "inflation_expectations", "INFLATION_REVIEW_V1",
              "Inflation data and traded inflation expectations are distinct; establish the transmission first.",
              "contract explicitly references inflation or CPI", review=True)
