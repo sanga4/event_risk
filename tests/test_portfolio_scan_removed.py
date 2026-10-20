@@ -21,6 +21,7 @@ class NoPortfolioScanTests(unittest.TestCase):
         self.assertEqual(registered, {
             "PROB", "CHANGE", "NAME", "QUESTIONS", "RUNGS",
             "PROPOSITIONS", "EXPOSURES", "HISTORY",
+            "FIELD", "ASKNOWN", "EVENT", "SEARCH", "UPDATED",
         })
         js = self.read("excel/functions.js")
         self.assertNotIn('CustomFunctions.associate("SCAN"', js)
@@ -33,7 +34,8 @@ class NoPortfolioScanTests(unittest.TestCase):
                        "Scan selection", "Portfolio scan"):
             self.assertNotIn(marker, html)
         self.assertIn('id="refresh"', html)
-        self.assertIn('id="search"', html)
+        self.assertIn('id="themeSearch"', html)
+        self.assertIn('id="questionSearch"', html)
 
     def test_website_has_no_scan_copy_or_api_documentation(self):
         html = self.read("web/index.html")
