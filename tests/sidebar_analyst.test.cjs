@@ -36,7 +36,9 @@ const tick = async () => {
 function setup() {
   const names=['theme','themeSearch','themeCount','themeResults','questionQuery',
     'questionSearch','eventResults','eventCount','selectionNote','status',
-    'refresh','key','saveKey','keyMsg','health'];
+    'refresh','key','saveKey','keyMsg','health',
+    'factorSource','factorVersion','factorReview','factorReviewCount',
+    'factorReviewResults','factorResults'];
   const nodes=Object.fromEntries(names.map(id=>[id,new Element()]));
   const calls=[],writes=[],store={};
   let calculations=0;
