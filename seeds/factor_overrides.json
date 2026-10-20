@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "review_version": "2026-10-20.1",
+  "description": "Controlled analyst decisions. Entries are empty until independently reviewed. Commit changes through a reviewed pull request. These files contain no coefficients, betas, sensitivities or return estimates.",
+  "entries": []
+}
