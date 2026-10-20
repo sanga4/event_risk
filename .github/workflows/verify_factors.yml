@@ -20,10 +20,14 @@ jobs:
           python-version: "3.12"
       - name: Compile pure Factor rules and backend
         run: python -m py_compile factors.py matching.py api.py
-      - name: Validate version-controlled Factor catalog
-        run: python -m json.tool seeds/factors.json > /dev/null
-      - name: Run no-database factor fixtures
-        run: python -m unittest discover -s tests -p 'test_factors.py' -v
+      - name: Validate version-controlled Factor catalog and reviewed decisions
+        run: |
+          python -m json.tool seeds/factors.json > /dev/null
+          python -m json.tool seeds/factor_overrides.json > /dev/null
+      - name: Run no-database factor and review-governance fixtures
+        run: |
+          python -m unittest discover -s tests -p 'test_factors.py' -v
+          python -m unittest discover -s tests -p 'test_factors_governance.py' -v
       - name: Run Portfolio Scan removal regression
         run: python -m unittest discover -s tests -p 'test_portfolio_scan_removed.py' -v
   client-and-api:
@@ -44,6 +48,6 @@ jobs:
           python -m json.tool excel/functions.json > /dev/null
           python -c "import xml.etree.ElementTree as E; E.parse('excel/manifest.xml')"
       - name: Existing and new Excel UI tests
-        run: node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs tests/sidebar_factors.test.cjs
+        run: node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs tests/sidebar_factors.test.cjs tests/web_factors.test.cjs
       - name: Factors endpoints and graph overlay tests (no MotherDuck)
         run: python -m unittest discover -s tests -p 'test_factors_api.py' -v
