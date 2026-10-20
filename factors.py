@@ -22,6 +22,7 @@ from matching import find_action
 
 ROOT = Path(__file__).resolve().parent
 CATALOG = ROOT / "seeds" / "factors.json"
+OVERRIDES = ROOT / "seeds" / "factor_overrides.json"
 RULE_VERSION = "2026-10-20.1"
 MAPPING_BASIS = "Boolean contextual rule with review gate; no numeric exposure"
 
@@ -99,8 +100,37 @@ def catalog() -> dict[str, Any]:
             raise ValueError("Factor catalog may not contain numeric exposure data")
     return value
 
+@lru_cache(maxsize=1)
 def factor_index() -> dict[str, dict]:
     return {f["id"]: f for f in catalog()["factors"]}
+
+@lru_cache(maxsize=1)
+def overrides() -> dict[str, Any]:
+    """Reviewed additions/exclusions, committed as source; never read from DB."""
+    data = json.loads(OVERRIDES.read_text(encoding="utf-8"))
+    if data.get("schema_version") != 1 or not data.get("review_version"):
+        raise ValueError("Unsupported Factors review file format")
+    seen = set()
+    required = ("id","question_id","factor_id","decision","mechanism",
+                "rationale","evidence","reviewer","reviewed_at")
+    for entry in data.get("entries", []):
+        for key in required:
+            if not isinstance(entry.get(key),str) or not entry[key].strip():
+                raise ValueError("Missing factor review field " + key)
+        if entry["id"] in seen:
+            raise ValueError("Duplicate Factors review ID " + entry["id"])
+        seen.add(entry["id"])
+        if entry["decision"] not in ("approve", "reject", "review"):
+            raise ValueError("Invalid factor review decision " + entry["decision"])
+        if entry["factor_id"] not in factor_index():
+            raise ValueError("Factor review points to unknown factor " + entry["factor_id"])
+        if any(x in entry for x in ("beta","coefficient","loading","weight","sign","score")):
+            raise ValueError("Factor review must be qualitative")
+        from datetime import datetime, timezone
+        reviewed = datetime.fromisoformat(entry["reviewed_at"].replace("Z","+00:00"))
+        if reviewed.tzinfo is None or reviewed.utcoffset() is None:
+            raise ValueError("Review timestamp must be timezone-aware")
+    return data
 
 def list_factors(family: str | None = None, query: str | None = None) -> list[dict]:
     q = (query or "").casefold().strip()
@@ -268,6 +298,43 @@ def map_question(question: dict, entities: list[dict] | None = None,
              "conflict event type without validated contract-level defense-demand mechanism",
              review=True)
 
+    # Analyst review override register. A reviewer may accept a well-supported
+    # candidate, explicitly reject a false positive, or downgrade an automatic
+    # mapping for further review. Entries are version-controlled, not stored
+    # in MotherDuck and never represent numeric sensitivities.
+    exclusions = []
+    applied = []
+    review = overrides()
+    for entry in review["entries"]:
+        if entry["question_id"] != info["question_id"]:
+            continue
+        scoped = entry.get("proposition_id")
+        if scoped and scoped != proposition_id:
+            continue
+        fid = entry["factor_id"]
+        decision = entry["decision"]
+        applied.append(entry["id"])
+        if decision == "reject":
+            links.pop(fid, None)
+            suggestions.pop(fid, None)
+            exclusions.append({"factor_id": fid, "decision": "rejected_by_reviewer",
+                "rationale": entry["rationale"], "evidence": entry["evidence"],
+                "reviewer": entry["reviewer"], "reviewed_at": entry["reviewed_at"],
+                "override_id": entry["id"]})
+            continue
+        row = dict(factor_id=fid, factor=dict(available[fid]),
+            status="mapped" if decision == "approve" else "review_required",
+            link_type="curated_qualitative" if decision == "approve" else "conditional",
+            mechanism=entry["mechanism"], reason=entry["rationale"],
+            evidence=entry["evidence"],
+            rule_id="CURATED:" + entry["id"], rule_version=RULE_VERSION,
+            provenance="source_controlled_analyst_review",
+            reviewer=entry["reviewer"], reviewed_at=entry["reviewed_at"],
+            override_id=entry["id"])
+        links.pop(fid, None)
+        suggestions.pop(fid, None)
+        (links if decision == "approve" else suggestions)[fid] = row
+        mechanisms.add(entry["mechanism"])
     # A review candidate superseded by a mapped link is not returned as a duplicate.
     for fid in links:
         suggestions.pop(fid, None)
@@ -275,7 +342,9 @@ def map_question(question: dict, entities: list[dict] | None = None,
         "question_id": info["question_id"], "proposition_id": proposition_id,
         "title": title, "action": act,
         "catalog_version": catalog()["catalog_version"],
-        "rule_version": RULE_VERSION, "mapping_basis": MAPPING_BASIS,
+        "rule_version": RULE_VERSION, "review_version": review["review_version"],
+        "applied_review_ids": applied, "exclusions": exclusions,
+        "mapping_basis": MAPPING_BASIS,
         "time_travel_caveat": "Current versioned rules are applied to the requested event graph snapshot; this is not a historical record of past analyst approvals.",
         "mechanisms": sorted(mechanisms),
         "factors": sorted(links.values(), key=lambda x: (x["factor"]["family"], x["factor_id"])),
