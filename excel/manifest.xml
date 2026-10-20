@@ -5,11 +5,11 @@
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
-  <Id>eeb823d5-3150-4ee3-a983-57ef26e13f0b</Id>
-  <Version>1.0.0.0</Version>
-  <ProviderName>Event Risk</ProviderName>
+  <Id>f00e7ab3-6d20-4316-90ad-9c1e8074af20</Id>
+  <Version>2.0.0.0</Version>
+  <ProviderName>EventRisk</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Event Risk"/>
+  <DisplayName DefaultValue="EventRisk Analyst"/>
   <Description DefaultValue="Geopolitical event probabilities from prediction markets, and the securities exposed to them."/>
   <IconUrl DefaultValue="{BASE}/excel/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="{BASE}/excel/icon-64.png"/>
@@ -100,14 +100,14 @@
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="{BASE}/"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="Functions.Namespace" DefaultValue="EVENTRISK"/>
+        <bt:String id="Functions.Namespace" DefaultValue="ER"/>
         <bt:String id="GetStarted.Title" DefaultValue="Event Risk is ready"/>
-        <bt:String id="Group.Label" DefaultValue="Event Risk"/>
-        <bt:String id="TaskpaneButton.Label" DefaultValue="Event Risk"/>
+        <bt:String id="Group.Label" DefaultValue="EventRisk Analyst"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="EventRisk Analyst"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Open the Event Risk pane from the Home tab, or type =EVENTRISK. in a cell."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Search propositions, refresh market data, and set your API key."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Open EventRisk Analyst from the Home tab, or type =ER. in a cell."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Search themes, explore questions and event contracts, refresh data, and set your API key."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
