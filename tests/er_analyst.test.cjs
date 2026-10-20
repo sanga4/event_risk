@@ -53,7 +53,7 @@ function functionsHarness() {
     localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>{store[k]=v},removeItem:k=>{delete store[k]}},
     CustomFunctions:{
       associate:(id,fn)=>registered.set(id,fn),
-      Error:class ExcelError extends Error{},
+      Error:class ExcelError extends Error{ constructor(code,message){super(message);this.code=code;} },
       ErrorCode:{notAvailable:'notAvailable',invalidValue:'invalidValue'}
     },
     fetch:async url=>{
