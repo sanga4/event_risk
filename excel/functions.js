@@ -167,3 +167,81 @@ CustomFunctions.associate("SCAN", scan);
 
 // Shared with the task pane.
 window.EventRisk = { request, parseHoldings, clearCache: () => cache.clear() };
+
+
+ 
+// New analyst-facing aliases. They only read existing API endpoints; no API or graph changes.
+const PUBLIC_FIELDS = {
+  volume: "volume_24h",
+  volume_24h: "volume_24h",
+  probability: "prob",
+  prob: "prob",
+  change_24h: "change_24h",
+  open_interest: "open_interest",
+  status: "status",
+  title: "name",
+  name: "name",
+  id: "id",
+  close_time: "close_time",
+  n_rungs: "n_rungs",
+  n_live: "n_live"
+};
+
+// One scalar market field. "volume" intentionally means reported 24-hour volume.
+async function field(id, fieldName) {
+  const key = String(fieldName || "").trim().toLowerCase();
+  if (key === "updated" || key === "updated_at" || key === "observed_at") return updated(id);
+  const col = PUBLIC_FIELDS[key];
+  if (!col) throw fail("unknown field: " + fieldName, CustomFunctions.ErrorCode.invalidValue);
+  const item = await proposition(id);
+  const value = item[col];
+  if (value && typeof value === "object") throw fail("field is not scalar: " + fieldName);
+  return (col === "close_time") ? dateCell(value) : blank(value);
+}
+
+// Bitemporal point-in-time: world as of date T, using only records known by T.
+async function asknown(id, at) {
+  if (at === null || at === undefined || at === "") {
+    throw fail("as-known date is required", CustomFunctions.ErrorCode.invalidValue);
+  }
+  return prob(id, at, at);
+}
+
+// Descriptive scalar field from the same event/question detail API.
+async function event(id, fieldName) {
+  const key = String(fieldName || "title").trim().toLowerCase();
+  if (key === "updated" || key === "updated_at") return updated(id);
+  if (key === "question") {
+    const p = await proposition(id);
+    return p.question ? p.question.name : p.name;
+  }
+  return field(id, key);
+}
+
+// Broad text search returns the grouped questions and their headline market event IDs.
+async function eventSearch(query) {
+  if (!query || !String(query).trim()) throw fail("search text is required", CustomFunctions.ErrorCode.invalidValue);
+  const r = await request("/questions", { q: String(query).trim(), limit: 50, sort: "move" });
+  return [["id", "title", "probability", "volume_24h", "headline_event_id"],
+          ...r.questions.map(q => [q.id, q.name, blank(q.prob), blank(q.volume_24h),
+                                   q.headline ? q.headline.id : ""])];
+}
+
+// Latest source-observation timestamp, not response time or graph refresh time.
+async function updated(id) {
+  const item = await proposition(id);
+  const pid = String(id).startsWith("q:") ? item.headline && item.headline.id : id;
+  if (!pid) throw fail("question has no live headline event");
+  const p = String(id).startsWith("q:") ? await proposition(pid) : item;
+  const timestamps = (p.markets || [])
+    .filter(m => m.relation === "same_as" && m.observed_at)
+    .map(m => Date.parse(m.observed_at)).filter(Number.isFinite);
+  if (!timestamps.length) throw fail("no source observation timestamp available");
+  return excelDate(new Date(Math.max(...timestamps)).toISOString());
+}
+
+CustomFunctions.associate("FIELD", field);
+CustomFunctions.associate("ASKNOWN", asknown);
+CustomFunctions.associate("EVENT", event);
+CustomFunctions.associate("SEARCH", eventSearch);
+CustomFunctions.associate("UPDATED", updated);
