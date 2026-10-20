@@ -43,36 +43,62 @@ The explorer's **API** tab documents every endpoint with examples; `/docs` is th
 Every read accepts `as_of` (state of the world at T) and `known_as_of` (what the graph knew at T);
 set both to T for a point-in-time, backtest-safe view. Set `API_KEYS` to require `X-API-Key`.
 
-## Excel add-in
+## Excel add-in — EventRisk Analyst
 
-The API also serves an Excel add-in (`excel/`: Office.js custom functions plus a task pane, no build
-step). It works in Microsoft 365 Excel on Windows, Mac and the web. Office only loads add-ins over
-HTTPS, so point it at the deployed server.
+The fork serves a Microsoft Office.js Excel add-in under `/excel/`. This version
+has a new manifest ID and the exact `ER` namespace, so it can coexist with the
+original add-in rather than overwrite its `EVENTRISK.*` formulas.
 
+Seven formulas (real event IDs have a `prop:` prefix; `event_123` is only a
+placeholder, not an ID in the graph):
+
+```excel
+=ER.PROB("prop:venue:id")                      latest event probability
+=ER.FIELD("prop:venue:id","volume")            most recent 24-hour market volume
+=ER.HISTORY("prop:venue:id",A2,B2)             restated historical probability table
+=ER.ASKNOWN("prop:venue:id",A2)                probability known at A2
+=ER.EVENT("prop:venue:id","title")            event-contract question text
+=ER.SEARCH("Taiwan")                          event IDs and prices matching a topic
+=ER.UPDATED("prop:venue:id")                  latest underlying market-observation time
 ```
-=EVENTRISK.PROPOSITIONS("taiwan", 20)          table of propositions, biggest 24h movers first
-=EVENTRISK.PROB(A2)  =EVENTRISK.CHANGE(A2)     blended probability / 24h change for the id in A2
-=EVENTRISK.PROB(A2, "2026-09-01", "2026-09-01")  point-in-time (as_of, known_as_of)
-=EVENTRISK.HISTORY(A2, DATE(2026,9,1))         daily series (format column A as a date)
-=EVENTRISK.EXPOSURES("TSM")                    propositions a security is exposed to
-```
 
-The **Event Risk** button on the Home tab opens the pane: search propositions and click one to add a
-live watchlist row at the selected cell; set the API key there if the server has `API_KEYS` set.
-Identical requests are cached for 60 s; **Refresh** in the pane forces a full recalculation.
+`q:...` identifiers refer to broad questions grouping multiple event contracts.
+`mkt:...` selects one venue-native market for ER.PROB, ER.FIELD and ER.UPDATED.
+ER.PROB on `prop:` returns the API's blend **only for validated same_as market
+mappings**. ER.FIELD with `volume` returns `volume_24h`. ER.UPDATED returns
+an Excel serial date/time, so format the cell as `yyyy-mm-dd hh:mm`.
 
-Install by downloading `https://<your-domain>/excel/manifest.xml` (it already points at that server), then:
-- **Excel on the web**: Insert → Add-ins → *Upload My Add-in* → choose the file.
-- **Mac**: copy it to `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/`, restart Excel,
-  then Insert → Add-ins → *My Add-ins*.
-- **Windows**: put it in a network share, add the share under File → Options → Trust Center →
-  Trusted Add-in Catalogs, restart, then Insert → My Add-ins → *Shared Folder*.
-- **For a whole organisation**: an M365 admin uploads it under Admin center → Settings →
-  Integrated apps. Corporate tenants often block sideloading, so this is the usual route.
+ER.HISTORY is a **restated**, not as-known, time series: it follows the currently
+selected contract mapping. ER.ASKNOWN sends both `as_of` and `known_as_of`
+set to the selected date and uses the API's seven-day market-price freshness window.
+The remaining helper formulas are still registered: `ER.CHANGE`, `ER.NAME`,
+`ER.QUESTIONS`, `ER.RUNGS`, `ER.PROPOSITIONS` and `ER.EXPOSURES`.
 
-Local development needs HTTPS on localhost: `npx office-addin-dev-certs install`, then
-`uvicorn api:app --ssl-keyfile ~/.office-addin-dev-certs/localhost.key --ssl-certfile ~/.office-addin-dev-certs/localhost.crt`
-and sideload `https://localhost:8000/excel/manifest.xml`.
+The sidebar has **Search a theme** (Taiwan → questions) followed by **Search for
+questions / Events**. Clicking a question populates its linked event contracts
+below. Searching the lower box directly finds matching questions and their events.
+Click an event to insert its ID, live title, probability and source update time
+into Excel. Refresh, API-key controls and formula reference remain. The retired holdings-analysis worksheet action is not present in this fork.
+
+### Install and iterate
+
+1. Deploy **this fork** (`sanga4/event_risk`) to a *separate* Railway HTTPS
+   service. The existing `geo-risk-api` still runs the upstream repo and will
+   not reflect this fork's changes.
+2. Download `https://YOUR-NEW-DOMAIN/excel/manifest.xml`. On Windows where
+   policies permit, download `https://YOUR-NEW-DOMAIN/excel/install.cmd` and
+   run it. Otherwise sideload the XML via the Office Add-ins interface; in
+   corporate Excel, administrator approval may be required.
+3. Restart Excel, open **EventRisk Analyst** on Home, and try
+   `=ER.SEARCH("Taiwan")`. Enter your server API key in the pane if needed.
+4. For every change: new GitHub feature branch → automated tests (including
+   `node --test tests/er_analyst.test.cjs`) → separate Railway test service →
+   real Excel workbook test → merge to main when accepted.
+
+Local development requires HTTPS. Install Office dev certs with
+`npx office-addin-dev-certs install`, then run
+`uvicorn api:app --ssl-keyfile ~/.office-addin-dev-certs/localhost.key --ssl-certfile ~/.office-addin-dev-certs/localhost.crt`.
+Sideload `https://localhost:8000/excel/manifest.xml`.
 
 ## Deploying (Railway)
 

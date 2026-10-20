@@ -1,7 +1,7 @@
-// Excel custom functions (=EVENTRISK.*). Loaded by taskpane.html, which is the add-in's shared
+// Excel custom functions (=ER.*). Loaded by taskpane.html, which is the add-in's shared
 // runtime, so these share localStorage (API key) and same-origin fetch with the pane and the API.
 
-const CACHE_MS = 60 * 1000;  // identical requests within a minute share one response (recalcs, PROB+CHANGE+NAME)
+const CACHE_MS = 15 * 1000;  // identical requests within a minute share one response (recalcs, PROB+CHANGE+NAME)
 const cache = new Map();     // url -> {t, promise}
 
 function apiKey() { return localStorage.getItem("apiKey") || ""; }
@@ -76,7 +76,7 @@ function proposition(id, asOf, knownAsOf) {
 }
 
 async function prob(id, asOf, knownAsOf) {
-  const p = await proposition(id, asOf, knownAsOf);
+  const p = await observation(id, asOf, knownAsOf);
   if (p.prob === null || p.prob === undefined) throw fail("no price in the 7 days before as_of");
   return p.prob;
 }
@@ -124,7 +124,10 @@ async function exposures(ticker, limit, minScore, asOf, sort) {
 }
 
 async function history(id, start, end, interval) {
-  if (!id) throw fail("id is required", CustomFunctions.ErrorCode.invalidValue);
+  id = requireId(id);
+  if (id.startsWith("mkt:")) throw fail("history needs a prop: or q: ID", CustomFunctions.ErrorCode.invalidValue);
+  if (start !== undefined && end !== undefined && isoTime(start) > isoTime(end))
+    throw fail("history start must be at or before end", CustomFunctions.ErrorCode.invalidValue);
   if (String(id).startsWith("q:")) {  // a question's history = its current headline rung's
     const q = await proposition(id);
     if (!q.headline) throw fail("question has no live rung");
@@ -135,6 +138,111 @@ async function history(id, start, end, interval) {
   return [["date", "prob", "n_markets"], ...r.points.map(p => [excelDate(p.t), blank(p.prob), p.n_markets])];
 }
 
+
+// Analyst formula helpers. "Events" in this data model are individually priced
+// propositions (prop:...); questions (q:...) group propositions into rungs.
+// mkt:... selects an individual venue's observation, avoiding implicit consensus.
+function requireId(id) {
+  const value = String(id ?? "").trim();
+  if (!/^(q|prop|mkt):[^/\s]+$/.test(value))
+    throw fail("use a question (q:...), event (prop:...) or venue market (mkt:...) ID",
+               CustomFunctions.ErrorCode.invalidValue);
+  return value;
+}
+function requireField(field) {
+  const value = String(field ?? "").trim().toLowerCase();
+  if (!/^[a-z][a-z0-9_]*$/.test(value))
+    throw fail("a valid field name is required", CustomFunctions.ErrorCode.invalidValue);
+  return value;
+}
+function scalar(value, field) {
+  if (value === null || value === undefined)
+    throw fail("field not available: " + field);
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return value;
+}
+async function observation(id, asOf, knownAsOf) {
+  const key = requireId(id);
+  if (!key.startsWith("mkt:")) return proposition(key, asOf, knownAsOf);
+  const params = { as_of: isoTime(asOf), known_as_of: isoTime(knownAsOf) };
+  const market = await request("/markets/" + encodeURIComponent(key), params);
+  // /markets/{id} reports the native price, but the parent proposition detail
+  // carries volume_24h, open_interest and source observation timestamps.
+  const parentId = market.proposition;
+  if (!parentId) return market;
+  const parent = await request("/propositions/" + encodeURIComponent(parentId), params);
+  const source = (parent.markets || []).find(m => m.id === key);
+  return source ? Object.assign({}, market, source) : market;
+}
+async function field(id, fieldName) {
+  const field = requireField(fieldName);
+  const allowed = {
+    volume: "volume_24h", volume_24h: "volume_24h",
+    open_interest: "open_interest", probability: "prob", prob: "prob",
+    displayed_probability: "prob", change_24h: "change_24h",
+    observed_at: "observed_at", status: "status",
+    venue: "venue", venues: "venues", close_time: "close_time"
+  };
+  if (!Object.prototype.hasOwnProperty.call(allowed, field))
+    throw fail("unsupported market field: " + field, CustomFunctions.ErrorCode.invalidValue);
+  const raw = allowed[field];
+  const data = await observation(id);
+  return scalar(data[raw], field);
+}
+async function asknown(id, date) {
+  const key = requireId(id);
+  const at = isoTime(date);
+  if (!at) throw fail("date is required", CustomFunctions.ErrorCode.invalidValue);
+  const value = await observation(key, at, at);
+  if (value.prob === null || value.prob === undefined)
+    throw fail("no price known at that date (within the seven-day lookback)");
+  return value.prob;
+}
+async function eventField(id, fieldName) {
+  const field = requireField(fieldName);
+  const key = requireId(id);
+  const aliases = {title:"name", probability:"prob", updated:"observed_at"};
+  const allowed = new Set(["id","name","title","prob","probability",
+    "change_24h","status","close_time","venues","venue","kind","headline",
+    "n_rungs","n_live","volume_24h","open_interest","rules","question",
+    "observed_at","updated"]);
+  if (!allowed.has(field))
+    throw fail("unsupported event field: " + field, CustomFunctions.ErrorCode.invalidValue);
+  const data = await observation(key);
+  return scalar(data[aliases[field] || field], field);
+}
+async function searchEvents(term) {
+  const q = String(term ?? "").trim();
+  if (!q) throw fail("search term is required", CustomFunctions.ErrorCode.invalidValue);
+  const data = await request("/propositions", {q,limit:100,sort:"move"});
+  return [["Event ID","Event / contract question","Probability"],
+          ...(data.propositions || []).map(p => [p.id,p.name,blank(p.prob)])];
+}
+async function updated(id) {
+  const key = requireId(id);
+  let target = key;
+  if (target.startsWith("q:")) {
+    const question = await proposition(target);
+    if (!question.headline || !question.headline.id)
+      throw fail("question has no live headline contract; use a prop: ID");
+    target = question.headline.id;
+  }
+  if (target.startsWith("mkt:")) {
+    const market = await observation(target);
+    if (!market.observed_at)
+      throw fail("source observation timestamp unavailable");
+    return excelDate(market.observed_at);
+  }
+  const data = await proposition(target);
+  const dates = (data.markets || []).filter(m => m.relation === "same_as")
+    .map(m => m.observed_at).filter(Boolean);
+  if (!dates.length) throw fail("no fresh priced market timestamp available");
+  const latest = Math.max(...dates.map(x => Date.parse(x)));
+  if (!Number.isFinite(latest)) throw fail("invalid source observation timestamp");
+  return latest / 86400000 + 25569; // Excel serial; format cell as date/time.
+}
+
 CustomFunctions.associate("PROB", prob);
 CustomFunctions.associate("CHANGE", change);
 CustomFunctions.associate("NAME", name);
@@ -143,6 +251,11 @@ CustomFunctions.associate("QUESTIONS", questions);
 CustomFunctions.associate("RUNGS", rungs);
 CustomFunctions.associate("EXPOSURES", exposures);
 CustomFunctions.associate("HISTORY", history);
+CustomFunctions.associate("FIELD", field);
+CustomFunctions.associate("ASKNOWN", asknown);
+CustomFunctions.associate("EVENT", eventField);
+CustomFunctions.associate("SEARCH", searchEvents);
+CustomFunctions.associate("UPDATED", updated);
 
 // Shared with the task pane.
 window.EventRisk = { request, clearCache: () => cache.clear() };

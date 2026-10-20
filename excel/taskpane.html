@@ -25,107 +25,260 @@
   .up { color: #067647; } .down { color: #b42318; }
   code { font: 12px Consolas, monospace; background: #f3f6fa; padding: 0 3px; }
   dl { margin: 0; } dt { margin-top: 6px; } dd { margin: 0 0 0 8px; color: #6b7785; font-size: 12px; }
+
+  h3 { font-size: 12px; font-weight: 650; color: #405a73; margin: 10px 0 4px; }
+  .section-divider { border: 0; border-top: 1px solid #dbe4eb; margin: 17px 0 12px; }
+  .results { max-height: 220px; overflow-y: auto; border: 1px solid #e7ecf1; border-radius: 5px; }
+  .results li { padding: 0; }
+  .results button { width: 100%; display: block; text-align: left; border: 0; border-bottom: 1px solid #e6eaf0;
+    border-radius: 0; background: #fff; color: #1f2933; padding: 10px 8px; }
+  .results button:hover, .results button:focus { background: #eff6fd; outline: 1px solid #98badd; }
+  .results button .meta { font-size: 11px; line-height: 1.4; font-weight: 400; }
+  .results li .group { padding: 9px 8px 4px; font-weight: 700; font-size: 12px; background: #f2f6fa; }
+  .results li.message { padding: 12px 9px; font-size: 12px; color: #66788a; }
+  .hint { margin: 7px 0 8px; color: #687887; font-size: 11px; }
+  .status-line { min-height: 16px; margin: 7px 0 5px; }
+  .count { font-size: 11px; color: #6b7785; font-weight: 400; }
+  .details { padding-top: 9px; border-top: 1px solid #e1e8ee; margin-top: 15px; }
+  .details summary { cursor: pointer; color: #405a73; font-weight: 600; }
+  .functions-list { margin-top: 7px; }
+
 </style>
 </head>
 <body>
-<h2>Search questions</h2>
-<div class="row"><input id="q" placeholder="e.g. taiwan, iran, tariffs"><button id="search">Search</button></div>
-<div class="muted">Click a result to add a live row at the selected cell: id, name, probability, 24h change.</div>
-<ul id="results"></ul>
+<h2>Search a theme</h2>
+<p class="hint">Enter a broad topic to find related prediction-market questions.</p>
+<div class="row">
+  <input id="theme" aria-label="Theme search" placeholder="Taiwan, Iran, oil" autocomplete="off">
+  <button id="themeSearch">Search</button>
+</div>
+<h3>Questions <span class="count" id="themeCount"></span></h3>
+<ul id="themeResults" class="results" aria-live="polite">
+  <li class="message">Search a theme to see its questions.</li>
+</ul>
+
+<hr class="section-divider">
+<h2>Search for questions</h2>
+<p class="hint">Search directly, or click a question above to display all its linked events below.</p>
+<div class="row">
+  <input id="questionQuery" aria-label="Question search" placeholder="Search questions" autocomplete="off">
+  <button id="questionSearch">Find</button>
+</div>
+<h3>Events <span class="count" id="eventCount"></span></h3>
+<div id="selectionNote" class="hint">Click an event to insert its ID, title, probability and update time into Excel.</div>
+<ul id="eventResults" class="results" aria-live="polite">
+  <li class="message">Choose a question above, or search for questions here.</li>
+</ul>
 
 <h2>Refresh</h2>
-<div class="row"><button id="refresh" class="secondary">Refresh all Event Risk formulas</button></div>
-<div id="health" class="muted"></div>
+<div class="row"><button id="refresh" class="secondary">Refresh all EventRisk formulas</button></div>
+<div id="health" class="muted status-line"></div>
 
 <h2>API key</h2>
-<div class="row"><input id="key" type="password" placeholder="only if the server requires one"><button id="saveKey" class="secondary">Save</button></div>
-<div id="keyMsg" class="muted"></div>
+<div class="row">
+  <input id="key" type="password" aria-label="API key" placeholder="Only if this server requires one" autocomplete="off">
+  <button id="saveKey" class="secondary">Save</button>
+</div>
+<div id="keyMsg" class="muted status-line"></div>
 
-<h2>Functions</h2>
-<dl>
-  <dt><code>=EVENTRISK.PROB(id, [as_of], [known_as_of])</code></dt><dd>Probability, 0–1. A question id gives its headline (most-traded live) rung.</dd>
-  <dt><code>=EVENTRISK.CHANGE(id, [as_of], [known_as_of])</code></dt><dd>24h change in probability.</dd>
-  <dt><code>=EVENTRISK.NAME(id)</code></dt><dd>The question asked.</dd>
-  <dt><code>=EVENTRISK.QUESTIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of questions, biggest movers first.</dd>
-  <dt><code>=EVENTRISK.RUNGS(question_id, [as_of], [known_as_of])</code></dt><dd>A question's ladder: every deadline / threshold.</dd>
-  <dt><code>=EVENTRISK.PROPOSITIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of single rungs, biggest movers first.</dd>
-  <dt><code>=EVENTRISK.EXPOSURES(ticker, [limit], [min_score], [as_of], [sort])</code></dt><dd>Questions a security is exposed to, with signed impact.</dd>
-  <dt><code>=EVENTRISK.HISTORY(id, [start], [end], [interval])</code></dt><dd>Probability over time (daily by default).</dd>
+<details class="details">
+<summary>Functions and examples</summary>
+<dl class="functions-list">
+  <dt><code>=ER.PROB("prop:venue:id")</code></dt><dd>Latest event probability; q: IDs use their current headline.</dd>
+  <dt><code>=ER.FIELD(A2,"volume")</code></dt><dd>24-hour market volume; a mkt: ID selects a single venue.</dd>
+  <dt><code>=ER.HISTORY(A2,B2,C2)</code></dt><dd>Restated historical probability series; spills into adjacent cells.</dd>
+  <dt><code>=ER.ASKNOWN(A2,B2)</code></dt><dd>Probability with both as_of and known_as_of set to B2.</dd>
+  <dt><code>=ER.EVENT(A2,"title")</code></dt><dd>Event title or other supported metadata field.</dd>
+  <dt><code>=ER.SEARCH("Taiwan")</code></dt><dd>Event-contract IDs, names and current probabilities.</dd>
+  <dt><code>=ER.UPDATED(A2)</code></dt><dd>Latest source observation time; format the result as a date/time.</dd>
 </dl>
-<p class="muted">A question's headline rung can change as trading moves; use a rung id from RUNGS to pin one deadline.
-Set <code>known_as_of</code> = <code>as_of</code> for a point-in-time, backtest-safe value.
-Exposure scores rank relevance; they are not betas.</p>
+<p class="hint">Other helpers remain: ER.CHANGE, ER.NAME, ER.QUESTIONS, ER.RUNGS, ER.PROPOSITIONS, ER.EXPOSURES.
+All events here use prop: IDs; q: IDs group those contracts. Historic series use restated mappings,
+whereas ER.ASKNOWN is point-in-time. Venue market observations use mkt: IDs.</p>
+</details>
+<p id="status" role="status" class="muted" aria-live="polite"></p>
 
 <script>
+"use strict";
 const $ = id => document.getElementById(id);
-const pct = v => v === null || v === undefined ? "–" : (100 * v).toFixed(1) + "%";
-const pts = v => v === null || v === undefined ? "" : (v >= 0 ? "+" : "") + (100 * v).toFixed(1) + " pts";
+const pct = v => v === null || v === undefined ? "—" : (Number(v) * 100).toFixed(1) + "%";
+let themeSequence = 0, eventSequence = 0;
 
-function show(el, text, isError) { el.textContent = text; el.className = isError ? "err" : "muted"; }
-
-async function search() {
-  const list = $("results");
-  list.innerHTML = "<li class='muted'>Searching…</li>";
-  try {
-    const r = await EventRisk.request("/questions", { q: $("q").value.trim(), limit: 25, sort: "move" });
-    list.innerHTML = "";
-    if (!r.questions.length) list.innerHTML = "<li class='muted'>No live questions match.</li>";
-    for (const p of r.questions) {
-      const li = document.createElement("li");
-      li.innerHTML = `<div></div><div class="meta"><span>${pct(p.prob)}</span>
-        <span class="${p.change_24h > 0 ? "up" : p.change_24h < 0 ? "down" : ""}">${pts(p.change_24h)}</span></div>`;
-      li.firstChild.textContent = p.name;
-      li.title = `${p.id}
-Headline: ${p.headline ? p.headline.name : "–"}`;
-      li.onclick = () => insertRow(p.id);
-      list.appendChild(li);
-    }
-  } catch (e) {
-    list.innerHTML = "";
-    const li = document.createElement("li"); li.className = "err"; li.textContent = e.message; list.appendChild(li);
-  }
+function message(listId, text, error) {
+  const el = $(listId);
+  el.replaceChildren();
+  const li = document.createElement("li");
+  li.className = error ? "message err" : "message";
+  li.textContent = text;
+  el.appendChild(li);
 }
-
-// Writes [id, NAME, PROB, CHANGE] at the active cell, then moves down a row so clicks build a watchlist.
-async function insertRow(id) {
-  await Excel.run(async ctx => {
-    const cell = ctx.workbook.getActiveCell();
-    const row = cell.getResizedRange(0, 3);
-    row.formulasR1C1 = [[id, "=EVENTRISK.NAME(RC[-1])", "=EVENTRISK.PROB(RC[-2])", "=EVENTRISK.CHANGE(RC[-3])"]];
-    row.getCell(0, 2).numberFormat = [["0.0%"]];
-    row.getCell(0, 3).numberFormat = [["+0.0%;-0.0%;0.0%"]];
-    cell.getOffsetRange(1, 0).select();
-    await ctx.sync();
+function notify(text, error) {
+  const el = $("status");
+  el.className = error ? "err" : "muted";
+  el.textContent = text;
+}
+function makeButton(text, detail, clicked) {
+  const li = document.createElement("li");
+  const button = document.createElement("button");
+  button.type = "button";
+  const title = document.createElement("span");
+  title.textContent = text || "Untitled";
+  button.appendChild(title);
+  const info = document.createElement("div");
+  info.className = "meta";
+  info.textContent = detail || "";
+  button.appendChild(info);
+  button.addEventListener("click", () => {
+    Promise.resolve().then(clicked).catch(e => notify(e.message, true));
   });
+  li.appendChild(button);
+  return li;
 }
-
-async function refresh() {
-  EventRisk.clearCache();
-  await Excel.run(async ctx => { ctx.workbook.application.calculate(Excel.CalculationType.full); await ctx.sync(); });
-  health();
+async function searchTheme() {
+  const token = ++themeSequence, term = $("theme").value.trim();
+  $("themeCount").textContent = "";
+  if (!term) { message("themeResults", "Enter a theme to search."); return; }
+  message("themeResults", "Searching questions…");
+  try {
+    // Themes use both question-title matches and the graph's entity->question links.
+    // A question can concern Taiwan even when its contract title omits "Taiwan".
+    const [data, catalog] = await Promise.all([
+      EventRisk.request("/questions", {q: term, limit: 40, sort: "move"}),
+      EventRisk.request("/entities").catch(() => [])  // title search still works if entity discovery fails
+    ]);
+    if (token !== themeSequence) return;
+    const topic = term.toLowerCase();
+    const relevant = (Array.isArray(catalog) ? catalog : [])
+      .filter(e => (e.name || "").toLowerCase().includes(topic))
+      .sort((a,b) => (Number((b.name || "").toLowerCase() === topic) -
+                       Number((a.name || "").toLowerCase() === topic)) ||
+                       ((b.n_live_questions || 0) - (a.n_live_questions || 0)))
+      .slice(0, 3);
+    const related = await Promise.all(relevant.map(e =>
+      EventRisk.request("/entities/" + encodeURIComponent(e.id))
+        .then(result => result.questions || []).catch(() => [])));
+    if (token !== themeSequence) return;
+    const byId = new Map();
+    for (const q of [...related.flat(), ...(data.questions || [])]) {
+      if (q.id && q.status !== "closed" && !byId.has(q.id)) byId.set(q.id, q);
+    }
+    const rows = [...byId.values()].slice(0, 50);
+    $("themeCount").textContent = "(" + rows.length + ")";
+    $("themeResults").replaceChildren();
+    if (!rows.length) message("themeResults", "No live questions match this theme.");
+    for (const q of rows) {
+      $("themeResults").appendChild(makeButton(q.name,
+        pct(q.prob) + " · " + (q.n_rungs ?? 0) + " linked event(s)",
+        () => showQuestion(q.id, q.name)));
+    }
+  } catch (e) { if (token === themeSequence) message("themeResults", e.message, true); }
 }
-
+function appendEvent(parent, event, questionName) {
+  if (!event || !event.id) return;
+  parent.appendChild(makeButton(event.name || event.id,
+    pct(event.prob) + " · " + (event.status || "unknown status") +
+    " · " + event.id, () => insertEvent(event.id)));
+}
+function appendQuestionEvents(parent, question) {
+  const heading = document.createElement("li");
+  heading.className = "group";
+  heading.textContent = question.name || question.id;
+  parent.appendChild(heading);
+  const rungs = question.rungs || [];
+  for (const item of rungs) appendEvent(parent, item, question.name);
+  if (!rungs.length) {
+    const empty = document.createElement("li");
+    empty.className = "message";
+    empty.textContent = "This question has no linked events.";
+    parent.appendChild(empty);
+  }
+  return rungs.length;
+}
+async function showQuestion(id, title) {
+  const token = ++eventSequence;
+  $("selectionNote").textContent = "Selected question: " + (title || id);
+  $("eventCount").textContent = "";
+  message("eventResults", "Loading linked events…");
+  try {
+    const data = await EventRisk.request("/questions/" + encodeURIComponent(id));
+    if (token !== eventSequence) return;
+    $("eventResults").replaceChildren();
+    const n = appendQuestionEvents($("eventResults"), data);
+    $("eventCount").textContent = "(" + n + ")";
+    if (!n) notify("No event contracts attached to the selected question.");
+  } catch (e) { if (token === eventSequence) message("eventResults", e.message, true); }
+}
+async function searchQuestions() {
+  const token = ++eventSequence;
+  const term = $("questionQuery").value.trim();
+  $("selectionNote").textContent = "Events attached to questions matching: " + term;
+  $("eventCount").textContent = "";
+  if (!term) { message("eventResults", "Enter a question or topic."); return; }
+  message("eventResults", "Finding questions and events…");
+  try {
+    const r = await EventRisk.request("/questions", {q: term, limit: 6, sort: "move"});
+    if (token !== eventSequence) return;
+    const qs = (r.questions || []).slice(0, 6);
+    if (!qs.length) { message("eventResults", "No questions match that search."); return; }
+    const details = await Promise.all(qs.map(q =>
+      EventRisk.request("/questions/" + encodeURIComponent(q.id))));
+    if (token !== eventSequence) return;
+    $("eventResults").replaceChildren();
+    let count = 0;
+    for (const item of details) count += appendQuestionEvents($("eventResults"), item);
+    $("eventCount").textContent = "(" + count + ")";
+  } catch (e) { if (token === eventSequence) message("eventResults", e.message, true); }
+}
+async function insertEvent(id) {
+  if (!globalThis.Excel) { notify("Open this add-in in Excel to insert events.", true); return; }
+  await Excel.run(async context => {
+    const cell = context.workbook.getActiveCell();
+    const row = cell.getResizedRange(0, 3);
+    row.getCell(0, 0).values = [[id]];
+    row.getCell(0, 1).formulasR1C1 = [['=ER.EVENT(RC[-1],"title")']];
+    row.getCell(0, 2).formulasR1C1 = [['=ER.PROB(RC[-2])']];
+    row.getCell(0, 3).formulasR1C1 = [['=ER.UPDATED(RC[-3])']];
+    row.getCell(0, 2).numberFormat = [["0.0%"]];
+    row.getCell(0, 3).numberFormat = [["yyyy-mm-dd hh:mm"]];
+    cell.getOffsetRange(1, 0).select();
+    await context.sync();
+  });
+  notify("Inserted " + id + " and its live Excel formulas.");
+}
 async function health() {
   try {
-    const h = await EventRisk.request("/health", { t: Date.now() });
-    show($("health"), `Connected. Market data last collected ${h.last_successful_run || "never"} (UTC).`);
-  } catch (e) { show($("health"), e.message, true); }
+    const data = await EventRisk.request("/health", {t: Date.now()});
+    $("health").textContent = "Connected · Market data last collected " + (data.last_successful_run || "never") + " (UTC)";
+  } catch (e) { $("health").textContent = e.message; }
 }
-
+async function refresh() {
+  EventRisk.clearCache();
+  ++themeSequence; ++eventSequence;
+  try {
+    await Excel.run(async context => {
+      context.workbook.application.calculate(Excel.CalculationType.full);
+      await context.sync();
+    });
+    await health();
+    notify("Excel formulas recalculated.");
+  } catch (e) { notify("Recalculation failed: " + e.message, true); }
+}
 function saveKey() {
   const k = $("key").value.trim();
-  k ? localStorage.setItem("apiKey", k) : localStorage.removeItem("apiKey");
+  if (k) localStorage.setItem("apiKey", k);
+  else localStorage.removeItem("apiKey");
   EventRisk.clearCache();
-  show($("keyMsg"), k ? "Saved. Click Refresh to recalculate." : "Cleared.");
+  $("keyMsg").textContent = k ? "API key saved for this browser profile." : "API key cleared.";
   health();
 }
-
 Office.onReady(() => {
   $("key").value = localStorage.getItem("apiKey") || "";
-  $("search").onclick = search;
-  $("q").onkeydown = e => { if (e.key === "Enter") search(); };
-  $("refresh").onclick = refresh;
-  $("saveKey").onclick = saveKey;
+  $("themeSearch").addEventListener("click", searchTheme);
+  $("theme").addEventListener("keydown", e => {if (e.key === "Enter") {e.preventDefault(); searchTheme();}});
+  $("questionSearch").addEventListener("click", searchQuestions);
+  $("questionQuery").addEventListener("keydown", e => {if (e.key === "Enter") {e.preventDefault(); searchQuestions();}});
+  $("refresh").addEventListener("click", refresh);
+  $("saveKey").addEventListener("click", saveKey);
   health();
 });
 </script>

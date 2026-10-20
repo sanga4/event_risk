@@ -1,0 +1,34 @@
+name: Verify ER Excel analyst integration
+
+on:
+  push:
+    branches:
+      - feat/excel-er-formulas-linked-discovery-20261019
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  excel-analyst:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate backend syntax
+        run: python -m py_compile api.py
+      - name: Validate Office manifest XML structure
+        run: python -c "import xml.etree.ElementTree as E; E.parse('excel/manifest.xml'); print('XML parses')"
+      - name: Validate function registration metadata
+        run: python -m json.tool excel/functions.json > /dev/null
+      - name: Validate function JavaScript syntax
+        run: node --check excel/functions.js
+      - name: Test ER functions against graph API fixtures and sidebar integration
+        run: node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs
+      - name: Check Portfolio Scan is still removed
+        run: python -m unittest discover -s tests -p 'test_portfolio_scan_removed.py' -v
