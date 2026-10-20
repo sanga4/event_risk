@@ -80,6 +80,54 @@ below. Searching the lower box directly finds matching questions and their event
 Click an event to insert its ID, live title, probability and source update time
 into Excel. Refresh, API-key controls and formula reference remain. The retired holdings-analysis worksheet action is not present in this fork.
 
+## Factors — qualitative event-to-factor mapping
+
+The Factors feature adds an **unweighted, version-controlled** relationship
+layer across **108 catalogued factors** including Fama–French five-factor
+research portfolios, equity styles and momentum, country/industry, FX,
+rates, credit, commodities, inflation, volatility, liquidity and
+cross-asset style factors.
+
+The deterministic Python module `factors.py` maps each question through
+recognized actions, typed entities and explicit economic mechanisms to
+specific factors. A rule must pass its context gate to produce a factor
+link. Uncertain cases such as relative-return style factor relationships
+are held as **review candidates** until independently approved. No factor
+beta, coefficient, return direction, predicted impact or risk weight is
+calculated.
+
+Factor mapping is defined in the repository only:
+
+- `seeds/factors.json` — catalog, exact definitions and model/universe references.
+- `factors.py` — reproducible matching rules and standalone command-line tool.
+- `seeds/factor_overrides.json` — independently reviewed, source-controlled
+  approvals, rejections and question/proposition exceptions (initially empty).
+- `FACTORS_METHODOLOGY.md` — mathematical mapping, governance, QA and limitations.
+
+**No new MotherDuck schema, factors table, factor-mapping storage or writes**
+are required. Existing event data still comes from the current graph
+storage; the factor matching runs locally in Python on event descriptions,
+actions and entities. The API exposes `GET /factors`,
+`/factors/{factor_id}`, `/questions/{id}/factors`,
+`/propositions/{id}/factors` and `/factors/{factor_id}/questions`,
+with an optional virtual/unweighted graph overlay via `include_factors=true`.
+
+The Excel sidebar adds Factors below Events (accepted links, review
+candidates and reasoning); the website adds a Factors catalog tab,
+factor detail and reverse navigation. **All existing `ER.*` functions and
+workbook insertion semantics are preserved.** Point-in-time graph reads
+apply the *currently deployed* factor rule/catalog version; to replay an
+actual historic classification, pin the historical code/review Git commit.
+
+Run pure mapping without credentials or MotherDuck:
+
+```sh
+python factors.py --demo
+python factors.py --family equity_style
+python -m unittest discover -s tests -p 'test_factors.py' -v
+python -m unittest discover -s tests -p 'test_factors_governance.py' -v
+```
+
 ### Install and iterate
 
 1. Deploy **this fork** (`sanga4/event_risk`) to a *separate* Railway HTTPS
