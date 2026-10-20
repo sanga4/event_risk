@@ -5,11 +5,11 @@
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
-  <Id>eeb823d5-3150-4ee3-a983-57ef26e13f0b</Id>
-  <Version>1.0.0.0</Version>
+  <Id>15fbb7e3-86bf-433a-9a85-f2c7c8cf0a15</Id>
+  <Version>2.0.0.0</Version>
   <ProviderName>Event Risk</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Event Risk"/>
+  <DisplayName DefaultValue="Event Risk (Analyst)"/>
   <Description DefaultValue="Geopolitical event probabilities from prediction markets, and the securities exposed to them."/>
   <IconUrl DefaultValue="{BASE}/excel/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="{BASE}/excel/icon-64.png"/>
@@ -100,14 +100,14 @@
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="{BASE}/"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="Functions.Namespace" DefaultValue="EVENTRISK"/>
+        <bt:String id="Functions.Namespace" DefaultValue="ER"/>
         <bt:String id="GetStarted.Title" DefaultValue="Event Risk is ready"/>
         <bt:String id="Group.Label" DefaultValue="Event Risk"/>
         <bt:String id="TaskpaneButton.Label" DefaultValue="Event Risk"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Open the Event Risk pane from the Home tab, or type =EVENTRISK. in a cell."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Search propositions, scan a portfolio, set your API key."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Open the Event Risk pane from the Home tab, or type =ER. in a cell."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Search themes, select questions and events, scan a portfolio."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
