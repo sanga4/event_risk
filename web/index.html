@@ -334,7 +334,7 @@
 </article></section>
 <section id="api"><article class="doc">
   <h2 id="excel">Use it in Excel</h2>
-  <p class="lede">The Excel add-in brings probabilities, security exposures and market histories into your own spreadsheets, and keeps them up to date.
+  <p class="lede">The EventRisk Analyst add-in brings event probabilities, point-in-time values, histories and discovery into your spreadsheets, and keeps them up to date.
     Setting it up takes about five minutes. You don't need admin rights or any technical knowledge.</p>
   <p><strong>Before you start:</strong> you need the Microsoft 365 version of Excel. To check, open Excel and click <em>File</em> → <em>Account</em>:
     under "Product Information" it should say <em>Microsoft 365</em>. The steps below are for Windows; for a Mac or Excel in a web browser, see further down.</p>
@@ -357,21 +357,22 @@
 
   <h3>Try it</h3>
   <ol>
-    <li><strong>Build a watch list.</strong> In the panel, type <em>taiwan</em> in the search box and press Enter. Click an empty cell in your sheet, then click a question in the panel:
-      Excel fills in a row with the question, today's probability and its change over the last 24 hours. Click more questions to add more rows underneath.</li>
-    <li><strong>Use a formula.</strong> Click an empty cell, type <code>=EVENTRISK.QUESTIONS("taiwan", 10)</code> and press Enter.
-      A table of questions fills in below and to the right — leave those cells empty so it has room.</li>
+    <li><strong>Build a watch list.</strong> In the sidebar, search the theme <em>Taiwan</em>. Select a question to reveal its linked event contracts in the lower list. Click an empty Excel cell, then click a contract to insert its ID, title, latest probability and observation time.</li>
+    <li><strong>Use a formula.</strong> Click an empty cell, type <code>=ER.SEARCH("Taiwan")</code> and press Enter.
+      A table of event contracts fills in below and to the right; leave adjacent cells clear so it can spill.</li>
   </ol>
 
   <h3>Formulas</h3>
-  <p>All the formulas start with <code>=EVENTRISK.</code> — as you type it, Excel lists them and explains each part. The main ones:</p>
+  <p>The analyst formulas start with <code>=ER.</code>. Use the <code>prop:</code> event IDs returned by <code>ER.SEARCH</code> or the sidebar; <code>q:</code> IDs refer to groups of contract rungs.</p>
   <table>
     <tr><th>Formula</th><th>What you get</th></tr>
-    <tr><td><code>=EVENTRISK.QUESTIONS("iran")</code></td><td>A table of questions mentioning Iran, biggest moves today first. The first column is each question's id, used by the formulas below.</td></tr>
-    <tr><td><code>=EVENTRISK.PROB(A2)</code></td><td>The probability (as a decimal: 0.25 = 25%) for the question whose id is in cell A2. <code>CHANGE</code> gives its 24-hour change and <code>NAME</code> its wording.</td></tr>
-    <tr><td><code>=EVENTRISK.RUNGS(A2)</code></td><td>Every deadline of that question with its own probability — for example by June, by December, by next year.</td></tr>
-    <tr><td><code>=EVENTRISK.EXPOSURES("TSM")</code></td><td>The questions a stock is exposed to, how strongly, and whether each would push it up or down.</td></tr>
-    <tr><td><code>=EVENTRISK.HISTORY(A2)</code></td><td>The probability day by day over the last 30 days. Format the first column as a date.</td></tr>
+    <tr><td><code>=ER.SEARCH("Taiwan")</code></td><td>Spilling table of event IDs (prop:), contract questions and latest probabilities.</td></tr>
+    <tr><td><code>=ER.PROB(A2)</code></td><td>Latest event probability as a decimal (0.25 = 25%).</td></tr>
+    <tr><td><code>=ER.FIELD(A2,"volume")</code></td><td>Most recent 24-hour volume for the event. An mkt: ID selects one source market.</td></tr>
+    <tr><td><code>=ER.HISTORY(A2,DATE(2026,9,1),TODAY())</code></td><td>Restated historical series; format the first output column as a date.</td></tr>
+    <tr><td><code>=ER.ASKNOWN(A2,DATE(2026,9,1))</code></td><td>Point-in-time probability, with as_of and known_as_of both set to the specified date.</td></tr>
+    <tr><td><code>=ER.EVENT(A2,"title")</code></td><td>Event title or other supported metadata field.</td></tr>
+    <tr><td><code>=ER.UPDATED(A2)</code></td><td>Latest underlying source observation time, as a sortable Excel date/time.</td></tr>
   </table>
   <p>The numbers update whenever Excel recalculates, or when you click <em>Refresh all Event Risk formulas</em> in the panel.</p>
 
