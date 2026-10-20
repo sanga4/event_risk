@@ -224,7 +224,7 @@ node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs \
 ```
 
 CI also checks syntax, factor catalog schema, source-controlled reviews,
-and that Portfolio Scan never returns. A *successful CI run is not a
+and that the retired holdings-scan workflow remains absent. A *successful CI run is not a
 real-market or native-Excel acceptance test*. Before institutional release,
 deploy the fork to its own isolated HTTPS service, test live event IDs,
 validate the API authentication policy and source freshness, and sideload
