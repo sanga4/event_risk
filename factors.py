@@ -137,6 +137,7 @@ def overrides() -> dict[str, Any]:
     if data.get("schema_version") != 1 or not data.get("review_version"):
         raise ValueError("Unsupported Factors review file format")
     seen = set()
+    scoped_decisions = set()
     required = ("id","question_id","factor_id","decision","mechanism",
                 "rationale","evidence","reviewer","reviewed_at")
     for entry in data.get("entries", []):
@@ -146,6 +147,10 @@ def overrides() -> dict[str, Any]:
         if entry["id"] in seen:
             raise ValueError("Duplicate Factors review ID " + entry["id"])
         seen.add(entry["id"])
+        scope = (entry["question_id"], entry.get("proposition_id"), entry["factor_id"])
+        if scope in scoped_decisions:
+            raise ValueError("Conflicting Factors review decisions for " + repr(scope))
+        scoped_decisions.add(scope)
         if entry["decision"] not in ("approve", "reject", "review"):
             raise ValueError("Invalid factor review decision " + entry["decision"])
         if entry["factor_id"] not in factor_index():
@@ -341,7 +346,10 @@ def map_question(question: dict, entities: list[dict] | None = None,
     exclusions = []
     applied = []
     review = overrides()
-    for entry in review["entries"]:
+    # Question-wide decisions first, then proposition-specific decisions,
+    # regardless of file insertion order. This is essential for reproducible
+    # overrides when the same factor is reviewed at both levels.
+    for entry in sorted(review["entries"], key=lambda e: (bool(e.get("proposition_id")), e["id"])):
         if entry["question_id"] != info["question_id"]:
             continue
         scoped = entry.get("proposition_id")
