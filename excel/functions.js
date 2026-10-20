@@ -76,7 +76,7 @@ function proposition(id, asOf, knownAsOf) {
 }
 
 async function prob(id, asOf, knownAsOf) {
-  const p = await proposition(id, asOf, knownAsOf);
+  const p = await observation(id, asOf, knownAsOf);
   if (p.prob === null || p.prob === undefined) throw fail("no price in the 7 days before as_of");
   return p.prob;
 }
@@ -124,7 +124,10 @@ async function exposures(ticker, limit, minScore, asOf, sort) {
 }
 
 async function history(id, start, end, interval) {
-  if (!id) throw fail("id is required", CustomFunctions.ErrorCode.invalidValue);
+  id = requireId(id);
+  if (id.startsWith("mkt:")) throw fail("history needs a prop: or q: ID", CustomFunctions.ErrorCode.invalidValue);
+  if (start !== undefined && end !== undefined && isoTime(start) > isoTime(end))
+    throw fail("history start must be at or before end", CustomFunctions.ErrorCode.invalidValue);
   if (String(id).startsWith("q:")) {  // a question's history = its current headline rung's
     const q = await proposition(id);
     if (!q.headline) throw fail("question has no live rung");
@@ -181,7 +184,7 @@ async function field(id, fieldName) {
     observed_at: "observed_at", status: "status",
     venue: "venue", venues: "venues", close_time: "close_time"
   };
-  if (!Object.hasOwn(allowed, field))
+  if (!Object.prototype.hasOwnProperty.call(allowed, field))
     throw fail("unsupported market field: " + field, CustomFunctions.ErrorCode.invalidValue);
   const raw = allowed[field];
   const data = await observation(id);
@@ -199,9 +202,8 @@ async function asknown(id, date) {
 async function eventField(id, fieldName) {
   const field = requireField(fieldName);
   const key = requireId(id);
-  const aliases = {title:"name", description:"name", probability:"prob",
-                   updated:"observed_at"};
-  const allowed = new Set(["id","name","title","description","prob","probability",
+  const aliases = {title:"name", probability:"prob", updated:"observed_at"};
+  const allowed = new Set(["id","name","title","prob","probability",
     "change_24h","status","close_time","venues","venue","kind","headline",
     "n_rungs","n_live","volume_24h","open_interest","rules","question",
     "observed_at","updated"]);
