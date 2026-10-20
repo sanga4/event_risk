@@ -64,6 +64,20 @@ _CENTRAL_BANK = re.compile(r"\b(fed|federal reserve|fomc|ecb|european central ba
 _INFLATION = re.compile(r"\b(cpi|consumer price inflation|inflation rate|inflation expectations|breakeven inflation)\b", re.I)
 _SOVEREIGN = re.compile(r"\b(sovereign default|debt default|restructur(?:e|ing) sovereign debt|sovereign credit|bond default)\b", re.I)
 _VOL = re.compile(r"\b(vix|equity volatility|implied volatility|volatility index)\b", re.I)
+_LEVEL_CONDITION = re.compile(r"\b(above|below|exceed|exceeds|reach|reaches|over|under|less than|more than|hit|hits|trade at|settle|close at)\b", re.I)
+_DIRECT_FACTORS = {
+    "COMMODITY.BRENT": re.compile(r"\b(brent|brent crude)\b", re.I),
+    "COMMODITY.WTI": re.compile(r"\b(wti|west texas intermediate)\b", re.I),
+    "COMMODITY.GOLD": re.compile(r"\b(gold (?:price|futures)|gold)\b", re.I),
+    "COMMODITY.WHEAT": re.compile(r"\b(wheat (?:price|futures))\b", re.I),
+    "FX.USD_TWD": re.compile(r"\bUSD\s*[/\-]\s*TWD\b", re.I),
+    "FX.USD_CNH": re.compile(r"\bUSD\s*[/\-]\s*CNH\b", re.I),
+    "FX.USD_JPY": re.compile(r"\bUSD\s*[/\-]\s*JPY\b", re.I),
+    "RATES.US_10Y": re.compile(r"\b(?:US|U\.S\.)?\s*(?:10[- ]year|10Y)\s+(?:Treasury )?(?:yield|rate)\b", re.I),
+    "VOL.US_EQUITY_VOL": re.compile(r"\bVIX\b", re.I),
+    "INFLATION.US_5Y_BE": re.compile(r"\b(?:US|U\.S\.)?\s*(?:5[- ]year|5Y)\s+(?:inflation\s+)?breakeven\b", re.I),
+}
+
 _FF_DIRECT = {
     "FF5.US.HML": re.compile(r"\b(hml factor|high[- ]minus[- ]low|book[- ]to[- ]market spread|value (?:minus|versus|vs\.?) growth stocks?)\b", re.I),
     "FF5.US.SMB": re.compile(r"\b(smb factor|small[- ]minus[- ]big|small[- ]cap (?:minus|versus|vs\.?) large[- ]cap)\b", re.I),
@@ -203,6 +217,15 @@ def map_question(question: dict, entities: list[dict] | None = None,
                 link(COUNTRY_FX[region], "currency_country", "COUNTRY_FX_V1",
                      "Event action and named jurisdiction connect to its exchange-rate factor.",
                      "action=" + str(act) + "; " + evidence)
+    # When the contract *directly asks about a defined factor level*,
+    # the relevant factor is the observable itself; require both its precise
+    # identifier and a conditional threshold to avoid incidental references.
+    if _LEVEL_CONDITION.search(title):
+        for fid, pattern in _DIRECT_FACTORS.items():
+            if pattern.search(title):
+                link(fid, "direct_factor_outcome", "DIRECT_OBSERVABLE_V1",
+                     "The contract directly specifies a threshold for the named factor quantity.",
+                     "explicit benchmark identifier and threshold in contract title")
     # Only add explicit industry/commodity paths for material actions in event terms.
     if act in SUPPLY_ACTIONS and _SEMI.search(title):
         link("EQUITY.INDUSTRY.SEMICONDUCTORS", "semiconductor_supply",
@@ -257,9 +280,10 @@ def map_question(question: dict, entities: list[dict] | None = None,
     if _INFLATION.search(title):
         # A CPI release is not itself an inflation breakeven expectation.
         fid = "INFLATION.US_5Y_BE" if ("US" in countries or re.search(r"\bUS\b", title) or re.search(r"\b(u\.s\.|united states|american)\b", title, re.I)) else "INFLATION.GLOBAL_INFLATION"
-        link(fid, "inflation_expectations", "INFLATION_REVIEW_V1",
-             "Inflation data and traded inflation expectations are distinct; establish the transmission first.",
-             "contract explicitly references inflation or CPI", review=True)
+        if fid not in links:
+            link(fid, "inflation_expectations", "INFLATION_REVIEW_V1",
+                 "Inflation data and traded inflation expectations are distinct; establish the transmission first.",
+                 "contract explicitly references inflation or CPI", review=True)
     if _SOVEREIGN.search(title):
         if "CN" in countries:
             fid = "CREDIT.CN_SOVEREIGN"
@@ -270,7 +294,7 @@ def map_question(question: dict, entities: list[dict] | None = None,
         link(fid, "sovereign_credit", "SOVEREIGN_CREDIT_V1",
              "Explicit sovereign credit/default question.",
              "contract explicitly references sovereign credit or default")
-    if _VOL.search(title):
+    if _VOL.search(title) and "VOL.US_EQUITY_VOL" not in links:
         link("VOL.US_EQUITY_VOL", "equity_volatility", "VOLATILITY_DIRECT_REVIEW_V1",
              "Volatility factor universe and horizon must be explicitly verified.",
              "contract explicitly references volatility", review=True)
