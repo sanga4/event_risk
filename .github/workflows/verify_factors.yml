@@ -1,0 +1,49 @@
+name: Verify qualitative Factors integration
+
+on:
+  push:
+    branches:
+      - feat/qualitative-factors-graph-20261020
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  factor-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile pure Factor rules and backend
+        run: python -m py_compile factors.py matching.py api.py
+      - name: Validate version-controlled Factor catalog
+        run: python -m json.tool seeds/factors.json > /dev/null
+      - name: Run no-database factor fixtures
+        run: python -m unittest discover -s tests -p 'test_factors.py' -v
+      - name: Run Portfolio Scan removal regression
+        run: python -m unittest discover -s tests -p 'test_portfolio_scan_removed.py' -v
+  client-and-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing API and test dependencies
+        run: pip install -r requirements.txt httpx==0.27.2
+      - name: Excel source and metadata validation
+        run: |
+          node --check excel/functions.js
+          python -m json.tool excel/functions.json > /dev/null
+          python -c "import xml.etree.ElementTree as E; E.parse('excel/manifest.xml')"
+      - name: Existing and new Excel UI tests
+        run: node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs tests/sidebar_factors.test.cjs
+      - name: Factors endpoints and graph overlay tests (no MotherDuck)
+        run: python -m unittest discover -s tests -p 'test_factors_api.py' -v
