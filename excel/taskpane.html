@@ -25,13 +25,23 @@
   .up { color: #067647; } .down { color: #b42318; }
   code { font: 12px Consolas, monospace; background: #f3f6fa; padding: 0 3px; }
   dl { margin: 0; } dt { margin-top: 6px; } dd { margin: 0 0 0 8px; color: #6b7785; font-size: 12px; }
+  .selected { border-left: 3px solid #1f3a60; padding: 8px; margin: 8px 0; background: #f3f6fa; }
+  details summary {cursor:pointer;}
 </style>
 </head>
 <body>
+
+<h2>Search a theme</h2>
+<div class="row"><input id="themeQuery" aria-label="Broad theme" placeholder="e.g. Taiwan, tariffs, Iran"><button id="themeSearch">Search</button></div>
+<div class="muted">Find questions about a broad theme. Select a question to show its concrete events below.</div>
+<ul id="themeResults"></ul>
+
 <h2>Search questions</h2>
-<div class="row"><input id="q" placeholder="e.g. taiwan, iran, tariffs"><button id="search">Search</button></div>
-<div class="muted">Click a result to add a live row at the selected cell: id, name, probability, 24h change.</div>
-<ul id="results"></ul>
+<div class="row"><input id="questionQuery" aria-label="Question wording" placeholder="Search question wording"><button id="questionSearch">Search</button></div>
+<ul id="questionResults"></ul>
+<div id="selectedQuestion" class="selected muted">Select a question above, or search for one here.</div>
+<div class="muted">Events attached to the selected question (one per deadline or threshold). Click an event to add a live row to Excel.</div>
+<ul id="eventResults"></ul>
 
 <h2>Portfolio scan</h2>
 <div class="muted">Select two columns, ticker and weight (header row optional), then:</div>
@@ -46,18 +56,32 @@
 <div class="row"><input id="key" type="password" placeholder="only if the server requires one"><button id="saveKey" class="secondary">Save</button></div>
 <div id="keyMsg" class="muted"></div>
 
-<h2>Functions</h2>
+
+<h2>Seven core Excel functions</h2>
 <dl>
-  <dt><code>=EVENTRISK.PROB(id, [as_of], [known_as_of])</code></dt><dd>Probability, 0–1. A question id gives its headline (most-traded live) rung.</dd>
-  <dt><code>=EVENTRISK.CHANGE(id, [as_of], [known_as_of])</code></dt><dd>24h change in probability.</dd>
-  <dt><code>=EVENTRISK.NAME(id)</code></dt><dd>The question asked.</dd>
-  <dt><code>=EVENTRISK.QUESTIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of questions, biggest movers first.</dd>
-  <dt><code>=EVENTRISK.RUNGS(question_id, [as_of], [known_as_of])</code></dt><dd>A question's ladder: every deadline / threshold.</dd>
-  <dt><code>=EVENTRISK.PROPOSITIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of single rungs, biggest movers first.</dd>
-  <dt><code>=EVENTRISK.EXPOSURES(ticker, [limit], [min_score], [as_of], [sort])</code></dt><dd>Questions a security is exposed to, with signed impact.</dd>
-  <dt><code>=EVENTRISK.HISTORY(id, [start], [end], [interval])</code></dt><dd>Probability over time (daily by default).</dd>
-  <dt><code>=EVENTRISK.SCAN(holdings, [limit], [move_threshold])</code></dt><dd>Live portfolio scan over a ticker/weight range.</dd>
+  <dt><code>=ER.PROB(id)</code></dt><dd>Latest event probability (0–1).</dd>
+  <dt><code>=ER.FIELD(id,"volume")</code></dt><dd>Latest market field; volume means trailing 24-hour volume.</dd>
+  <dt><code>=ER.HISTORY(id,start,end)</code></dt><dd>Historical probability table; spills into nearby cells.</dd>
+  <dt><code>=ER.ASKNOWN(id,date)</code></dt><dd>Probability as known at that date, using point-in-time information.</dd>
+  <dt><code>=ER.EVENT(id,"title")</code></dt><dd>Event or question title.</dd>
+  <dt><code>=ER.SEARCH("Taiwan")</code></dt><dd>Search matching questions and their headline event IDs.</dd>
+  <dt><code>=ER.UPDATED(id)</code></dt><dd>Last underlying price observation. Format the result as a date/time.</dd>
 </dl>
+<details><summary class="muted">More functions (unchanged)</summary>
+
+<dl>
+  <dt><code>=ER.PROB(id, [as_of], [known_as_of])</code></dt><dd>Probability, 0–1. A question id gives its headline (most-traded live) rung.</dd>
+  <dt><code>=ER.CHANGE(id, [as_of], [known_as_of])</code></dt><dd>24h change in probability.</dd>
+  <dt><code>=ER.NAME(id)</code></dt><dd>The question asked.</dd>
+  <dt><code>=ER.QUESTIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of questions, biggest movers first.</dd>
+  <dt><code>=ER.RUNGS(question_id, [as_of], [known_as_of])</code></dt><dd>A question's ladder: every deadline / threshold.</dd>
+  <dt><code>=ER.PROPOSITIONS([query], [limit], [sort], [entity])</code></dt><dd>Table of single rungs, biggest movers first.</dd>
+  <dt><code>=ER.EXPOSURES(ticker, [limit], [min_score], [as_of], [sort])</code></dt><dd>Questions a security is exposed to, with signed impact.</dd>
+  <dt><code>=ER.HISTORY(id, [start], [end], [interval])</code></dt><dd>Probability over time (daily by default).</dd>
+  <dt><code>=ER.SCAN(holdings, [limit], [move_threshold])</code></dt><dd>Live portfolio scan over a ticker/weight range.</dd>
+</dl>
+
+</details>
 <p class="muted">A question's headline rung can change as trading moves; use a rung id from RUNGS to pin one deadline.
 Set <code>known_as_of</code> = <code>as_of</code> for a point-in-time, backtest-safe value.
 Exposure scores rank relevance; they are not betas.</p>
@@ -69,26 +93,77 @@ const pts = v => v === null || v === undefined ? "" : (v >= 0 ? "+" : "") + (100
 
 function show(el, text, isError) { el.textContent = text; el.className = isError ? "err" : "muted"; }
 
-async function search() {
-  const list = $("results");
-  list.innerHTML = "<li class='muted'>Searching…</li>";
+
+function rowMessage(list, message, error) {
+  list.replaceChildren();
+  const item = document.createElement("li");
+  item.className = error ? "err" : "muted";
+  item.textContent = message;
+  list.appendChild(item);
+}
+
+function showQuestionList(list, questions) {
+  list.replaceChildren();
+  if (!questions.length) return rowMessage(list, "No live matching questions.");
+  for (const q of questions) {
+    const li = document.createElement("li");
+    const title = document.createElement("div");
+    title.textContent = q.name;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const probLabel = document.createElement("span");
+    probLabel.textContent = pct(q.prob);
+    const moveLabel = document.createElement("span");
+    moveLabel.textContent = pts(q.change_24h);
+    moveLabel.className = q.change_24h > 0 ? "up" : q.change_24h < 0 ? "down" : "";
+    meta.append(probLabel, moveLabel);
+    li.append(title, meta);
+    li.title = q.id;
+    li.onclick = () => selectQuestion(q);
+    list.appendChild(li);
+  }
+}
+
+async function searchQuestions(input, listId) {
+  const query = $(input).value.trim();
+  const list = $(listId);
+  rowMessage(list, "Searching...");
   try {
-    const r = await EventRisk.request("/questions", { q: $("q").value.trim(), limit: 25, sort: "move" });
-    list.innerHTML = "";
-    if (!r.questions.length) list.innerHTML = "<li class='muted'>No live questions match.</li>";
-    for (const p of r.questions) {
+    const res = await EventRisk.request("/questions", {q:query, limit:25, sort:"move"});
+    showQuestionList(list, res.questions || []);
+  } catch(e) {
+    rowMessage(list, e.message, true);
+  }
+}
+
+async function selectQuestion(q) {
+  $("questionQuery").value = q.name;
+  $("selectedQuestion").textContent = "Events for: " + q.name + " (" + q.id + ")";
+  const list = $("eventResults");
+  rowMessage(list, "Loading events...");
+  try {
+    const detail = await EventRisk.request("/questions/" + encodeURIComponent(q.id));
+    const events = detail.rungs || [];
+    list.replaceChildren();
+    if (!events.length) return rowMessage(list, "No events are attached to this question.");
+    for (const p of events) {
       const li = document.createElement("li");
-      li.innerHTML = `<div></div><div class="meta"><span>${pct(p.prob)}</span>
-        <span class="${p.change_24h > 0 ? "up" : p.change_24h < 0 ? "down" : ""}">${pts(p.change_24h)}</span></div>`;
-      li.firstChild.textContent = p.name;
-      li.title = `${p.id}
-Headline: ${p.headline ? p.headline.name : "–"}`;
-      li.onclick = () => insertRow(p.id);
+      const title = document.createElement("div");
+      title.textContent = p.name;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const probLabel = document.createElement("span");
+      probLabel.textContent = pct(p.prob);
+      const status = document.createElement("span");
+      status.textContent = p.status || "";
+      meta.append(probLabel, status);
+      li.title = p.id + " — click to insert live Excel formulas";
+      li.append(title, meta);
+      li.onclick = () => insertRow(p.id).catch(e => show($("selectedQuestion"), e.message, true));
       list.appendChild(li);
     }
-  } catch (e) {
-    list.innerHTML = "";
-    const li = document.createElement("li"); li.className = "err"; li.textContent = e.message; list.appendChild(li);
+  } catch(e) {
+    rowMessage(list, e.message, true);
   }
 }
 
@@ -97,7 +172,7 @@ async function insertRow(id) {
   await Excel.run(async ctx => {
     const cell = ctx.workbook.getActiveCell();
     const row = cell.getResizedRange(0, 3);
-    row.formulasR1C1 = [[id, "=EVENTRISK.NAME(RC[-1])", "=EVENTRISK.PROB(RC[-2])", "=EVENTRISK.CHANGE(RC[-3])"]];
+    row.formulasR1C1 = [[id, "=ER.NAME(RC[-1])", "=ER.PROB(RC[-2])", "=ER.CHANGE(RC[-3])"]];
     row.getCell(0, 2).numberFormat = [["0.0%"]];
     row.getCell(0, 3).numberFormat = [["+0.0%;-0.0%;0.0%"]];
     cell.getOffsetRange(1, 0).select();
@@ -105,7 +180,7 @@ async function insertRow(id) {
   });
 }
 
-// Puts a live =EVENTRISK.SCAN over the selected range on a new sheet.
+// Puts a live =ER.SCAN over the selected range on a new sheet.
 async function scan() {
   try {
     await Excel.run(async ctx => {
@@ -123,7 +198,7 @@ async function scan() {
       let name = "Event risk scan", i = 2;
       while (sheets.items.some(s => s.name === name)) name = `Event risk scan ${i++}`;
       const ws = sheets.add(name);
-      ws.getRange("A1").formulas = [[`=EVENTRISK.SCAN(${ref})`]];
+      ws.getRange("A1").formulas = [[`=ER.SCAN(${ref})`]];
       ws.getRange("C:C").numberFormat = [["0.0%"]];
       ws.getRange("D:D").numberFormat = [["+0.0%;-0.0%;0.0%"]];
       ws.getRange("E:F").numberFormat = [["0.000"]];
@@ -161,8 +236,10 @@ function saveKey() {
 
 Office.onReady(() => {
   $("key").value = localStorage.getItem("apiKey") || "";
-  $("search").onclick = search;
-  $("q").onkeydown = e => { if (e.key === "Enter") search(); };
+  $("themeSearch").onclick = () => searchQuestions("themeQuery", "themeResults");
+  $("themeQuery").onkeydown = e => { if (e.key === "Enter") searchQuestions("themeQuery", "themeResults"); };
+  $("questionSearch").onclick = () => searchQuestions("questionQuery", "questionResults");
+  $("questionQuery").onkeydown = e => { if (e.key === "Enter") searchQuestions("questionQuery", "questionResults"); };
   $("scan").onclick = scan;
   $("refresh").onclick = refresh;
   $("saveKey").onclick = saveKey;
