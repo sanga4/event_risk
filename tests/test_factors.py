@@ -98,6 +98,35 @@ class FactorMappingTests(unittest.TestCase):
         self.assertNotIn("COMMODITY.BRENT", keys(r))
         self.assertNotIn("COMMODITY.FREIGHT", keys(r))
 
+    def test_brent_threshold_maps_direct_observable_without_geopolitical_parser(self):
+        r = mapped("Will Brent crude oil trade above $100 in December?")
+        self.assertIn("COMMODITY.BRENT", keys(r))
+        self.assertIn("direct_factor_outcome", r["mechanisms"])
+
+    def test_explicit_fx_threshold_is_factor_observable(self):
+        r = mapped("Will USD/TWD close above 33 before December?")
+        self.assertIn("FX.USD_TWD", keys(r))
+        self.assertNotIn("EQUITY.COUNTRY.TW", keys(r))
+
+    def test_ten_year_yield_threshold_is_factor_observable(self):
+        r = mapped("Will the US 10-year Treasury yield exceed 5%?")
+        self.assertIn("RATES.US_10Y", keys(r))
+
+    def test_direct_vix_threshold_maps_without_spurious_review_duplicate(self):
+        r = mapped("Will VIX close above 30?")
+        self.assertIn("VOL.US_EQUITY_VOL", keys(r))
+        self.assertNotIn("VOL.US_EQUITY_VOL", keys(r, "review_candidates"))
+
+    def test_direct_breakeven_threshold_bypasses_cpi_review_gate(self):
+        r = mapped("Will the US 5-year breakeven exceed 3%?")
+        self.assertIn("INFLATION.US_5Y_BE", keys(r))
+        self.assertNotIn("INFLATION.US_5Y_BE", keys(r, "review_candidates"))
+
+    def test_incidental_benchmark_name_without_threshold_does_not_create_link(self):
+        r = mapped("Will a leader discuss Brent oil?")
+        self.assertNotIn("COMMODITY.BRENT", keys(r))
+        self.assertNotIn("FX.USD_TWD", keys(r))
+
     def test_oil_sanctions_connect_directly_to_oil(self):
         r = mapped("Will Iran sanction oil exports?", "sanction")
         self.assertIn("COMMODITY.BRENT", keys(r))
