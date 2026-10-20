@@ -187,6 +187,18 @@ class FactorMappingTests(unittest.TestCase):
         self.assertIn("STYLE.US.UMD", keys(r, "review_candidates"))
         self.assertNotIn("STYLE.US.UMD", keys(r))
 
+    def test_generic_quality_and_defensive_style_mentions_are_review_only(self):
+        r = mapped("Will high-quality stocks outperform low-volatility defensive stocks?")
+        self.assertIn("STYLE.GLOBAL.QUALITY", keys(r, "review_candidates"))
+        self.assertIn("STYLE.GLOBAL.LOW_VOL", keys(r, "review_candidates"))
+        self.assertNotIn("STYLE.GLOBAL.QUALITY", keys(r))
+        self.assertNotIn("STYLE.GLOBAL.LOW_VOL", keys(r))
+
+    def test_cross_asset_carry_explicit_factor_still_requires_review(self):
+        r = mapped("Will the cross-asset carry factor outperform this year?")
+        self.assertIn("XASSET.CARRY", keys(r, "review_candidates"))
+        self.assertNotIn("XASSET.CARRY", keys(r))
+
     def test_diplomatic_visit_no_automatic_country_factor(self):
         r = mapped("Will China visit Taiwan?", "visit", [TW, CN])
         self.assertNotIn("EQUITY.COUNTRY.TW", keys(r))
