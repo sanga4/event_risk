@@ -71,6 +71,19 @@ class ReviewSemanticsTests(unittest.TestCase):
         self.assertNotIn("FX.USD_TWD",ids(child,"factors"))
         self.assertIn("FX.USD_TWD",ids(other,"factors"))
 
+    def test_proposition_exception_precedes_question_rule_regardless_of_file_order(self):
+        parent=reviewed("approve","FX.USD_TWD")["entries"][0]
+        child=reviewed("reject","FX.USD_TWD","prop:2027")["entries"][0]
+        parent["id"]="REVIEW-PARENT"
+        child["id"]="REVIEW-CHILD"
+        data=dict(schema_version=1,review_version="2026-10-20.review",
+                  entries=[child,parent])  # deliberately reversed file order
+        q=evaluate(data)
+        p=evaluate(data,"prop:2027")
+        self.assertIn("FX.USD_TWD",ids(q,"factors"))
+        self.assertNotIn("FX.USD_TWD",ids(p,"factors"))
+        self.assertEqual(p["applied_review_ids"],["REVIEW-PARENT","REVIEW-CHILD"])
+
     def test_review_version_and_audit_ids_exposed(self):
         r=evaluate(reviewed("approve","EQUITY.INDUSTRY.SEMICONDUCTORS"))
         self.assertEqual(r["review_version"],"2026-10-20.review")
@@ -82,6 +95,7 @@ class ReviewSemanticsTests(unittest.TestCase):
     def test_review_file_validation_rejects_duplicates_unknown_factors_and_missing_evidence(self):
         for transform in (
             lambda e:[e,e],
+            lambda e:[e,e|{"id":"DIFFERENT_ID_SAME_SCOPE"}],
             lambda e:[e|{"factor_id":"UNKNOWN.FACTOR"}],
             lambda e:[e|{"evidence":""}],
             lambda e:[e|{"reviewed_at":"2026-10-20"}],
