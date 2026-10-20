@@ -35,11 +35,11 @@ function thresholdText(t) {
   return Array.isArray(t[1]) ? `${t[1][0]}-${t[1][1]}` : `${t[0]}${t[1]}`;
 }
 
-async function request(path, params, body) {
+async function request(path, params) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params || {})) if (v !== undefined && v !== null && v !== "") q.set(k, v);
   const url = `${path}${q.toString() ? "?" + q : ""}`;
-  const key = body ? null : url;
+  const key = url;
   const hit = key && cache.get(key);
   if (hit && Date.now() - hit.t < CACHE_MS) return hit.promise;
   const promise = (async () => {
@@ -47,7 +47,7 @@ async function request(path, params, body) {
     if (apiKey()) headers["X-API-Key"] = apiKey();
     let r;
     try {
-      r = await fetch(url, body ? { method: "POST", headers, body: JSON.stringify(body) } : { headers });
+      r = await fetch(url, { headers });
     } catch (e) {
       throw fail("cannot reach the Event Risk API");
     }
