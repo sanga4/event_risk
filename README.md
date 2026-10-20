@@ -78,8 +78,7 @@ The sidebar has **Search a theme** (Taiwan → questions) followed by **Search f
 questions / Events**. Clicking a question populates its linked event contracts
 below. Searching the lower box directly finds matching questions and their events.
 Click an event to insert its ID, live title, probability and source update time
-into Excel. Refresh, API-key controls and formula reference remain. Portfolio
-Scan has been removed throughout this fork.
+into Excel. Refresh, API-key controls and formula reference remain. The retired holdings-analysis worksheet action is not present in this fork.
 
 ### Install and iterate
 
