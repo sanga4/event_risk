@@ -29,6 +29,6 @@ jobs:
       - name: Validate function JavaScript syntax
         run: node --check excel/functions.js
       - name: Test ER functions against graph API fixtures and sidebar integration
-        run: node --test tests/er_analyst.test.cjs
+        run: node --test tests/er_analyst.test.cjs tests/sidebar_analyst.test.cjs
       - name: Check Portfolio Scan is still removed
         run: python -m unittest discover -s tests -p 'test_portfolio_scan_removed.py' -v
