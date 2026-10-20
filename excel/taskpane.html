@@ -140,9 +140,29 @@ async function searchTheme() {
   if (!term) { message("themeResults", "Enter a theme to search."); return; }
   message("themeResults", "Searching questions…");
   try {
-    const data = await EventRisk.request("/questions", {q: term, limit: 40, sort: "move"});
+    // Themes use both question-title matches and the graph's entity->question links.
+    // A question can concern Taiwan even when its contract title omits "Taiwan".
+    const [data, catalog] = await Promise.all([
+      EventRisk.request("/questions", {q: term, limit: 40, sort: "move"}),
+      EventRisk.request("/entities").catch(() => [])  // title search still works if entity discovery fails
+    ]);
     if (token !== themeSequence) return;
-    const rows = data.questions || [];
+    const topic = term.toLowerCase();
+    const relevant = (Array.isArray(catalog) ? catalog : [])
+      .filter(e => (e.name || "").toLowerCase().includes(topic))
+      .sort((a,b) => (Number((b.name || "").toLowerCase() === topic) -
+                       Number((a.name || "").toLowerCase() === topic)) ||
+                       ((b.n_live_questions || 0) - (a.n_live_questions || 0)))
+      .slice(0, 3);
+    const related = await Promise.all(relevant.map(e =>
+      EventRisk.request("/entities/" + encodeURIComponent(e.id))
+        .then(result => result.questions || []).catch(() => [])));
+    if (token !== themeSequence) return;
+    const byId = new Map();
+    for (const q of [...related.flat(), ...(data.questions || [])]) {
+      if (q.id && q.status !== "closed" && !byId.has(q.id)) byId.set(q.id, q);
+    }
+    const rows = [...byId.values()].slice(0, 50);
     $("themeCount").textContent = "(" + rows.length + ")";
     $("themeResults").replaceChildren();
     if (!rows.length) message("themeResults", "No live questions match this theme.");
