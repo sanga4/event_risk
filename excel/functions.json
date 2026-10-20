@@ -3,7 +3,7 @@
     {
       "id": "PROB",
       "name": "PROB",
-      "description": "Probability (0-1) of a proposition, or of a question's headline (most-traded live) rung, e.g. =EVENTRISK.PROB(A2) where A2 holds an id from EVENTRISK.QUESTIONS.",
+      "description": "Probability (0-1) of a proposition, or of a question's headline (most-traded live) rung, e.g. =ER.PROB(A2) where A2 holds an id from EVENTRISK.QUESTIONS.",
       "result": {
         "type": "number",
         "dimensionality": "scalar"
@@ -299,6 +299,109 @@
           "type": "number",
           "dimensionality": "scalar",
           "optional": true
+        }
+      ]
+    },
+    {
+      "id": "FIELD",
+      "name": "FIELD",
+      "description": "Market observation field. \"volume\" means 24-hour volume; supports probability, open_interest, change_24h, status and others.",
+      "result": {
+        "type": "any",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question (q:...) or proposition id.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "field",
+          "description": "Field name such as volume.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "ASKNOWN",
+      "name": "ASKNOWN",
+      "description": "Probability as of a historical date, restricted to what the system knew at that date (backtest-safe).",
+      "result": {
+        "type": "number",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question or proposition id.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "at",
+          "description": "Excel date or ISO 8601 time.",
+          "type": "any",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "EVENT",
+      "name": "EVENT",
+      "description": "Event metadata scalar. \"title\" returns the event/question title; other supported scalar fields are available.",
+      "result": {
+        "type": "any",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question or proposition id.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "field",
+          "description": "Metadata field, e.g. title.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "SEARCH",
+      "name": "SEARCH",
+      "description": "Search broad themes by question wording. Spills question id, title, probability, 24-hour volume and headline event id.",
+      "result": {
+        "type": "any",
+        "dimensionality": "matrix"
+      },
+      "parameters": [
+        {
+          "name": "query",
+          "description": "Broad topic such as Taiwan.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
+      "id": "UPDATED",
+      "name": "UPDATED",
+      "description": "Excel datetime of the latest actual source observation for the proposition or the question's live headline rung.",
+      "result": {
+        "type": "number",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "Question or proposition id.",
+          "type": "string",
+          "dimensionality": "scalar"
         }
       ]
     }
