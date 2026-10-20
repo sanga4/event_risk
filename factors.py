@@ -91,6 +91,18 @@ _STYLE_HINTS = {
     "FF5.US.RMW": re.compile(r"\b(profitability|profit margins?)\b", re.I),
     "FF5.US.CMA": re.compile(r"\b(corporate investment|capital expenditure)\b", re.I),
     "STYLE.US.UMD": re.compile(r"\b(momentum|past winners|past losers)\b", re.I),
+    "STYLE.GLOBAL.QUALITY": re.compile(r"\b(quality stocks?|earnings quality|balance sheet quality)\b", re.I),
+    "STYLE.GLOBAL.LOW_VOL": re.compile(r"\b(low[- ]volatility|defensive stocks?|minimum volatility)\b", re.I),
+    "STYLE.GLOBAL.RESID_VOL": re.compile(r"\b(residual volatility|idiosyncratic volatility)\b", re.I),
+    "STYLE.GLOBAL.GROWTH": re.compile(r"\b(growth stocks?|growth factor)\b", re.I),
+    "STYLE.GLOBAL.EARNINGS_YIELD": re.compile(r"\b(earnings yield|e\/p factor)\b", re.I),
+    "STYLE.GLOBAL.DIVIDEND_YIELD": re.compile(r"\b(dividend yield|dividend factor)\b", re.I),
+    "STYLE.GLOBAL.LEVERAGE": re.compile(r"\b(leverage factor|highly leveraged|balance sheet leverage)\b", re.I),
+    "STYLE.GLOBAL.LIQUIDITY": re.compile(r"\b(illiquid stocks?|stock liquidity factor|equity liquidity)\b", re.I),
+    "STYLE.GLOBAL.BETA": re.compile(r"\b(market beta factor|high[- ]beta stocks?|low[- ]beta stocks?)\b", re.I),
+    "XASSET.CARRY": re.compile(r"\b(cross[- ]asset carry|carry factor)\b", re.I),
+    "XASSET.TREND": re.compile(r"\b(cross[- ]asset trend|trend[- ]following factor)\b", re.I),
+    "XASSET.DEFENSIVE": re.compile(r"\b(cross[- ]asset defensive|defensive factor)\b", re.I),
 }
 
 def _contains(text: str, term: str) -> bool:
