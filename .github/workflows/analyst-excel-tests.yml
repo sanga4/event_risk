@@ -13,3 +13,6 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - name: Live upstream API read-only smoke
+        continue-on-error: true
+        run: node excel/tests/live-upstream-smoke.mjs
