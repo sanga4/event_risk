@@ -49,6 +49,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from collector import DB
+import factors as factors_engine
 
 LOOKBACK = timedelta(days=7)
 MUTEX_SHOWN = 3  # per node in /graph neighbourhoods
@@ -276,6 +277,79 @@ def question_summary(g, qid, qp):
 SORTS = {"move": lambda r: -abs(r["change_24h"] or 0), "prob": lambda r: -(r["prob"] or 0),
          "name": lambda r: r["name"]}
 
+# ── qualitative Factors (no factor database writes or numeric loadings) ────────
+def factor_question_context(g, qid):
+    """Existing question + involvement edges, no new DB data or factor weights."""
+    n = g.get(qid, "question")
+    relevant = [e for e in g.out[qid] if e["type"] == "involves"]
+    entities = [dict(id=e["dst"], name=g.nodes[e["dst"]]["name"],
+                     entity_type=g.nodes[e["dst"]]["attrs"].get("entity_type"),
+                     role=(e.get("attrs") or {}).get("role"))
+                for e in relevant if e["dst"] in g.nodes]
+    actions = sorted({e["attrs"]["action"] for e in relevant
+                      if (e.get("attrs") or {}).get("action")})
+    # If graph edges provide conflicting action signatures, abstain from
+    # choosing one and use the title parser's fallback.
+    action = actions[0] if len(actions) == 1 else None
+    return dict(id=qid, name=n["name"]), entities, action
+
+def factor_mapping(g, question_id, proposition_id=None):
+    question, entities, action = factor_question_context(g, question_id)
+    result = factors_engine.map_question(question, entities, action, proposition_id)
+    result["inherited_from_question"] = bool(proposition_id)
+    return result
+
+@app.get("/factors")
+def factors_catalog(family: str | None = None, q: str | None = None):
+    """Version-controlled factor definitions; no MotherDuck dependency."""
+    rows = factors_engine.list_factors(family, q)
+    return dict(catalog_version=factors_engine.catalog()["catalog_version"],
+                rule_version=factors_engine.RULE_VERSION, count=len(rows), factors=rows)
+
+@app.get("/factors/{factor_id}")
+def factor_detail(factor_id: str):
+    item = factors_engine.factor_index().get(factor_id)
+    if item is None: raise HTTPException(404, "unknown factor id")
+    return dict(catalog_version=factors_engine.catalog()["catalog_version"], **item)
+
+@app.get("/factors/{factor_id}/questions")
+def factor_questions(factor_id: str, include_review: bool = False,
+                     limit: int = Query(100, ge=1, le=500),
+                     as_of: datetime | None = AsOf, known_as_of: datetime | None = KnownAsOf,
+                     cur=Depends(db)):
+    """Reverse lookup: accepted links, optionally review candidates, at selected graph snapshot."""
+    if factor_id not in factors_engine.factor_index():
+        raise HTTPException(404, "unknown factor id")
+    at, known = times(as_of, known_as_of)
+    g = graph(cur, as_of, known_as_of)
+    inputs = [factor_question_context(g, qid)
+              for qid, n in sorted(g.nodes.items()) if n["type"] == "question"]
+    matches = factors_engine.factor_coverage(factor_id, inputs, include_review)
+    return dict(factor_id=factor_id, as_of=at, known_as_of=known,
+                catalog_version=factors_engine.catalog()["catalog_version"],
+                rule_version=factors_engine.RULE_VERSION,
+                count=len(matches), questions=matches[:limit],
+                caveat="Static current rules applied to the selected event graph snapshot.")
+
+@app.get("/questions/{question_id}/factors")
+def question_factors(question_id: str, as_of: datetime | None = AsOf,
+                     known_as_of: datetime | None = KnownAsOf, cur=Depends(db)):
+    at, known = times(as_of, known_as_of)
+    g = graph(cur, as_of, known_as_of)
+    return dict(as_of=at, known_as_of=known, **factor_mapping(g, question_id))
+
+@app.get("/propositions/{proposition_id}/factors")
+def proposition_factors(proposition_id: str, as_of: datetime | None = AsOf,
+                        known_as_of: datetime | None = KnownAsOf, cur=Depends(db)):
+    at, known = times(as_of, known_as_of)
+    g = graph(cur, as_of, known_as_of)
+    g.get(proposition_id, "proposition")
+    question_id = g.question_of(proposition_id)
+    if not question_id:
+        raise HTTPException(404, "proposition has no question for factor inheritance")
+    return dict(as_of=at, known_as_of=known,
+                **factor_mapping(g, question_id, proposition_id))
+
 # ── endpoints ─────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health(cur=Depends(db)):
@@ -424,7 +498,8 @@ def neighbourhood(g, root, depth, fanout, rank=None):
 
 @app.get("/graph/{node_id}")
 def node_graph(node_id: str, depth: int = Query(1, ge=1, le=3), fanout: int = Query(30, ge=1, le=200),
-               as_of: datetime | None = AsOf, known_as_of: datetime | None = KnownAsOf, cur=Depends(db)):
+               as_of: datetime | None = AsOf, known_as_of: datetime | None = KnownAsOf, cur=Depends(db),
+               include_factors: bool = Query(False)):
     """Neighbourhood of any question, proposition, market, entity or security, for visualisation.
     Questions are picked live first, then by 24h trading volume; other links by strength.
     `totals` = how many links of each kind the root has (the graph shows at most `fanout`)."""
@@ -440,14 +515,33 @@ def node_graph(node_id: str, depth: int = Query(1, ge=1, le=3), fanout: int = Qu
     seen, edges, totals = neighbourhood(g, node_id, depth, fanout, rank)
     probs = prop_probs(cur, g, [i for i in seen if g.nodes[i]["type"] == "proposition"], at)
     probs |= question_probs(cur, g, [i for i in seen if g.nodes[i]["type"] == "question"], at)
+    display_nodes = [g.ref(i) | dict(depth=d, entity_type=g.nodes[i]["attrs"].get("entity_type"),
+                                     venue=g.nodes[i]["attrs"].get("venue"),
+                                     **{k: probs[i][k] for k in ("prob", "change_24h", "status")} if i in probs else {})
+                     for i, d in seen.items()]
+    display_edges = [dict(src=e["src"], dst=e["dst"], type=e["type"], weight=e["weight"],
+                          confidence=e["confidence"], provenance=e["provenance"], note=e["note"])
+                     for e in edges]
+    if include_factors:
+        # Virtual, read-only factor nodes are generated at request time. They
+        # are NOT inserted into graph_nodes/graph_edges and have NO weights.
+        root_question = (node_id if g.nodes[node_id]["type"] == "question" else
+                         g.question_of(node_id) if g.nodes[node_id]["type"] == "proposition" else None)
+        if root_question:
+            mapped = factor_mapping(g, root_question)["factors"]
+            existing_ids = {n["id"] for n in display_nodes}
+            if root_question not in existing_ids:
+                display_nodes.append(dict(g.ref(root_question), depth=1))
+            for item in mapped:
+                fid = "factor:" + item["factor_id"]
+                display_nodes.append(dict(id=fid, type="factor", name=item["factor"]["name"],
+                                          family=item["factor"]["family"], depth=1,
+                                          factor_id=item["factor_id"], model=item["factor"]["model"]))
+                display_edges.append(dict(src=root_question, dst=fid, type="factor_link",
+                                          mechanism=item["mechanism"], reason=item["reason"],
+                                          rule_id=item["rule_id"], provenance=item["provenance"]))
     return dict(as_of=at, known_as_of=known, root=node_id, totals=totals,
-                nodes=[g.ref(i) | dict(depth=d, entity_type=g.nodes[i]["attrs"].get("entity_type"),
-                                       venue=g.nodes[i]["attrs"].get("venue"),
-                                       **{k: probs[i][k] for k in ("prob", "change_24h", "status")} if i in probs else {})
-                       for i, d in seen.items()],
-                edges=[dict(src=e["src"], dst=e["dst"], type=e["type"], weight=e["weight"],
-                            confidence=e["confidence"], provenance=e["provenance"], note=e["note"])
-                       for e in edges])
+                nodes=display_nodes, edges=display_edges)
 
 @app.get("/propositions/{proposition_id}/graph")
 def proposition_graph(proposition_id: str, depth: int = Query(2, ge=1, le=3), fanout: int = Query(30, ge=1, le=200),

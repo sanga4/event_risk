@@ -70,6 +70,20 @@
   <li class="message">Choose a question above, or search for questions here.</li>
 </ul>
 
+<hr class="section-divider">
+<h2>Factors <span class="count">qualitative mapping</span></h2>
+<p class="hint">Select a question above, or an event below, to see related factors.
+No betas, coefficients, or predicted returns.</p>
+<div id="factorSource" class="hint">No question or event selected.</div>
+<ul id="factorResults" class="results" aria-live="polite">
+  <li class="message">Factors appear here after you select a question.</li>
+</ul>
+<details id="factorReview" class="details" hidden>
+  <summary>Review candidates — not accepted <span id="factorReviewCount"></span></summary>
+  <ul id="factorReviewResults" class="results"></ul>
+</details>
+<div id="factorVersion" class="hint"></div>
+
 <h2>Refresh</h2>
 <div class="row"><button id="refresh" class="secondary">Refresh all EventRisk formulas</button></div>
 <div id="health" class="muted status-line"></div>
@@ -102,6 +116,7 @@ whereas ER.ASKNOWN is point-in-time. Venue market observations use mkt: IDs.</p>
 "use strict";
 const $ = id => document.getElementById(id);
 const pct = v => v === null || v === undefined ? "—" : (Number(v) * 100).toFixed(1) + "%";
+let factorSequence = 0;
 let themeSequence = 0, eventSequence = 0;
 
 function message(listId, text, error) {
@@ -134,10 +149,65 @@ function makeButton(text, detail, clicked) {
   li.appendChild(button);
   return li;
 }
+function clearFactors(messageText) {
+  ++factorSequence;
+  $("factorSource").textContent = "";
+  $("factorVersion").textContent = "";
+  $("factorReview").hidden = true;
+  $("factorReviewCount").textContent = "";
+  $("factorReviewResults").replaceChildren();
+  message("factorResults", messageText || "Select a question or event to see its factors.");
+}
+function showFactorInfo(item) {
+  // Do not display raw HTML from the factor catalog or user searches.
+  notify(item.factor.name + ": " + item.reason + " | Evidence: " + item.evidence +
+    " | Rule: " + item.rule_id + " (" + item.rule_version + ")");
+}
+function renderFactors(result, sequence, sourceLabel) {
+  if (sequence !== factorSequence) return;
+  $("factorSource").textContent = "Mapped from: " + sourceLabel;
+  $("factorVersion").textContent = "Catalog " + result.catalog_version +
+    " · Rules " + result.rule_version + " · Current rules applied to this graph snapshot.";
+  const list = $("factorResults"), rows = result.factors || [];
+  list.replaceChildren();
+  if (!rows.length) message("factorResults", "No established factor links; no exposures inferred.");
+  for (const item of rows) {
+    list.appendChild(makeButton(item.factor.name,
+      item.factor.family + " · " + item.mechanism + " · " + item.reason,
+      () => showFactorInfo(item)));
+  }
+  const pending = result.review_candidates || [];
+  $("factorReview").hidden = !pending.length;
+  $("factorReviewCount").textContent = "(" + pending.length + ")";
+  $("factorReviewResults").replaceChildren();
+  for (const item of pending) {
+    $("factorReviewResults").appendChild(makeButton(item.factor.name,
+      item.reason + " · " + item.rule_id, () => showFactorInfo(item)));
+  }
+}
+async function loadFactors(endpoint, label) {
+  const token = ++factorSequence;
+  $("factorSource").textContent = "Selected: " + label;
+  message("factorResults", "Mapping factors…");
+  $("factorReview").hidden = true;
+  try {
+    const result = await EventRisk.request(endpoint);
+    renderFactors(result, token, label);
+  } catch (err) {
+    if (token === factorSequence) message("factorResults", err.message, true);
+  }
+}
+async function loadQuestionFactors(qid, label) {
+  return loadFactors("/questions/" + encodeURIComponent(qid) + "/factors", label);
+}
+async function loadEventFactors(pid, label) {
+  return loadFactors("/propositions/" + encodeURIComponent(pid) + "/factors", label);
+}
 async function searchTheme() {
   const token = ++themeSequence, term = $("theme").value.trim();
   $("themeCount").textContent = "";
   if (!term) { message("themeResults", "Enter a theme to search."); return; }
+  clearFactors("Select a question to see its factors.");
   message("themeResults", "Searching questions…");
   try {
     // Themes use both question-title matches and the graph's entity->question links.
@@ -177,7 +247,10 @@ function appendEvent(parent, event, questionName) {
   if (!event || !event.id) return;
   parent.appendChild(makeButton(event.name || event.id,
     pct(event.prob) + " · " + (event.status || "unknown status") +
-    " · " + event.id, () => insertEvent(event.id)));
+    " · " + event.id, async () => {
+      void loadEventFactors(event.id, event.name || event.id);
+      await insertEvent(event.id);
+    }));
 }
 function appendQuestionEvents(parent, question) {
   const heading = document.createElement("li");
@@ -196,6 +269,7 @@ function appendQuestionEvents(parent, question) {
 }
 async function showQuestion(id, title) {
   const token = ++eventSequence;
+  clearFactors("Loading selected question factors…");
   $("selectionNote").textContent = "Selected question: " + (title || id);
   $("eventCount").textContent = "";
   message("eventResults", "Loading linked events…");
@@ -206,11 +280,13 @@ async function showQuestion(id, title) {
     const n = appendQuestionEvents($("eventResults"), data);
     $("eventCount").textContent = "(" + n + ")";
     if (!n) notify("No event contracts attached to the selected question.");
+    await loadQuestionFactors(id, data.name || title || id);
   } catch (e) { if (token === eventSequence) message("eventResults", e.message, true); }
 }
 async function searchQuestions() {
   const token = ++eventSequence;
   const term = $("questionQuery").value.trim();
+  clearFactors("Select an event to show its inherited question factors.");
   $("selectionNote").textContent = "Events attached to questions matching: " + term;
   $("eventCount").textContent = "";
   if (!term) { message("eventResults", "Enter a question or topic."); return; }
@@ -254,6 +330,7 @@ async function health() {
 async function refresh() {
   EventRisk.clearCache();
   ++themeSequence; ++eventSequence;
+  clearFactors("Select a question or event again after refreshing.");
   try {
     await Excel.run(async context => {
       context.workbook.application.calculate(Excel.CalculationType.full);
