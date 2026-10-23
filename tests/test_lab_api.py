@@ -134,6 +134,40 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(d["quote_freshness_certified"])
         self.assertFalse(d["released_for_historical_backtesting"])
 
+    def test_warehouse_asof_coverage_never_certifies_publication_times(self):
+        def query(sql, params):
+            if "lab_factor_warehouse_vintages_v1" in sql:
+                return [{"factor_warehouse_vintages": 12656,
+                         "independently_verified_release_records": 0}]
+            return [{"event_factor_pairs": 190008, "future_warehouse_factor_pairs": 0}]
+        lab.app.state.query_fn = query
+        result = lab.warehouse_asof_coverage()
+        self.assertEqual(result["co_observations"]["event_factor_pairs"], 190008)
+        self.assertFalse(result["provider_publication_times_independently_verified"])
+        self.assertFalse(result["historical_backtest_released"])
+
+    def test_warehouse_asof_grid_requires_explicit_research_switch(self):
+        with patch.dict(os.environ, {"LAB_ENABLE_PROSPECTIVE_READ": ""}):
+            with self.assertRaises(HTTPException) as error:
+                lab.warehouse_asof_grid(research_use=True)
+            self.assertEqual(error.exception.status_code, 403)
+
+    def test_warehouse_asof_grid_is_always_unreleased(self):
+        observed = []
+        lab.app.state.query_fn = lambda sql,params: observed.append(params) or [
+            {"factor_id": "DGS10", "factor_ingested_at": "2026-10-23T06:00:00Z"}
+        ]
+        with patch.dict(os.environ, {"LAB_ENABLE_PROSPECTIVE_READ": "true"}):
+            result = lab.warehouse_asof_grid(
+                research_use=True,venue="kalshi",factor_id="DGS10",
+                proposition_id="prop:kalshi:K1",limit=10,offset=0
+            )
+        self.assertEqual(observed[0],("kalshi","kalshi","DGS10","DGS10",
+                                      "prop:kalshi:K1","prop:kalshi:K1",10,0))
+        self.assertFalse(result["historical_backtest_released"])
+        self.assertFalse(result["approved_mapping"])
+
+
 
 if __name__ == "__main__":
     unittest.main()
