@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.2.0"
+VERSION="phase1-gates-v1.3.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -51,6 +51,12 @@ def main():
         ("warehouse_asof_temporal_leakage",
          f"SELECT COUNT(*) FROM {P}lab_prospective_event_factor_grid_v1 WHERE factor_ingested_at>event_capture_at OR factor_available_at>event_capture_at",
          0,"MAX_COUNT","Strictly zero factor observations with warehouse ingest or availability after event capture cutoff"),
+        ("prospective_mapping_review_queue_prepared",
+         f"SELECT COUNT(*) FROM {P}lab_forward_mapping_review_queue_v1 WHERE review_state='pending_human_review' AND NOT released_for_signal_use",
+         50,"MIN_COUNT","At least 50 forward-mapping hypotheses in traceable pending-review queue; no analyst decision implied"),
+        ("forward_mapping_candidate_temporal_leakage",
+         f"SELECT COUNT(*) FROM {P}lab_forward_mapping_hypotheses_v1 WHERE mapping_available_at > first_eligible_capture_at OR graph_asof > first_eligible_capture_at OR factor_ingested_at > first_eligible_capture_at OR factor_available_at > first_eligible_capture_at OR evidence_approved OR historically_backtest_released",
+         0,"MAX_COUNT","Forward mapping hypothesis staging must not use post-capture warehouse information or claim approved evidence/release"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
