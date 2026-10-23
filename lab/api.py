@@ -60,7 +60,7 @@ def _query(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         return injected(sql, params)
     try:
         import duckdb
-        conn = duckdb.connect("md:")
+        conn = duckdb.connect("md:eventrisk_factor_lab?attach_mode=single")
         try:
             cursor = conn.execute(sql, params)
             names = [description[0] for description in cursor.description]
@@ -115,7 +115,7 @@ def factors(
     rows = _query(
         "SELECT factor_id, name, family, unit, provider, provider_series, license_class "
         "FROM eventrisk_factor_lab.main.lab_factor_catalog "
-        "WHERE active = TRUE AND license_class NOT LIKE 'restricted%' "
+        "WHERE active = TRUE AND license_class IN ('government_source_via_treasury', 'government_source_via_fred', 'derived_not_true_breakeven') "
         "AND (? IS NULL OR family = ?) "
         "ORDER BY factor_id LIMIT ? OFFSET ?", (family, family, limit, offset)
     )
@@ -244,3 +244,45 @@ def panel_v3(
             "mode": "retrospective", "research_only": True,
             "released_for_backtesting": False,
             "warning": "RETROSPECTIVE_AND_UNREVIEWED_NOT_CAUSAL_OR_BACKTEST_SAFE"}
+
+
+@app.get("/v1/research/history/coverage", dependencies=[Depends(require_api_key)])
+def history_coverage() -> dict[str, Any]:
+    rows = _query(
+        "SELECT COUNT(*) AS market_days, MIN(observed_date) AS first_date, "
+        "MAX(observed_date) AS last_date, COUNT(DISTINCT observed_date) AS distinct_days, "
+        "COUNT(*) FILTER (WHERE snapshot_source='backfill') AS backfilled_rows "
+        "FROM eventrisk_factor_lab.main.lab_market_daily_historical_v1"
+    )
+    return {"metrics": rows[0] if rows else {},
+            "source_availability_verified": False, "research_only": True,
+            "warning": "BACKFILLED_EVENT_TIME_IS_NOT_POINT_IN_TIME_AVAILABILITY"}
+
+
+@app.get("/v1/research/regressions", dependencies=[Depends(require_api_key)])
+def exploratory_regressions(
+    research_use: bool = False,
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    venue: str | None = Query(None, max_length=50),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000)
+) -> dict[str, Any]:
+    # Associations are explicitly noncausal, retrospective and potentially
+    # revision/measurement-biased. No unauthorized public release.
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Exploratory regressions are disabled")
+    rows = _query(
+        "SELECT factor_id, factor_unit, venue, predictor, response, "
+        "n_sessions, distinct_months, first_date, last_date, "
+        "slope, intercept, r_squared, correlation, model_class, "
+        "point_in_time_verified, approved_for_decision_use, "
+        "interpretation_warning, build_id "
+        "FROM eventrisk_factor_lab.main.lab_exploratory_regressions_v1 "
+        "WHERE (? IS NULL OR factor_id=?) AND (? IS NULL OR venue=?) "
+        "ORDER BY factor_id,venue LIMIT ? OFFSET ?",
+        (factor_id, factor_id, venue, venue, limit, offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "research_only": True, "point_in_time_verified": False,
+            "approved_for_decision_use": False,
+            "warning": "NO_CAUSAL_INFERENCE_NO_PVALUES_NO_TRADABLE_SIGNALS"}
