@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.0.0"
+VERSION="phase1-gates-v1.1.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -36,6 +36,15 @@ def main():
         ("real_time_venue_data_recent",
          f"SELECT COALESCE(date_diff('hour',MAX(ts),current_timestamp),999999) FROM {P}market_snapshots WHERE source='realtime'",
          12,"MAX_HOURS","Realtime snapshots must be younger than 12 hours"),
+        ("prospective_dual_venue_capture_recent",
+         f"SELECT COUNT(*) FROM {P}lab_capture_feed_freshness_v1 WHERE venue IN ('kalshi','polymarket') AND collector_operational_recently",
+         2,"MIN_COUNT","Both Kalshi and Polymarket need recently successful, non-empty prospective captures; not exchange quote certification"),
+        ("prospective_capture_receipt_provenance",
+         f"SELECT COUNT(*) FROM {P}lab_live_market_captures_v1 WHERE capture_time_verified AND source_record_sha256 IS NOT NULL AND LENGTH(source_record_sha256)=64",
+         1000,"MIN_COUNT","At least 1,000 independently receipt-timestamped source records with SHA256 hashes; NOT provider publication-time validation"),
+        ("provider_quote_freshness_evidence",
+         f"SELECT COUNT(*) FROM {P}lab_live_market_captures_v1 WHERE provider_quote_freshness_verified AND provider_quote_at IS NOT NULL",
+         1,"MIN_COUNT","Need independently verified original venue quote times; HTTP receipt timestamps alone are insufficient"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
