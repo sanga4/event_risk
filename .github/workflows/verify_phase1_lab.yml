@@ -2,7 +2,7 @@ name: Verify EventRisk Phase I laboratory API
 on:
   push:
     branches:
-      - fix/phase1-motherduck-ci-and-panel-gates-20261023
+      - feat/phase1-hac-holdout-production-gates-20261023
       - main
   pull_request:
 permissions:
@@ -17,7 +17,7 @@ jobs:
           python-version: '3.12'
       - name: Install pinned laboratory runtime and offline-test dependencies
         run: pip install -r lab/requirements.txt httpx==0.27.2
-      - name: Compile API without network or secrets
-        run: python -m py_compile lab/api.py
-      - name: Validate API authentication, rights and research-mode gates
-        run: python -m unittest discover -s tests -p 'test_lab_api.py' -v
+      - name: Compile all laboratory scripts without database or secrets
+        run: python -m py_compile lab/api.py lab/phase1_build_v3.py lab/phase1_historical_regressions.py lab/phase1_robust_regressions.py lab/phase1_release_gates.py
+      - name: Validate API, robust regression math, data rights and research-mode gates
+        run: python -m unittest discover -s tests -p 'test_lab_*.py' -v
