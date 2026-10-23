@@ -129,8 +129,7 @@ def collect_polymarket(session, run_id):
             url = GAMMA + "/events"
             payload, at, digest = fetch_page(session, url, {
                 "tag_id": int(tag_id), "active": "true", "closed": "false",
-                "limit": 100, "offset": offset, "order": "volume_24hr",
-                "ascending": "false"
+                "limit": 100, "offset": offset
             })
             if not isinstance(payload, list):
                 raise RuntimeError("Gamma API did not return an events list")
@@ -357,6 +356,8 @@ def main():
             stats[name]={"state":"error","captured":0,"error_class":type(exc).__name__}
             if isinstance(exc, requests.HTTPError) and exc.response is not None:
                 stats[name]["http_status"] = int(exc.response.status_code)
+                from urllib.parse import urlparse
+                stats[name]["failed_path"] = urlparse(exc.response.url).path
             print(f"SOURCE_ERROR={name}:{type(exc).__name__}:HTTP_{stats[name].get('http_status', 'unknown')}")
     completed=timestamp()
     if not records:
