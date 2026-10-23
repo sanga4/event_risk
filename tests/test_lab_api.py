@@ -98,5 +98,42 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertEqual(captured[0][1], ("rates", "rates", 10, 0))
 
 
+    def test_live_overview_declares_uncertified(self):
+        calls = []
+        def query(sql, params):
+            calls.append(sql)
+            return ([{"capture_rows": 10556, "source_quote_verified": 0}]
+                    if "lab_live_market_captures_v1" in sql else
+                    [{"venue": "kalshi", "collector_operational_recently": True}])
+        lab.app.state.query_fn = query
+        d = lab.prospective_capture_overview()
+        self.assertEqual(d["metrics"]["capture_rows"], 10556)
+        self.assertEqual(len(d["sources"]), 1)
+        self.assertFalse(d["source_quote_freshness_certified"])
+        self.assertFalse(d["released_for_historical_backtesting"])
+
+    def test_prospective_changes_disabled_without_explicit_flag(self):
+        with patch.dict(os.environ, {"LAB_ENABLE_PROSPECTIVE_READ": ""}):
+            with self.assertRaises(HTTPException) as err:
+                lab.prospective_changes(research_use=True)
+            self.assertEqual(err.exception.status_code, 403)
+
+    def test_prospective_changes_require_research_use(self):
+        with patch.dict(os.environ, {"LAB_ENABLE_PROSPECTIVE_READ": "true"}):
+            with self.assertRaises(HTTPException) as err:
+                lab.prospective_changes(research_use=False)
+            self.assertEqual(err.exception.status_code, 403)
+
+    def test_prospective_changes_paginate_and_remain_unreleased(self):
+        args = []
+        lab.app.state.query_fn = lambda sql, params: args.append(params) or [{"venue": "kalshi", "market_id": "test"}]
+        with patch.dict(os.environ, {"LAB_ENABLE_PROSPECTIVE_READ": "true"}):
+            d = lab.prospective_changes(research_use=True, venue="kalshi", limit=5, offset=10)
+        self.assertEqual(args[0], ("kalshi", "kalshi", 5, 10))
+        self.assertEqual(d["items"][0]["venue"], "kalshi")
+        self.assertFalse(d["quote_freshness_certified"])
+        self.assertFalse(d["released_for_historical_backtesting"])
+
+
 if __name__ == "__main__":
     unittest.main()
