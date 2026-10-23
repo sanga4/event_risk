@@ -392,3 +392,73 @@ def prospective_changes(
             "research_only": True,
             "quote_freshness_certified": False,
             "released_for_historical_backtesting": False}
+
+
+@app.get("/v1/research/forward/asof-coverage", dependencies=[Depends(require_api_key)])
+def warehouse_asof_coverage() -> dict[str, Any]:
+    """Warehouse as-of eligibility is NOT independent publication-time verification."""
+    ledger = _query(
+        "SELECT COUNT(*) AS factor_warehouse_vintages, "
+        "COUNT(DISTINCT factor_id) AS factor_series, "
+        "MIN(source_ingested_at) AS earliest_recorded_ingest, "
+        "MAX(source_ingested_at) AS latest_recorded_ingest, "
+        "COUNT(*) FILTER (WHERE independent_release_time_verified) "
+        "AS independently_verified_release_records "
+        "FROM eventrisk_factor_lab.main.lab_factor_warehouse_vintages_v1"
+    )
+    pairs = _query(
+        "SELECT COUNT(*) AS event_factor_pairs, "
+        "COUNT(DISTINCT proposition_id) AS market_propositions, "
+        "COUNT(DISTINCT factor_id) AS related_factor_series, "
+        "COUNT(*) FILTER (WHERE factor_ingested_at > event_capture_at "
+        "OR factor_available_at > event_capture_at) AS future_warehouse_factor_pairs, "
+        "COUNT(*) FILTER (WHERE historical_backtest_released) "
+        "AS historical_backtest_released_pairs, "
+        "MIN(event_capture_at) AS first_capture, "
+        "MAX(event_capture_at) AS latest_capture "
+        "FROM eventrisk_factor_lab.main.lab_prospective_event_factor_grid_v1"
+    )
+    return {"vintages": ledger[0] if ledger else {},
+            "co_observations": pairs[0] if pairs else {},
+            "research_only": True,
+            "provider_publication_times_independently_verified": False,
+            "exchange_quote_times_independently_verified": False,
+            "reviewed_event_factor_relationships": False,
+            "historical_backtest_released": False,
+            "notice": "WAREHOUSE_ASOF_ONLY_NOT_INDEPENDENT_SOURCE_PIT"}
+
+
+@app.get("/v1/research/forward/grid", dependencies=[Depends(require_api_key)])
+def warehouse_asof_grid(
+    research_use: bool = False,
+    venue: str | None = Query(None, pattern="^(kalshi|polymarket)$"),
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    proposition_id: str | None = Query(None, min_length=2, max_length=200),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000)
+) -> dict[str, Any]:
+    if not research_use or os.environ.get("LAB_ENABLE_PROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Prospective research grid is disabled")
+    rows = _query(
+        "SELECT proposition_id, venue, market_id, event_run_id, "
+        "event_capture_at, previous_event_capture_at, "
+        "event_probability, event_delta_pp, event_quote_basis, "
+        "factor_id, factor_observed_date, factor_value, factor_unit, "
+        "factor_available_at, factor_ingested_at, factor_provider, "
+        "factor_source_sha256, factor_license_class, "
+        "event_receipt_time_verified, factor_warehouse_asof_verified, "
+        "exchange_quote_time_independently_verified, "
+        "factor_publication_time_independently_verified, "
+        "event_to_factor_mapping_approved, historical_backtest_released, "
+        "relation_status, data_use_class, source_build_id "
+        "FROM eventrisk_factor_lab.main.lab_prospective_event_factor_grid_v1 "
+        "WHERE (? IS NULL OR venue=?) AND (? IS NULL OR factor_id=?) "
+        "AND (? IS NULL OR proposition_id=?) "
+        "ORDER BY event_capture_at DESC, proposition_id, factor_id "
+        "LIMIT ? OFFSET ?",
+        (venue,venue,factor_id,factor_id,proposition_id,proposition_id,limit,offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "research_only": True, "warehouse_asof_only": True,
+            "independent_provider_time_verified": False,
+            "approved_mapping": False, "historical_backtest_released": False}

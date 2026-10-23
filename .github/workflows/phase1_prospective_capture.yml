@@ -41,3 +41,9 @@ jobs:
           LAB_RESEARCH_SCOPE: internal-only
           LAB_PIPELINE_COMMIT: ${{ github.sha }}
         run: python lab/phase1_prospective_features.py
+      - name: Append strictly warehouse-as-of factor vintages and research co-observations
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_warehouse_asof_grid.py

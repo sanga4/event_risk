@@ -120,3 +120,65 @@ observations cannot be promoted into historical point-in-time data.
 Current-capture market timestamps, human-approved event–factor mappings
 and genuine source-available factor vintages must all accumulate and pass
 independent review before statistical model release.
+
+## Prospective factor vintages and warehouse-as-of co-observation grid — 2026-10-23
+
+Builder: `lab/phase1_warehouse_asof_grid.py`. MotherDuck Flight
+`eventrisk-factor-lab-warehouse-asof-prospective-grid` has UUID
+`4b2c0eb4-06ec-42a0-9c7c-bad9b80d0e5d`.
+
+The source-controlled program materializes three new tables in
+`eventrisk_factor_lab` without changing the existing v2/v3
+retrospective historical panels:
+
+- `lab_factor_warehouse_vintages_v1`: one immutable factor ingested
+  version from the existing factor observations, with the ORIGINAL source
+  ingestion and availability timestamps, provider, numeric value, license
+  class and SHA256; records when this particular ledger independently
+  reconciled it. It DOES NOT retroactively claim that published values were
+  accessible before their source warehouse ingest time.
+- `lab_prospective_event_factor_grid_v1`: candidate venue market response
+  receipt joined to the newest source factor observed version that the
+  warehouse had **ingested and marked available before** that receipt.
+  Limited to data observed within the prior ten days, permitted source
+  license classes, valid hashes and real timestamp eligibility.
+  This is a co-observation grid of candidate factors, not a signed semantic
+  edge, causal link, market risk beta, tradable signal or performance record.
+- `lab_prospective_grid_runs_v1`: exact source commit, source script
+  checksum, as-of leakage diagnostics and build counts.
+
+The first successful build materialized **12,656 factor vintage records**
+and **190,008 event-factor grid rows** across 4 capture runs, 4,889 distinct
+markets and 18 nominal/real Treasury series. Independent database checks
+found zero future factor-ingest/availability timestamps, zero licensed-series
+violations, zero duplicate market/run/factor keys, and zero approved/released
+rows. The associated Flight returned `SUCCEEDED`.
+
+**Two essential timeline caveats**:
+
+1. **Warehouse-as-of is not independent publication-time PIT.** The
+   `availability_at` and `ingested_at` values were recorded by our
+   legacy factor ingestor in October 2026. We have not yet independently
+   validated provider release and revision timestamps.
+2. **Public market API response receipt is not venue quote time.** Our
+   collector knows when it received the response, not when the exchange
+   first quoted each value. For these reasons, both independent source
+   timing flags, all review flags and backtesting release flags are FALSE.
+
+The materializer is append/idempotent: input factor vintage hashes and
+event-run/venue/market/factor keys are checked before insertion; later
+ingestion of revised economic data cannot overwrite the past as-of version
+of an earlier event capture. The guarded (manual, currently not scheduled)
+GitHub workflow runs capture > research feature views > as-of builder.
+
+Authenticated research API routes:
+`GET /v1/research/forward/asof-coverage` (summary) and
+`GET /v1/research/forward/grid` (bounded, explicit prospective research
+flag). No user gets access to this data without the scoped database token,
+API key, confirmed data rights and explicit research opt-in.
+
+The expanded release-gate Flight version 1.2 reported **6/14** automated
+checks passing, **8/14** blocking, and **4** external/manual gates outstanding.
+The new passes are engineering/data-lineage checks only. Independently
+validated point-in-time history, legal rights, approved mappings, source
+publication/quote-time evidence and validated causal models remain blockers.
