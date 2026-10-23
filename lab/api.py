@@ -462,3 +462,61 @@ def warehouse_asof_grid(
             "research_only": True, "warehouse_asof_only": True,
             "independent_provider_time_verified": False,
             "approved_mapping": False, "historical_backtest_released": False}
+
+
+@app.get("/v1/research/mappings/forward/summary", dependencies=[Depends(require_api_key)])
+def forward_mapping_summary() -> dict[str, Any]:
+    hypotheses = _query(
+        "SELECT COUNT(*) AS path_hypotheses, "
+        "COUNT(DISTINCT proposition_id) AS covered_markets, "
+        "COUNT(DISTINCT factor_id) AS eligible_factor_series, "
+        "COUNT(*) FILTER (WHERE mapping_available_at > first_eligible_capture_at "
+        "OR graph_asof > first_eligible_capture_at "
+        "OR factor_ingested_at > first_eligible_capture_at "
+        "OR factor_available_at > first_eligible_capture_at) AS asof_leakage_rows, "
+        "COUNT(*) FILTER (WHERE evidence_approved OR historically_backtest_released) "
+        "AS incorrectly_released_rows "
+        "FROM eventrisk_factor_lab.main.lab_forward_mapping_hypotheses_v1"
+    )
+    reviews = _query(
+        "SELECT COUNT(*) AS review_items, COUNT(DISTINCT venue) AS venues, "
+        "COUNT(DISTINCT event_channel) AS channels, "
+        "COUNT(*) FILTER (WHERE review_state='pending_human_review') AS pending, "
+        "COUNT(*) FILTER (WHERE reviewer IS NOT NULL) AS attributed_reviews, "
+        "COUNT(*) FILTER (WHERE released_for_signal_use) AS signals_released "
+        "FROM eventrisk_factor_lab.main.lab_forward_mapping_review_queue_v1"
+    )
+    return {"hypotheses":hypotheses[0] if hypotheses else {},
+            "review_queue":reviews[0] if reviews else {},
+            "research_only": True, "mapping_approved": False,
+            "approved_for_historical_backtests": False,
+            "historical_graph_snapshot_lookahead": True}
+
+
+@app.get("/v1/research/mappings/forward/queue", dependencies=[Depends(require_api_key)])
+def forward_mapping_queue(
+    review_state: str = Query("pending_human_review", pattern="^(pending_human_review)$"),
+    venue: str | None = Query(None, pattern="^(kalshi|polymarket)$"),
+    factor_id: str | None = Query(None, min_length=2, max_length=80),
+    event_channel: str | None = Query(None, min_length=2, max_length=80),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows=_query(
+        "SELECT review_id,proposition_id,venue,market_id,question, "
+        "event_channel,factor_id,proposed_path_count,first_eligible_capture_at, "
+        "earliest_mapping_available_at,retrospective_hindsight_paths, "
+        "independently_verified_evidence_count,review_state,reviewer, "
+        "reviewed_at,analyst_decision,analyst_rationale,evidence_url, "
+        "review_batch,sampling_method,released_for_signal_use "
+        "FROM eventrisk_factor_lab.main.lab_forward_mapping_review_queue_v1 "
+        "WHERE review_state=? AND (? IS NULL OR venue=?) "
+        "AND (? IS NULL OR factor_id=?) "
+        "AND (? IS NULL OR event_channel=?) "
+        "ORDER BY venue,event_channel,factor_id,review_id LIMIT ? OFFSET ?",
+        (review_state,venue,venue,factor_id,factor_id,
+         event_channel,event_channel,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "review_only": True,"hypotheses_not_evidence":True,
+            "analyst_approval_required":True,"signals_released":False}
