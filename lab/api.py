@@ -342,3 +342,53 @@ def production_gates() -> dict[str, Any]:
     return {"summary": latest[0], "gates": gates,
             "released_to_institutional_production": False,
             "research_only": True}
+
+
+@app.get("/v1/research/live/overview", dependencies=[Depends(require_api_key)])
+def prospective_capture_overview() -> dict[str, Any]:
+    """Live capture provenance and per-venue operational status, not trading readiness."""
+    totals = _query(
+        "SELECT COUNT(*) AS capture_rows, COUNT(DISTINCT market_id) AS markets, "
+        "COUNT(DISTINCT run_id) AS capture_runs, "
+        "MIN(capture_received_at) AS first_capture_at, "
+        "MAX(capture_received_at) AS latest_capture_at, "
+        "COUNT(*) FILTER (WHERE historical_point_in_time_released) AS released_history_rows, "
+        "COUNT(*) FILTER (WHERE provider_quote_freshness_verified) AS source_quote_verified "
+        "FROM eventrisk_factor_lab.main.lab_live_market_captures_v1"
+    )
+    streams = _query(
+        "SELECT venue, last_run_at, venue_state, reported_capture_count, age_minutes, "
+        "collector_operational_recently, institutional_quote_freshness_certified "
+        "FROM eventrisk_factor_lab.main.lab_capture_feed_freshness_v1 ORDER BY venue"
+    )
+    return {"metrics": totals[0] if totals else {}, "sources": streams,
+            "source_quote_freshness_certified": False,
+            "released_for_historical_backtesting": False,
+            "research_only": True}
+
+
+@app.get("/v1/research/live/changes", dependencies=[Depends(require_api_key)])
+def prospective_changes(
+    research_use: bool = False,
+    venue: str | None = Query(None, pattern="^(kalshi|polymarket)$"),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    if not research_use or os.environ.get("LAB_ENABLE_PROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Prospective market research is disabled")
+    rows = _query(
+        "SELECT proposition_id,venue,market_id,event_id, "
+        "observed_date_utc,known_at,probability,previous_probability, "
+        "previous_capture_at,probability_delta_pp,quote_basis, "
+        "capture_time_verified,provider_quote_freshness_verified, "
+        "historical_point_in_time_released,capture_provenance, "
+        "released_for_historical_backtesting,run_id "
+        "FROM eventrisk_factor_lab.main.lab_live_market_latest_v1 "
+        "WHERE (? IS NULL OR venue = ?) "
+        "ORDER BY known_at DESC,proposition_id LIMIT ? OFFSET ?",
+        (venue,venue,limit,offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "research_only": True,
+            "quote_freshness_certified": False,
+            "released_for_historical_backtesting": False}
