@@ -76,7 +76,7 @@ def main():
           SELECT *,
                  ROW_NUMBER() OVER (
                    PARTITION BY venue,market_id
-                   ORDER BY capture_received_at DESC,run_id DESC
+                   ORDER BY known_at DESC,run_id DESC
                  ) AS rn
           FROM {P}lab_live_event_features_v1
         )
