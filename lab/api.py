@@ -170,3 +170,77 @@ def mapping_readiness() -> dict[str, Any]:
     )
     # Do not present potential links as actual approved links.
     return {"approved_for_research": False, "status": "BLOCKED_UNREVIEWED_MAPPING", "metrics": rows[0] if rows else {}}
+
+
+@app.get("/v1/research/v3/builds", dependencies=[Depends(require_api_key)])
+def builds_v3(limit: int = Query(10, ge=1, le=50)) -> dict[str, Any]:
+    """Published build manifests, NOT a production-ready release assertion."""
+    rows = _query(
+        "SELECT build_id, pipeline_version, source_commit, source_sha256, "
+        "started_at, finished_at, first_event_date, last_event_date, "
+        "retrospective_rows, as_known_rows, released_for_backtesting, "
+        "execution_status FROM eventrisk_factor_lab.main.lab_phase1_build_runs_v3 "
+        "ORDER BY finished_at DESC LIMIT ?", (limit,)
+    )
+    return {"builds": rows, "dataset_version": "v3", "research_only": True,
+            "released_for_backtesting": False}
+
+
+@app.get("/v1/research/v3/summary", dependencies=[Depends(require_api_key)])
+def summary_v3() -> dict[str, Any]:
+    rows = _query(
+        "SELECT COUNT(*) AS rows_total, "
+        "COUNT(*) FILTER (WHERE observed_mode='retrospective') AS retrospective_rows, "
+        "COUNT(*) FILTER (WHERE observed_mode='as_known') AS as_known_rows, "
+        "COUNT(DISTINCT proposition_id) AS distinct_propositions, "
+        "COUNT(DISTINCT factor_id) AS observed_factors, "
+        "MIN(observed_date) AS first_date, MAX(observed_date) AS last_date, "
+        "COUNT(*) FILTER (WHERE data_lookahead_warning) AS lookahead_rows, "
+        "COUNT(*) FILTER (WHERE relation_status='unreviewed_research_grid') AS unreviewed_rows "
+        "FROM eventrisk_factor_lab.main.lab_event_factor_panel_v3"
+    )
+    return {"panel_version": "v3", "metrics": rows[0] if rows else {},
+            "data_use": "internal_research_only",
+            "released_for_backtesting": False, "independently_reviewed": False}
+
+
+@app.get("/v1/research/v3/panel", dependencies=[Depends(require_api_key)])
+def panel_v3(
+    mode: str = Query("as_known", pattern="^(as_known|retrospective)$"),
+    research_use: bool = False,
+    proposition_id: str | None = Query(None, min_length=2, max_length=200),
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    # The existence of an as-known row does not authorize treating the whole
+    # dataset as an independently audited and licensed quantitative model.
+    if mode == "as_known":
+        raise HTTPException(409, detail="As-known v3 panel remains under independent release review")
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Retrospective research data are disabled")
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(422, detail="date_from must not exceed date_to")
+    rows = _query(
+        "SELECT proposition_id, factor_id, observed_date, event_cutoff_at, "
+        "event_known_at, event_last_quote_at, event_probability, event_delta_pp, "
+        "factor_observed_date, factor_value, factor_unit, "
+        "previous_aligned_factor_value, factor_change_bps, "
+        "factor_carried_forward, factor_available_at, factor_ingested_at, "
+        "factor_provider, factor_source_sha256, event_source_run, factor_source_run, "
+        "observed_mode, data_lookahead_warning, relation_status, data_use_class, "
+        "pipeline_version, build_id "
+        "FROM eventrisk_factor_lab.main.lab_event_factor_panel_v3 "
+        "WHERE observed_mode = 'retrospective' "
+        "AND (? IS NULL OR proposition_id = ?) AND (? IS NULL OR factor_id = ?) "
+        "AND (? IS NULL OR observed_date >= ?) AND (? IS NULL OR observed_date <= ?) "
+        "ORDER BY observed_date DESC, proposition_id, factor_id LIMIT ? OFFSET ?",
+        (proposition_id, proposition_id, factor_id, factor_id,
+         date_from, date_from, date_to, date_to, limit, offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "mode": "retrospective", "research_only": True,
+            "released_for_backtesting": False,
+            "warning": "RETROSPECTIVE_AND_UNREVIEWED_NOT_CAUSAL_OR_BACKTEST_SAFE"}
