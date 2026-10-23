@@ -286,3 +286,59 @@ def exploratory_regressions(
             "research_only": True, "point_in_time_verified": False,
             "approved_for_decision_use": False,
             "warning": "NO_CAUSAL_INFERENCE_NO_PVALUES_NO_TRADABLE_SIGNALS"}
+
+
+@app.get("/v1/research/v2/robust-regressions", dependencies=[Depends(require_api_key)])
+def robust_regressions(
+    research_use: bool = False,
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    venue: str | None = Query(None, max_length=50),
+    predictor_timing: str | None = Query(None, pattern="^(contemporaneous|previous_venue_day)$"),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    """Exploratory HAC/holdout/FDR; no PIT provenance or signal approval."""
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Retrospective diagnostics are disabled")
+    rows = _query(
+        "SELECT factor_id, factor_unit, venue, predictor_timing, "
+        "n_total, n_train, n_test, start_date, end_date, slope, intercept, "
+        "in_sample_r2, newey_west_lags, hac_slope_se, z_approx, "
+        "two_sided_normal_p, benjamini_hochberg_q, oos_r2_vs_train_mean, "
+        "oos_rmse, baseline_rmse, research_label, point_in_time_verified, "
+        "approved_for_decision_use, build_id "
+        "FROM eventrisk_factor_lab.main.lab_robust_regressions_v2 "
+        "WHERE (? IS NULL OR factor_id=?) AND (? IS NULL OR venue=?) "
+        "AND (? IS NULL OR predictor_timing=?) "
+        "ORDER BY factor_id, venue, predictor_timing LIMIT ? OFFSET ?",
+        (factor_id, factor_id, venue, venue,
+         predictor_timing, predictor_timing, limit, offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "research_only": True, "point_in_time_verified": False,
+            "approved_for_decision_use": False,
+            "warning": "EXPLORATORY_RETROSPECTIVE_ASSOCIATION_NOT_A_PREDICTIVE_SIGNAL"}
+
+
+@app.get("/v1/research/production-gates", dependencies=[Depends(require_api_key)])
+def production_gates() -> dict[str, Any]:
+    """Latest materialized release assessment, including manual blockers."""
+    latest = _query(
+        "SELECT build_id, asof_utc, computed_gates, passed_gates, "
+        "blocked_gates, external_manual_gates, "
+        "released_to_institutional_production, release_state "
+        "FROM eventrisk_factor_lab.main.lab_release_gate_summary_v1 "
+        "ORDER BY asof_utc DESC LIMIT 1"
+    )
+    if not latest:
+        raise HTTPException(503, detail="Release-gate report has not been materialized")
+    identifier = latest[0]["build_id"]
+    gates = _query(
+        "SELECT gate_id, measured_value, threshold, rule, gate_state, explanation "
+        "FROM eventrisk_factor_lab.main.lab_release_gate_history_v1 "
+        "WHERE build_id=? ORDER BY gate_id", (identifier,)
+    )
+    # No self-approval: the materializer always records release_state=BLOCKED.
+    return {"summary": latest[0], "gates": gates,
+            "released_to_institutional_production": False,
+            "research_only": True}
