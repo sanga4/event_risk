@@ -16,7 +16,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests pyarrow duckdb
+      - name: Verify MotherDuck credential is configured
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: |
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Missing MOTHERDUCK_TOKEN GitHub Actions secret. Configure a suitably scoped token before running this data job."
+            exit 1
+          fi
+      - name: Install pinned project dependencies
+        run: pip install -r requirements.txt
       - run: python backfill.py
         env:
           DB: md:geo_odds
