@@ -18,6 +18,12 @@ The latest registered build was `lab-phase1-v0.6.0` at 2026-10-23 14:46:53 UTC, 
 
 The query in [`phase1_v2_validation.sql`](phase1_v2_validation.sql) was verified against the database on 2026-10-23. It returned zero duplicate composite keys, zero invalid probabilities, zero date/carry/hash/bps inconsistencies and zero **unflagged** factor look-ahead rows. The `factor_daily_change` convention is **basis points**, so the factor-level percentage-point difference is multiplied by 100. A zero count of recorded `lab_quality_issues` is **not** evidence of independent accuracy or data-rights approval.
 
+### Mapping governance checkpoint
+
+As of the same read-only audit, the lab had **48,711 candidate event-factor paths**, all `review_status=proposed` and `historical_mapping_lookahead=true`; **50 proposed ontology relations** with no linked `evidence_id`; **40 pending reviewer cases** (none decided); and **zero records in `lab_evidence`**. Two restricted ICE/BofA credit entries remain inactive. Three of four build records use source labels instead of immutable 40-character Git SHAs.
+
+The separate read-only [`phase1_mapping_readiness.sql`](phase1_mapping_readiness.sql) returned `BLOCKED_UNREVIEWED_MAPPING`. **Proposed candidate paths must not be represented as analyst-approved economic relationships** merely because they are materialized in MotherDuck.
+
 ## Release gates (all mandatory)
 
 1. **Source control and reproducibility.** Check in and review the panel builder and factor ingestors; pin exact full Git SHA, runtime/package versions, extraction snapshot SHA and the SQL model version to each build. The observed `lab-phase1-v0.6.0` label alone is insufficient.
