@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.1.0"
+VERSION="phase1-gates-v1.2.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -45,6 +45,12 @@ def main():
         ("provider_quote_freshness_evidence",
          f"SELECT COUNT(*) FROM {P}lab_live_market_captures_v1 WHERE provider_quote_freshness_verified AND provider_quote_at IS NOT NULL",
          1,"MIN_COUNT","Need independently verified original venue quote times; HTTP receipt timestamps alone are insufficient"),
+        ("warehouse_asof_prospective_grid_materialized",
+         f"SELECT COUNT(*) FROM {P}lab_prospective_event_factor_grid_v1 WHERE factor_warehouse_asof_verified AND NOT historical_backtest_released",
+         1000,"MIN_COUNT","Prospective event/factor co-observation grid has at least 1,000 warehouse-as-of rows; this is not independent provider PIT"),
+        ("warehouse_asof_temporal_leakage",
+         f"SELECT COUNT(*) FROM {P}lab_prospective_event_factor_grid_v1 WHERE factor_ingested_at>event_capture_at OR factor_available_at>event_capture_at",
+         0,"MAX_COUNT","Strictly zero factor observations with warehouse ingest or availability after event capture cutoff"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
@@ -89,6 +95,7 @@ def main():
         passed = value is not None and (
             (rule=="MIN_COUNT" and value>=threshold) or
             (rule=="MAX_HOURS" and 0 <= value <= threshold) or
+            (rule=="MAX_COUNT" and 0 <= value <= threshold) or
             (rule=="MIN_PERCENT" and value>=threshold)
         )
         rows.append((build_id,gate_id,value,float(threshold),rule,
