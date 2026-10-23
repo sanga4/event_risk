@@ -276,18 +276,29 @@ def upload_captures(con, records, run_id, start, completed, stats, commit, scrip
                 con.execute(f"""
                 CREATE OR REPLACE TEMP TABLE new_captures AS
                   SELECT
-                    run_id::VARCHAR,venue::VARCHAR,market_id::VARCHAR,event_id::VARCHAR,
-                    event_title::VARCHAR,question::VARCHAR,status::VARCHAR,
-                    capture_received_at::TIMESTAMPTZ,
+                    run_id::VARCHAR AS run_id,
+                    venue::VARCHAR AS venue,
+                    market_id::VARCHAR AS market_id,
+                    event_id::VARCHAR AS event_id,
+                    event_title::VARCHAR AS event_title,
+                    question::VARCHAR AS question,
+                    status::VARCHAR AS status,
+                    capture_received_at::TIMESTAMPTZ AS capture_received_at,
                     CAST(NULL AS TIMESTAMPTZ) AS provider_quote_at,
-                    yes_bid::DOUBLE,yes_ask::DOUBLE,last_price::DOUBLE,
-                    yes_probability::DOUBLE,quote_basis::VARCHAR,
-                    contract_sha256::VARCHAR,source_record_sha256::VARCHAR,
-                    source_response_sha256::VARCHAR,source_url::VARCHAR,
+                    yes_bid::DOUBLE AS yes_bid,
+                    yes_ask::DOUBLE AS yes_ask,
+                    last_price::DOUBLE AS last_price,
+                    yes_probability::DOUBLE AS yes_probability,
+                    quote_basis::VARCHAR AS quote_basis,
+                    contract_sha256::VARCHAR AS contract_sha256,
+                    source_record_sha256::VARCHAR AS source_record_sha256,
+                    source_response_sha256::VARCHAR AS source_response_sha256,
+                    source_url::VARCHAR AS source_url,
                     TRUE AS capture_time_verified,
                     FALSE AS provider_quote_freshness_verified,
                     FALSE AS historical_point_in_time_released,
-                    data_use_class::VARCHAR,contract_json::JSON
+                    data_use_class::VARCHAR AS data_use_class,
+                    contract_json::JSON AS contract_json
                   FROM read_json_auto('{path}', format='newline_delimited',
                                       maximum_object_size=1048576)
                 """)
