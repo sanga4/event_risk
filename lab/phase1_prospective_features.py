@@ -108,7 +108,7 @@ def main():
         rows=con.execute(f"""
            SELECT venue,COUNT(*) AS captured,
              COUNT(*) FILTER (WHERE probability_delta_pp IS NOT NULL) AS transitions,
-             MAX(known_at) AS latest
+             CAST(MAX(known_at) AS VARCHAR) AS latest
            FROM {P}lab_live_event_features_v1 GROUP BY venue
         """).fetchall()
     for venue,n,transitions,latest in rows:
