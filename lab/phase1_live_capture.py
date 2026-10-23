@@ -119,10 +119,16 @@ def make_market(venue: str, market_id: str, event_id: str, title: str,
 def collect_polymarket(session, run_id):
     result, seen = [], set()
     for tag in ("geopolitics", "politics"):
+        # Gamma's documented event filter is numeric tag_id, not tag_slug.
+        # Resolve each taxonomy slug at capture time to avoid hardcoded IDs.
+        tag_payload, _, _ = fetch_page(session, GAMMA + "/tags/slug/" + tag, {})
+        tag_id = tag_payload.get("id") if isinstance(tag_payload, dict) else None
+        if not tag_id or not str(tag_id).isdigit():
+            raise RuntimeError("Gamma tag lookup returned no numeric tag id")
         for offset in range(0, MAX_PAGES*100, 100):
             url = GAMMA + "/events"
             payload, at, digest = fetch_page(session, url, {
-                "tag_slug": tag, "active": "true", "closed": "false",
+                "tag_id": int(tag_id), "active": "true", "closed": "false",
                 "limit": 100, "offset": offset, "order": "volume_24hr",
                 "ascending": "false"
             })
@@ -349,7 +355,9 @@ def main():
             stats[name]={"state":"ok","captured":len(captured)}
         except Exception as exc:
             stats[name]={"state":"error","captured":0,"error_class":type(exc).__name__}
-            print(f"SOURCE_ERROR={name}:{type(exc).__name__}")
+            if isinstance(exc, requests.HTTPError) and exc.response is not None:
+                stats[name]["http_status"] = int(exc.response.status_code)
+            print(f"SOURCE_ERROR={name}:{type(exc).__name__}:HTTP_{stats[name].get('http_status', 'unknown')}")
     completed=timestamp()
     if not records:
         # Do not fabricate a successful run or insert empty market data.
