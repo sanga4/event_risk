@@ -64,3 +64,59 @@ API routes include /v1/research/v3/builds, /v1/research/v3/summary, /v1/research
 4. Develop causal/forecast research with predeclared horizons, temporal holdouts, robustness to serial dependence, multiplicity control, coverage and missing-data policy, and true factor return benchmarks.
 5. Configure the dedicated Railway secret(s), explicit data rights, API keys, access logging, uptime monitoring and rollback. Do not repoint the existing huimarco-based MVP.
 6. Use an immutable source commit, script SHA and source versions on each build.
+
+## Prospective timestamped market capture — 2026-10-23
+
+**New source-controlled producer**: `lab/phase1_live_capture.py` (MotherDuck Flight
+`eventrisk-factor-lab-prospective-public-market-capture`,
+`6a13c2c9-8d1e-480e-bd74-7b50e890a246`). It fetches bounded public
+Kalshi / Polymarket current-market API pages and writes only into new,
+versioned internal-research tables. A successful HTTP response receipt time is
+logged as `capture_received_at`, distinct from the unknown original venue
+quote time. SHA256 hashes preserve the source response, record and contract
+content (this is provenance, not the raw original API payload).
+`provider_quote_freshness_verified = FALSE` and
+`historical_point_in_time_released = FALSE` on every collected record.
+
+- `lab_live_market_captures_v1`: capture/venue/market observations with
+  receipt timestamp, contract lineage, reported bid/ask and research-only
+  release labels.
+- `lab_live_market_contract_versions_v1`: new contract content hashes with
+  first observed capture time; existing versions remain intact.
+- `lab_live_capture_runs_v1`: per-venue success/error metadata, counts,
+  immutable script/source hash, and partial-run state.
+- `lab/phase1_prospective_features.py` produces **views**
+  `lab_live_event_features_v1`, `lab_live_market_latest_v1`, and
+  `lab_capture_feed_freshness_v1`. A second capture creates
+  consecutive market probability deltas, using receipt order. These
+  are **not true exchange-quote age or historical backtest releases**.
+
+The first two flights successfully captured 1,889 Kalshi market records per
+run. The corrected Gamma numeric tag filtering subsequently captured 3,000
+Polymarket and 1,889 Kalshi observations in one run. The public collector is
+**bounded**: at most 3 pages per request/search and 3,000 quotes per venue,
+so the result is neither the venue's full market population nor a
+fully audited category taxonomy. Market quote fields come from public venue
+metadata and may not represent executable or fresh order book prices.
+
+The dedicated laboratory API exposes `/v1/research/live/overview`
+for authenticated receipt/health status, and
+`/v1/research/live/changes` only with the separate explicit
+`LAB_ENABLE_PROSPECTIVE_READ=true` and `research_use=true` gates.
+Rights acknowledgement and API key plus database token still apply.
+Do not enable these settings for public users without verifying market
+redistribution permissions and scopes.
+
+**Scheduling**: the current MotherDuck plan rejected an hourly scheduled
+Flight. The checked-in GitHub Actions
+`.github/workflows/phase1_prospective_capture.yml` is *manually runnable*
+but intentionally has no active schedule. Configure a least-privilege
+GitHub Actions `MOTHERDUCK_TOKEN` secret, confirm the data-use permission
+and a successful authenticated manual run, then enable its hourly cron.
+Until then, on-demand Flights do not constitute continuous ingestion.
+
+**Current blocker**: the Factor Lab's dated retrospective 2024–2026 factor
+observations cannot be promoted into historical point-in-time data.
+Current-capture market timestamps, human-approved event–factor mappings
+and genuine source-available factor vintages must all accumulate and pass
+independent review before statistical model release.
