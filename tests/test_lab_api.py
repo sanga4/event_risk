@@ -168,6 +168,35 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(result["approved_mapping"])
 
 
+    def test_forward_review_summary_never_grants_signal_authorization(self):
+        calls = []
+        def query(sql, params):
+            calls.append(sql)
+            if "lab_forward_mapping_hypotheses_v1" in sql:
+                return [{"path_hypotheses": 8216, "asof_leakage_rows": 0}]
+            return [{"review_items":97,"pending":97,"signals_released":0}]
+        lab.app.state.query_fn=query
+        result=lab.forward_mapping_summary()
+        self.assertEqual(result["hypotheses"]["path_hypotheses"],8216)
+        self.assertEqual(result["review_queue"]["pending"],97)
+        self.assertFalse(result["mapping_approved"])
+        self.assertFalse(result["approved_for_historical_backtests"])
+
+    def test_forward_queue_bounded_filter_and_not_approved(self):
+        params=[]
+        lab.app.state.query_fn=lambda sql,args: params.append(args) or [
+            {"review_id":"forward-review:abc","review_state":"pending_human_review"}
+        ]
+        result=lab.forward_mapping_queue(
+            review_state="pending_human_review",venue="kalshi",
+            factor_id="DGS10",event_channel="conflict",limit=3,offset=6
+        )
+        self.assertEqual(params[0],("pending_human_review","kalshi","kalshi",
+                                   "DGS10","DGS10","conflict","conflict",3,6))
+        self.assertFalse(result["signals_released"])
+        self.assertTrue(result["analyst_approval_required"])
+
+
 
 if __name__ == "__main__":
     unittest.main()
