@@ -1,0 +1,43 @@
+name: Factor Lab prospective public-market capture
+on:
+  workflow_dispatch:
+    # Hourly scheduling can be enabled once a scoped MOTHERDUCK_TOKEN
+    # is configured in this repository's GitHub Actions secrets.
+    # schedule:
+    #   - cron: "5 * * * *"
+permissions:
+  contents: read
+concurrency:
+  group: factor-lab-prospective-capture
+  cancel-in-progress: false
+jobs:
+  prospective-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify scoped MotherDuck credential exists
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: |
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN GitHub Actions secret required to enable prospective captures."
+            exit 1
+          fi
+      - name: Install pinned capture dependencies
+        run: pip install -r lab/requirements.txt
+      - name: Append new public-market receipt-time captures
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_live_capture.py
+      - name: Create or refresh live research feature views
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_prospective_features.py
