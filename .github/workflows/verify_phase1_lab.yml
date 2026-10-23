@@ -1,0 +1,23 @@
+name: Verify EventRisk Phase I laboratory API
+on:
+  push:
+    branches:
+      - fix/phase1-motherduck-ci-and-panel-gates-20261023
+      - main
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lab-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned laboratory runtime and offline-test dependencies
+        run: pip install -r lab/requirements.txt httpx==0.27.2
+      - name: Compile API without network or secrets
+        run: python -m py_compile lab/api.py
+      - name: Validate API authentication, rights and research-mode gates
+        run: python -m unittest discover -s tests -p 'test_lab_api.py' -v
