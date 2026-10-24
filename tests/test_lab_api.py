@@ -372,5 +372,18 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertNotIn("factor_return",result["series"][0])
 
 
+    def test_ff6_security_coverage_does_not_serve_vendor_coefficients(self):
+        lab.app.state.query_fn=lambda sql,params: [
+            {"build_id":"ff6-research","included_security_models":48,
+             "factor_coefficients":288,"licensed_released_betas":0}
+        ]
+        r=lab.style_factor_security_model_coverage()
+        self.assertEqual(r["build"]["factor_coefficients"],288)
+        self.assertFalse(r["raw_source_returns_served"])
+        self.assertFalse(r["security_beta_coefficients_served"])
+        self.assertFalse(r["rights_for_external_use_verified"])
+        self.assertFalse(r["model_risk_approved"])
+
+
 if __name__ == "__main__":
     unittest.main()
