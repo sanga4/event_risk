@@ -239,3 +239,8 @@ Authoritative new source-controlled artifacts:
 - New authenticated research read endpoints: `/v1/research/data-contracts/summary`, `/v1/research/data-contracts/fields`, `/v1/research/factors/collinearity`. These cannot authorize model release or substitute for source rights.
 
 **Production direction:** capture verifiable original quote/release timestamps, security/corporate-action vintages and total returns; source licensed equity style, FX, commodity, credit, inflation and volatility factors; implement market/factor calendars; resolve highly correlated maturity and derived factors *before* training a multifactor covariance/beta engine; obtain evidence-based event economic mapping and external model-risk approvals. The 864 existing single-factor rate regressions remain retrospective, unapproved research results. This work only changes `sanga4/event_risk`.
+
+
+## Three-component Treasury curve multivariate research pilot
+
+The source-controlled [fixed LEVEL/SLOPE/CURVATURE Treasury rate methodology](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) fits 48 security models, 144 coefficients, multivariate HAC(5) and a market-only chronological holdout comparison. It prevents treating mechanically overlapping nominal/real-gap proxies as additional independent regressors. **Zero** model rows are certified PIT, legally cleared or released for institutional beta risk. Do not confuse same-day historical association with predictive or event causal impacts.
