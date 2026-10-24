@@ -50,7 +50,7 @@ def parse_records(raw:bytes,expect:str):
     return out
 
 def download(sid,part):
-    url=f"{BASE}/{part}/last/2500.json"
+    url=f"{BASE}/{part}/last/250.json"
     r=requests.get(url,timeout=(10,40),
         headers={"Accept":"application/json",
                  "User-Agent":"EventRiskFactor-internal-research/1.0"})
