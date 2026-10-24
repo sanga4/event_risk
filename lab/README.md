@@ -223,3 +223,8 @@ return-dependent variables, PIT source factor shocks, eligible event
 innovations, approved economic transmission links, robust pre-registered
 event-time regressions, governance review and API/data rights have been
 independently validated.
+
+
+## Security adjusted-price returns and Treasury rate-sensitivity backfill — October 24, 2026
+
+The lab already contained 107,157 historical `security_prices` records across 63 symbols. The new source-controlled `phase1_security_rate_beta_backfill.py` created versioned `lab_security_returns_retro_v1`, `lab_rate_shocks_retro_v1`, `lab_security_rate_betas_retro_v1`, and `lab_security_beta_builds_retro_v1` by a successful MotherDuck Flight. Results: 83,427 USD asset adjusted-price log-return days (49 instruments including SPY), 12,618 Treasury/derived yield-change days (18 series), 864 SPY-controlled retrospective rate sensitivities across 48 securities and 18 factors; 130 BH FDR q<.05, 414 positive retrospective holdout R² against market-only, and 49 satisfying both. All **remain unapproved**, with 12 large adjusted-price moves flagged and unresolved. See [the exact quantitative regression and units methodology](SECURITY_RATE_BETA_RESEARCH_METHOD.md). Do not confuse this market-controlled rate sensitivity with a security's licensed risk-model beta or with a causal event-factor response.
