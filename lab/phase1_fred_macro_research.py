@@ -214,7 +214,7 @@ def main():
             for series_id,freq,unit,transform,url,sha,lastmodified,nbytes,points in source:
                 con.execute(f"""
                  INSERT INTO {P}lab_fred_source_snapshots_v1
-                 SELECT 'FRED',?,?,?,?,?,?,?, ?,FALSE,FALSE
+                 SELECT 'FRED',?,?,?,?,?,?,?,?,?,FALSE,FALSE
                  WHERE NOT EXISTS (SELECT 1 FROM {P}lab_fred_source_snapshots_v1
                    WHERE series_id=? AND source_csv_sha256=?)
                 """,[series_id,freq,unit,url,sha,nbytes,lastmodified,now,build,series_id,sha])
