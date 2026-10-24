@@ -662,3 +662,36 @@ def retrospective_rate_factor_collinearity(
             "source_vintage_verified":False,
             "independent_factor_model_approved":False,
             "notice":"HIGH_CORRELATION_REQUIRES_KEY_RATE_OR_PCA_TRAINING_WINDOW_POLICY"}
+
+@app.get("/v1/research/production/workstream-gates", dependencies=[Depends(require_api_key)])
+def production_workstream_gates() -> dict[str, Any]:
+    rows = _query(
+        "SELECT workstream,n_gates,n_passed,n_blocked,percent_gates_passed,"
+        "p0_blockers,external_approval_remaining,gate_build_id "
+        "FROM eventrisk_factor_lab.main.lab_release_workstream_metrics_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_release_workstream_metrics_v1 "
+        "ORDER BY build_id DESC LIMIT 1) ORDER BY workstream"
+    )
+    return {"items":rows,"measurement":"share_of_applicable_gates_passed",
+            "is_project_completion_percent":False,
+            "institutional_release_approved":False}
+
+
+@app.get("/v1/research/production/action-register", dependencies=[Depends(require_api_key)])
+def production_action_register(
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows = _query(
+        "SELECT gate_id,workstream,priority,accountable_role,gate_state,"
+        "required_action,acceptance_evidence,requires_external_decision "
+        "FROM eventrisk_factor_lab.main.lab_release_unblock_register_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_release_unblock_register_v1 "
+        "ORDER BY build_id DESC LIMIT 1) "
+        "ORDER BY gate_state,priority,gate_id LIMIT ? OFFSET ?",
+        (limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "institutional_release_approved":False}
