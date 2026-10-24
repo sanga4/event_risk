@@ -12,10 +12,17 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.0.0"
+VERSION="phase1-release-unblock-register-v1.1.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"us_equity_style_source_archive_research_backfill":("Schema and cross-asset factors","P1","Quantitative data engineering",
+ "Maintain reproducible internal research source snapshots with provider file checksums, missing-sentinel and percent/decimal validation.",
+ "At least 100,000 source-versioned daily FF5/MOM records; never imply historical source release timestamps"),
+"us_equity_style_vintages_and_rights_certified":("Rights and service credentials","P0","Vendor licensing + independent provider provenance owner",
+ "Confirm French/CRSP data-use and distribution rights and recover independently verifiable historic factor archive/vintage and publication evidence.",
+ "Seven source series rights- and true-PIT-verified with independent model-risk acceptance; no synthetic release dates"),
+
 "genuine_pit_factor_panel":("Point-in-time provenance","P0","Data engineering + independent model validation",
  "Build historical as-known event/factor panels exclusively from replayable original source vintages and verified pre-cutoff mappings.",
  ">=10000 truly as-known, non-hindsight rows; independent per-source time replay and holdout validation"),
