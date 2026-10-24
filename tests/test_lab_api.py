@@ -352,5 +352,25 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(result["risk_model_approved"])
 
 
+    def test_style_factor_coverage_never_redistributes_source_values(self):
+        sqls=[]
+        def provider(sql, params):
+            sqls.append(sql)
+            if "lab_style_factor_ingest_builds_v1" in sql:
+                return [{"build_id":"style-build","rows_downloaded":121598,
+                         "source_publication_vintages_verified":0,
+                         "production_risk_factors_approved":0}]
+            return [{"factor_id":"FF_US_HML","research_rows":15897,
+                     "prohibited_release_claims":0}]
+        lab.app.state.query_fn=provider
+        result=lab.style_factor_research_coverage()
+        self.assertEqual(result["build"]["rows_downloaded"],121598)
+        self.assertFalse(result["source_redistribution_rights_verified"])
+        self.assertFalse(result["raw_factor_return_api_enabled"])
+        self.assertFalse(result["approved_for_institutional_risk_use"])
+        self.assertEqual(result["series"][0]["factor_id"],"FF_US_HML")
+        self.assertNotIn("factor_return",result["series"][0])
+
+
 if __name__ == "__main__":
     unittest.main()
