@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.7.0"
+VERSION="phase1-gates-v1.8.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -96,6 +96,18 @@ def main():
         ("ecb_original_provider_vintage_and_source_rights_certification",
          f"SELECT COUNT(DISTINCT quote_currency) FROM {P}lab_fx_reference_rates_retro_v1 WHERE provider_publish_time_independently_verified AND rights_for_risk_redistribution_verified AND historical_point_in_time_verified",
          7,"MIN_COUNT","Require original per-observation source publication and rights certification before FX risk input use; ECB prices remain informational"),
+        ("nyfed_sofr_effr_reference_research_loaded",
+         f"SELECT COUNT(*) FROM {P}lab_nyfed_rate_observations_retro_v1 WHERE research_only AND NOT production_risk_input_approved",
+         500,"MIN_COUNT","Two publisher-sourced SOFR/EFFR annual rate percent histories are archived as internal research snapshots; effective date is not original publication"),
+        ("nyfed_funding_provider_vintages_rights_verified",
+         f"SELECT COUNT(DISTINCT series_id) FROM {P}lab_nyfed_rate_observations_retro_v1 WHERE provider_historical_revision_asof_verified AND first_published_timestamp_verified AND downstream_license_approved AND production_risk_input_approved",
+         2,"MIN_COUNT","Independent original NY Fed rate first-publication/revision times and data-use approval required; percent-rate deltas are not surprises"),
+        ("rolling_crossasset_covariance_diagnostics_materialized",
+         f"SELECT COUNT(*) FROM {P}lab_cross_asset_rolling_windows_v1 WHERE build_id=(SELECT build_id FROM {P}lab_cross_asset_rolling_builds_v1 ORDER BY created_at DESC LIMIT 1)",
+         15,"MIN_COUNT","252 day train and 63-day forward test regime screens with 21-day steps built; not a validated risk product"),
+        ("rolling_crossasset_covariance_regime_stability_screen",
+         f"SELECT COUNT(*) FROM {P}lab_cross_asset_rolling_windows_v1 WHERE build_id=(SELECT build_id FROM {P}lab_cross_asset_rolling_builds_v1 ORDER BY created_at DESC LIMIT 1) AND requires_independent_regime_review",
+         0,"MAX_COUNT","No rolling covariance regime drift flags under preregistered materiality threshold; independent risk and source rights still separate"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
