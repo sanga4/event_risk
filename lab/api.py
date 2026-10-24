@@ -695,3 +695,74 @@ def production_action_register(
     )
     return {"items":rows,"limit":limit,"offset":offset,
             "institutional_release_approved":False}
+
+@app.get("/v1/research/data-quality/security-prices/summary", dependencies=[Depends(require_api_key)])
+def security_price_quality_summary() -> dict[str, Any]:
+    rows = _query(
+        "SELECT build_id,built_at,source_exception_rows,"
+        "duplicated_security_date_keys,beta_sensitivity_models,"
+        "models_with_beta_shift_ge_20pct,source_reconciled_exceptions,"
+        "research_use_only "
+        "FROM eventrisk_factor_lab.main.lab_security_price_exception_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503, detail="Security price QA not materialized")
+    return {"quality":rows[0],"source_quality_independently_approved":False,
+            "corporate_action_vintage_verified":False,
+            "production_betas_approved":False,
+            "notice":"LARGE_RETURNS_MAY_BE_REAL_NOT_AUTOMATIC_VENDOR_ERRORS"}
+
+
+@app.get("/v1/research/data-quality/security-prices/exceptions", dependencies=[Depends(require_api_key)])
+def security_price_exception_cases(
+    ticker: str | None = Query(None, min_length=1, max_length=24),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows = _query(
+        "SELECT ticker,observed_date,previous_observed_date,"
+        "previous_adjusted_close,adjusted_close,log_return_bps,"
+        "source_unadjusted_close,source_adjusted_close,source_volume,"
+        "source_currency,source_vendor,source_retrieved_at,source_run_id,"
+        "other_symbols_same_move_day,exception_category,review_state,"
+        "original_price_quote_time_verified,adjustment_vintage_verified,"
+        "external_data_rights_approved,eligible_for_production_release "
+        "FROM eventrisk_factor_lab.main.lab_security_price_exception_cases_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_security_price_exception_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1) "
+        "AND (? IS NULL OR ticker=?) "
+        "ORDER BY observed_date DESC,ticker LIMIT ? OFFSET ?",
+        (ticker,ticker,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "unverified_evidence_not_false_data":True,"research_only":True}
+
+
+@app.get("/v1/research/data-quality/security-prices/beta-sensitivity", dependencies=[Depends(require_api_key)])
+def security_price_beta_sensitivity(
+    ticker: str | None = Query(None, min_length=1, max_length=24),
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows = _query(
+        "SELECT ticker,factor_id,original_beta_rate,"
+        "baseline_recomputed_beta_rate,without_flagged_days_beta_rate,"
+        "absolute_delta_beta,relative_delta_beta,original_train_n,"
+        "research_exclusion_train_n,flagged_joint_observations,"
+        "original_q_value,original_holdout_r2,sensitivity_state,"
+        "source_pit_verified,production_beta_release "
+        "FROM eventrisk_factor_lab.main.lab_beta_price_exception_sensitivity_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_security_price_exception_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1) "
+        "AND (? IS NULL OR ticker=?) AND (? IS NULL OR factor_id=?) "
+        "ORDER BY relative_delta_beta DESC,ticker,factor_id LIMIT ? OFFSET ?",
+        (ticker,ticker,factor_id,factor_id,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "sensitivity_only":True,
+            "without_flagged_days_is_not_primary_model":True,
+            "production_beta_release":False}
