@@ -113,7 +113,7 @@ def main():
             """,[build,commit,digest])
             con.execute(f"""
                INSERT INTO {P}lab_institutional_beta_readiness_v1
-               VALUES (?,current_timestamp,108,?,?,?,?,?,?,?,?,?,?,?,?,0,0,FALSE,
+               VALUES (?,current_timestamp,108,?,?,?,?,?,?,?,?,?,?,?,0,0,FALSE,
                        'BETA_UNESTIMABLE_INSTITUTIONAL_RELEASE_BLOCKED',?,?)
             """,[build,*counts,commit,digest])
             con.execute("COMMIT")
