@@ -766,3 +766,79 @@ def security_price_beta_sensitivity(
             "sensitivity_only":True,
             "without_flagged_days_is_not_primary_model":True,
             "production_beta_release":False}
+
+
+@app.get("/v1/research/curve-factor/coverage", dependencies=[Depends(require_api_key)])
+def research_curve_factor_coverage() -> dict[str, Any]:
+    rows=_query(
+        "SELECT build_id,created_at,curve_factor_days,security_models,"
+        "model_coefficients,q_below_05,holdout_improved_vs_spy,"
+        "flagged_outlier_exposed_models,max_standardized_condition,"
+        "independently_verified_models,release_state "
+        "FROM eventrisk_factor_lab.main.lab_security_curve_builds_retro_v1 "
+        "ORDER BY created_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Research curve factor model not materialized")
+    return {"build":rows[0],
+            "factor_components":["LEVEL","SLOPE","CURVATURE"],
+            "rate_source":["DGS2","DGS5","DGS10"],
+            "estimation_type":"ex_post_market_controlled_treasury_curve",
+            "source_time_certified":False,"risk_model_approved":False,
+            "deployable_security_beta":False,
+            "notice":"RESEARCH_HAC_COEFFICIENTS_NOT_CAUSAL_EVENT_IMPACTS"}
+
+
+@app.get("/v1/research/curve-factor/coefficients", dependencies=[Depends(require_api_key)])
+def research_curve_coefficients(
+    research_use: bool = False,
+    ticker: str | None = Query(None,min_length=1,max_length=24),
+    component: str | None = Query(None,pattern="^(LEVEL|SLOPE|CURVATURE)$"),
+    limit: int = Query(50,ge=1,le=MAX_PAGE),
+    offset: int = Query(0,ge=0,le=100000),
+) -> dict[str,Any]:
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403,detail="Retrospective curve research disabled")
+    rows=_query(
+        "SELECT ticker,curve_component,coefficient_bps_per_bp,"
+        "hac_se,normal_approx_z,p_normal,bh_family_q,"
+        "ci95_lower,ci95_upper,response_unit,predictor_unit,"
+        "independently_validated,released_as_institutional_beta,build_id "
+        "FROM eventrisk_factor_lab.main.lab_security_curve_coefficients_retro_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_security_curve_builds_retro_v1 "
+        "ORDER BY created_at DESC LIMIT 1) "
+        "AND (? IS NULL OR ticker=?) "
+        "AND (? IS NULL OR curve_component=?) "
+        "ORDER BY ticker,curve_component LIMIT ? OFFSET ?",
+        (ticker,ticker,component,component,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "ex_post_research_only":True,
+            "no_tradable_forward_prediction":True,
+            "production_risk_beta_approved":False}
+
+
+@app.get("/v1/research/curve-factor/model-quality", dependencies=[Depends(require_api_key)])
+def research_curve_model_quality(
+    ticker: str | None = Query(None,min_length=1,max_length=24),
+    limit: int = Query(50,ge=1,le=MAX_PAGE),
+    offset: int = Query(0,ge=0,le=100000),
+) -> dict[str,Any]:
+    rows=_query(
+        "SELECT ticker,benchmark,first_date,last_date,train_through,test_from,"
+        "n_observations,n_train,n_test,standardized_train_condition,"
+        "beta_spy,train_r_squared,test_r2_vs_spy_only,test_rmse_bps,"
+        "spy_baseline_rmse_bps,flagged_large_return_days,"
+        "source_security_adjustments_pit_verified,source_factors_pit_verified,"
+        "source_rights_verified,authorized_institutional_release,model_status "
+        "FROM eventrisk_factor_lab.main.lab_security_curve_model_retro_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_security_curve_builds_retro_v1 "
+        "ORDER BY created_at DESC LIMIT 1) "
+        "AND (? IS NULL OR ticker=?) "
+        "ORDER BY ticker LIMIT ? OFFSET ?",
+        (ticker,ticker,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "research_only":True,"risk_model_approved":False}

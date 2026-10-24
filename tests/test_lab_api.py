@@ -314,5 +314,43 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertTrue(beta["without_flagged_days_is_not_primary_model"])
 
 
+    def test_curve_model_coverage_is_not_approved(self):
+        lab.app.state.query_fn=lambda sql,params:[
+            {"security_models":48,"model_coefficients":144,
+             "independently_verified_models":0}
+        ]
+        result=lab.research_curve_factor_coverage()
+        self.assertEqual(result["build"]["model_coefficients"],144)
+        self.assertFalse(result["risk_model_approved"])
+        self.assertFalse(result["deployable_security_beta"])
+
+    def test_curve_coefficients_require_retro_research_permission(self):
+        with patch.dict(os.environ,{"LAB_ENABLE_RETROSPECTIVE_READ":""}):
+            with self.assertRaises(HTTPException) as err:
+                lab.research_curve_coefficients(research_use=True)
+            self.assertEqual(err.exception.status_code,403)
+
+    def test_curve_coefficients_parameterize_filters_and_do_not_release(self):
+        calls=[]
+        lab.app.state.query_fn=lambda sql,args: calls.append(args) or [
+            {"ticker":"TLT","curve_component":"LEVEL"}
+        ]
+        with patch.dict(os.environ,{"LAB_ENABLE_RETROSPECTIVE_READ":"true"}):
+            result=lab.research_curve_coefficients(
+                research_use=True,ticker="TLT",component="LEVEL",limit=3,offset=4)
+        self.assertEqual(calls[0],("TLT","TLT","LEVEL","LEVEL",3,4))
+        self.assertFalse(result["production_risk_beta_approved"])
+        self.assertTrue(result["no_tradable_forward_prediction"])
+
+    def test_curve_quality_summary_is_still_unreleased(self):
+        vals=[]
+        lab.app.state.query_fn=lambda sql,args: vals.append(args) or [
+            {"ticker":"TLT","standardized_train_condition":1.76}
+        ]
+        result=lab.research_curve_model_quality(ticker="TLT",limit=5,offset=1)
+        self.assertEqual(vals[0],("TLT","TLT",5,1))
+        self.assertFalse(result["risk_model_approved"])
+
+
 if __name__ == "__main__":
     unittest.main()

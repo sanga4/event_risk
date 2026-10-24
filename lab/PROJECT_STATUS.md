@@ -15,6 +15,13 @@
 | Required source/rights approvals | https://github.com/sanga4/event_risk/blob/main/lab/PHASE1_PRODUCTION_UNBLOCK_PLAN.md |
 | Security source exceptions and beta robustness | https://github.com/sanga4/event_risk/blob/main/lab/SECURITY_SOURCE_QA_AND_BETA_SENSITIVITY.md |
 
+## Latest methodology milestone — three-component Treasury curve model
+
+Source-controlled risk-methodology code: [Treasury Curve Factor Model](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) and `phase1_curve_factor_research.py`. MotherDuck Flight successfully fitted **48** joint SPY + Treasury nominal curve models (LEVEL/SLOPE/CURVATURE), and persisted **144** coefficient rows over **701** historical rate-change dates. **6** slopes have exploratory BH q under .05, **17** same-day holdout comparisons improve on SPY-only, **4** models contain previously flagged abnormal price movements; maximum standardized training design condition number **1.7616**. All model and source PIT/rights/production release flags remain **FALSE**. These are descriptive historical security-rate sensitivities, not independently approved betas or event-to-factor causal responses.
+
+The formal institutional gate score is **still 11/24 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
+
+
 ## Current independent readiness checks
 
 | Scope | Passing tests | What passing means |
