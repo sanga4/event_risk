@@ -901,3 +901,61 @@ def style_factor_security_model_coverage() -> dict[str,Any]:
             "rights_for_external_use_verified":False,
             "model_risk_approved":False,
             "research_only":True}
+
+
+@app.get("/v1/research/cross-asset/fx-coverage", dependencies=[Depends(require_api_key)])
+def fx_informational_research_coverage() -> dict[str, Any]:
+    """Data counts only. Do NOT expose non-tradable ECB source observations."""
+    runs=_query(
+        "SELECT build_id,built_at,retrieved_series,new_archive_versions,"
+        "parsed_reference_rows,new_reference_versions,daily_return_rows,"
+        "currencies,original_source_publish_times_verified,source_rights_approved,"
+        "release_state "
+        "FROM eventrisk_factor_lab.main.lab_fx_backfill_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not runs:
+        raise HTTPException(503,detail="ECB historical research input not loaded")
+    coverage=_query(
+        "SELECT quote_currency,COUNT(*) AS source_historical_observations,"
+        "MIN(observed_date) AS first_observed_date,"
+        "MAX(observed_date) AS last_observed_date "
+        "FROM eventrisk_factor_lab.main.lab_fx_reference_rates_retro_v1 "
+        "GROUP BY quote_currency ORDER BY quote_currency"
+    )
+    return {"latest_build":runs[0],"pairs":coverage,
+            "base_currency":"EUR",
+            "native_unit":"quote_currency_per_one_EUR",
+            "source_use":"ECB_INFORMATIONAL_REFERENCE_NOT_EXECUTABLE",
+            "historical_publication_vintages_verified":False,
+            "data_redistribution_authorized":False,
+            "risk_portfolio_use_authorized":False,
+            "raw_rates_returned":False}
+
+
+@app.get("/v1/research/cross-asset/covariance-diagnostics", dependencies=[Depends(require_api_key)])
+def cross_asset_covariance_research_coverage() -> dict[str,Any]:
+    """Summary-only drift diagnostics, not raw copyrighted source covariance."""
+    rows=_query(
+        "SELECT build_id,built_at,first_matching_date,last_matching_date,"
+        "training_end,holdout_start,n_joint_observations,n_train,n_holdout,"
+        "n_factors,diagonal_shrinkage,min_shrunk_eigenvalue,"
+        "shrunk_condition_number,holdout_covariance_relative_frobenius_error,"
+        "max_holdout_univariate_variance_ratio,"
+        "sourced_rights_verified,original_pit_publications_verified,"
+        "institutional_factor_risk_model_released,release_status "
+        "FROM eventrisk_factor_lab.main.lab_cross_asset_risk_diagnostics_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Cross-asset risk study not materialized")
+    return {"build":rows[0],
+            "factor_groups":["Treasury_nominal_curve","ECB_EUR_base_reference",
+                             "US_French_research_factor_returns"],
+            "training_only_standardization":True,
+            "strict_same_date_intersection":True,
+            "portfolio_risk_covariance_approved":False,
+            "historical_point_in_time_certified":False,
+            "licensed_for_external_data_serving":False,
+            "matrix_entries_exposed":False,
+            "notice":"HOLDOUT_COVARIANCE_DRIFT_NOT_A_PREDICTIVE_RISK_MODEL"}
