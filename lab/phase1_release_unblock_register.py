@@ -12,10 +12,20 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.1.0"
+VERSION="phase1-release-unblock-register-v1.2.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"official_ecb_eur_fx_research_loaded":("Schema and cross-asset factors","P1","Cross-asset source engineering",
+ "Maintain source-hashed informational EUR currency-pair history with unambiguous quote orientation and dated reference values.",
+ "Seven ECB reference currencies, >30000 price records, immutable source hashes and unit-aware log change; no false tradability approval"),
+"cross_asset_factor_covariance_research_diagnostic":("Statistical model validation","P1","Quantitative risk methodology",
+ "Preserve train-only unit normalization, covariance shrinkage, chronological holdout drift and factor definitions; reject erroneous portfolio-release claims.",
+ "Complete seven-factor 49-cell research matrix with independent holdout diagnostics; not a cleared portfolio risk engine"),
+"ecb_original_provider_vintage_and_source_rights_certification":("Point-in-time provenance","P0","ECB source QA + licensing owner",
+ "Verify each original provider publication/version, permitted use and distinguish informational rates from tradeable executable FX data.",
+ "Seven EUR pair reference sources with independent original release/vintage timestamps and rights; separate tradeable FX feed required for execution"),
+
 "us_equity_style_source_archive_research_backfill":("Schema and cross-asset factors","P1","Quantitative data engineering",
  "Maintain reproducible internal research source snapshots with provider file checksums, missing-sentinel and percent/decimal validation.",
  "At least 100,000 source-versioned daily FF5/MOM records; never imply historical source release timestamps"),

@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.6.0"
+VERSION="phase1-gates-v1.7.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -87,6 +87,15 @@ def main():
         ("us_equity_style_vintages_and_rights_certified",
          f"SELECT COUNT(DISTINCT factor_id) FROM {P}lab_style_factor_returns_v1 WHERE source_publication_time_independently_verified AND historical_point_in_time_verified AND licensed_for_distribution AND approved_for_institutional_risk_use",
          7,"MIN_COUNT","Require source revision/publication vintage audit, permitted-use license and independent model approval for all 7 research US factor labels"),
+        ("official_ecb_eur_fx_research_loaded",
+         f"SELECT COUNT(*) FROM {P}lab_fx_reference_rates_retro_v1 WHERE research_only AND NOT historical_point_in_time_verified AND NOT is_executable_spot_fx_quote",
+         30000,"MIN_COUNT","Loaded source-hashed ECB EUR-base reference prices; information only, not executable FX quotes"),
+        ("cross_asset_factor_covariance_research_diagnostic",
+         f"SELECT COUNT(*) FROM {P}lab_cross_asset_factor_covariance_v1 WHERE build_id=(SELECT build_id FROM {P}lab_cross_asset_risk_diagnostics_v1 ORDER BY built_at DESC LIMIT 1) AND NOT approved_portfolio_risk_covariance",
+         49,"MIN_COUNT","Seven-factor unit-standardized covariance study exists; holdout drift/rights and PIT release stay separate"),
+        ("ecb_original_provider_vintage_and_source_rights_certification",
+         f"SELECT COUNT(DISTINCT quote_currency) FROM {P}lab_fx_reference_rates_retro_v1 WHERE provider_publish_time_independently_verified AND rights_for_risk_redistribution_verified AND historical_point_in_time_verified",
+         7,"MIN_COUNT","Require original per-observation source publication and rights certification before FX risk input use; ECB prices remain informational"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),

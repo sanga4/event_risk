@@ -385,5 +385,35 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(r["model_risk_approved"])
 
 
+    def test_official_ecb_fx_coverage_never_serves_raw_rates(self):
+        seen=[]
+        def query(sql,params):
+            seen.append(sql)
+            if "lab_fx_backfill_builds_v1" in sql:
+                return [{"retrieved_series":7,"parsed_reference_rows":39088,
+                         "source_rights_approved":False}]
+            return [{"quote_currency":"USD","source_historical_observations":5584}]
+        lab.app.state.query_fn=query
+        obj=lab.fx_informational_research_coverage()
+        self.assertEqual(obj["latest_build"]["retrieved_series"],7)
+        self.assertFalse(obj["data_redistribution_authorized"])
+        self.assertFalse(obj["risk_portfolio_use_authorized"])
+        self.assertFalse(obj["raw_rates_returned"])
+        self.assertEqual(obj["base_currency"],"EUR")
+        self.assertEqual(len(seen),2)
+
+    def test_crossasset_drift_research_is_not_an_approved_risk_model(self):
+        lab.app.state.query_fn=lambda sql,params:[
+            {"n_joint_observations":655,"n_factors":7,
+             "holdout_covariance_relative_frobenius_error":.6994,
+             "institutional_factor_risk_model_released":False}
+        ]
+        obj=lab.cross_asset_covariance_research_coverage()
+        self.assertEqual(obj["build"]["n_factors"],7)
+        self.assertFalse(obj["licensed_for_external_data_serving"])
+        self.assertFalse(obj["matrix_entries_exposed"])
+        self.assertFalse(obj["portfolio_risk_covariance_approved"])
+
+
 if __name__ == "__main__":
     unittest.main()
