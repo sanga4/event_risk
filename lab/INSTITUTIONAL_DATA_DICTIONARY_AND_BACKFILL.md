@@ -88,3 +88,8 @@ P2: Train actual factor models and event-response models, with pre-registered ho
 - ALFRED/FRED realtime periods: https://fred.stlouisfed.org/docs/api/fred/realtime_period.html
 - FRED revision dates: https://fred.stlouisfed.org/docs/api/fred/series_vintagedates.html
 - Kenneth French style return definitions and archives: https://mba.tuck.dartmouth.edu/pages/faculty/Ken.French/data_library.html
+
+
+## New equity style backfill — not a rights or as-of certification (October 24, 2026)
+
+The formerly empty `risk_factor_portfolio` data domain now has 121,598 **Ken French US daily FF5/RF + momentum** observations across 7 IDs (2 official file-SHA256-identified snapshots). These are simple daily return decimals derived from source percentages, not nominal yield levels or security total-return index prices. The `vintage_date` is the **warehouse retrieval snapshot date**, explicitly not first public historical publication; vendor/CRSP rights remain pending, so no public redistribution and no institutional beta release. Factor data ends August 31, 2026 and is **not a current October equity-style feed**. The first source-field re-audit reduced missing required fields from 146 to **135**, leaving 119/255 structurally populated, one empty provider quote-time field and **all independent release certifications false**. Research-only beta details: [source and six-factor model methodology](STYLE_FACTOR_SOURCE_AND_BETA_METHOD.md).
