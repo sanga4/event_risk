@@ -842,3 +842,34 @@ def research_curve_model_quality(
     )
     return {"items":rows,"limit":limit,"offset":offset,
             "research_only":True,"risk_model_approved":False}
+
+
+@app.get("/v1/research/style-factors/coverage", dependencies=[Depends(require_api_key)])
+def style_factor_research_coverage() -> dict[str,Any]:
+    """Summary counts ONLY. No factor returns may be served without rights signoff."""
+    builds=_query(
+        "SELECT build_id,built_at,provider_archives_checked,archives_new,"
+        "rows_downloaded,rows_appended,distinct_style_series,"
+        "oldest_factor_date,newest_factor_date,"
+        "source_publication_vintages_verified,"
+        "production_risk_factors_approved,release_state "
+        "FROM eventrisk_factor_lab.main.lab_style_factor_ingest_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not builds:
+        raise HTTPException(503, detail="Style factor research sources not loaded")
+    series=_query(
+        "SELECT factor_id,COUNT(*) AS research_rows,"
+        "MIN(observed_date) AS first_date,MAX(observed_date) AS last_date,"
+        "COUNT(*) FILTER (WHERE licensed_for_distribution OR "
+        "approved_for_institutional_risk_use OR historical_point_in_time_verified) "
+        "AS prohibited_release_claims "
+        "FROM eventrisk_factor_lab.main.lab_style_factor_returns_v1 "
+        "GROUP BY factor_id ORDER BY factor_id"
+    )
+    return {"build":builds[0],"series":series,
+            "research_only":True,"downloaded_original_files_sha256_recorded":True,
+            "historical_publication_vintage_independently_verified":False,
+            "source_redistribution_rights_verified":False,
+            "raw_factor_return_api_enabled":False,
+            "approved_for_institutional_risk_use":False}
