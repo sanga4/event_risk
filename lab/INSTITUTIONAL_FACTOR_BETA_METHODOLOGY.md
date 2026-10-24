@@ -101,3 +101,10 @@ Production exposure outputs must carry `estimation_status` = `unestimated|retros
 ## 8. Deliverable ownership and review
 
 Methodology version and model changes are Git SHA pinned under **sanga4**. The separate qualitative `FACTORS_METHODOLOGY.md` remains the 108-factor graph taxonomy contract; this document governs quantitative research, betas and institutional interpretation. No edits to huimarco or its production MVP. Any transition from research estimate to institutional beta requires a documented independent approval and release commit, never a script setting an approval bit.
+
+
+## October 24, 2026 — security-price inventory correction and retrospective rate-beta pilot
+
+A live MotherDuck audit found **107,157 already loaded security_prices observations for 63 symbols**, fetched on October 17, 2026, contrary to the earlier assumption that there were no security prices. A new [research pilot](SECURITY_RATE_BETA_RESEARCH_METHOD.md) has now backfilled 83,427 USD security adjusted-price daily log returns, 12,618 daily rate-factor shocks and 864 SPY-controlled *retrospective* rate sensitivities. There are 130 BH q<0.05 coefficients, 414 positive same-day holdout relative to market-only, and 49 satisfying both exploratory screens. **Zero are PIT/rights-verified, model-risk-approved or released**. This does not invalidate the original distinction between *security rate sensitivity* and *identified event-to-factor impact*.
+
+The exercise does **not** validate original vendor publication timestamps, `yahoo` license rights, adjustment vintages, historical constituent survivorship or return-currency conventions. Four duplicate ticker-days were deterministically collapsed; 12 large-return events are flagged for review. It deliberately excludes FX-only/non-USD instruments and the SPY benchmark as its own response. Same-date factor changes and SPY returns in a test set are contemporaneously known ex post, **not a tradable ex-ante forecast**. Multivariate licensed factor models and genuine asset total-return/PIT validation remain mandatory for production.
