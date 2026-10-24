@@ -244,3 +244,12 @@ Authoritative new source-controlled artifacts:
 ## Three-component Treasury curve multivariate research pilot
 
 The source-controlled [fixed LEVEL/SLOPE/CURVATURE Treasury rate methodology](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) fits 48 security models, 144 coefficients, multivariate HAC(5) and a market-only chronological holdout comparison. It prevents treating mechanically overlapping nominal/real-gap proxies as additional independent regressors. **Zero** model rows are certified PIT, legally cleared or released for institutional beta risk. Do not confuse same-day historical association with predictive or event causal impacts.
+
+
+## U.S. five-factor/momentum source backfill and FF6 research models (2026-10-24)
+
+- Official U.S. Kenneth French Data Library daily FF5/RF + separate momentum research archives, source-hashed/retrieval-versioned by `phase1_french_style_factor_backfill.py`.
+- First on-demand MotherDuck Flight `eventrisk-factor-lab-us-french-research-styles` **SUCCEEDED**: 121,598 historical daily source series observations, 7 IDs, archives with source SHA256, newest observations 2026-08-31. Re-run: **0 new archive versions and 0 new records**. No source original publication-vintage or redistribution rights approved.
+- Six-factor researcher `phase1_ff6_security_research.py`, MotherDuck Flight `eventrisk-factor-lab-us-six-factor-security-exposures` **SUCCEEDED**: 48 security models / 288 six-factor coefficients, 151 q<0.05 research historical associations and 27 same-day held-out improvements versus market-only. **0** approved institutional security betas.
+- Provenance tables `lab_style_factor_source_archives_v1`, `lab_style_factor_returns_v1`, `lab_style_factor_ingest_builds_v1`; research-only model tables `lab_ff6_security_models_retro_v1`, `lab_ff6_security_coefficients_retro_v1`, `lab_ff6_research_builds_v1`. See [full source and beta methodology](STYLE_FACTOR_SOURCE_AND_BETA_METHOD.md).
+- Institutional audit now has **119/255 populated required fields, 135 missing**, one empty original quote-time field; release gates **12/26 PASS, 14 BLOCKED, 4 manual signoffs**. No public API for provider factor levels/returns or unlicensed derived security betas, only authenticated summary metadata.
