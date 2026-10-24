@@ -40,3 +40,11 @@ The present automatic release gate definitions do not cover every eventual style
 ## Safe work that can continue now
 
 Run on-demand prospective capture, forward feature views, warehouse-as-of grid, review triage, and release checks. Maintain rigorous source-only append and P0 issue logs. These actions improve current research history, NOT original publication/vintage certification, independent legal rights, causal identification or model release.
+
+
+## New official FX/funding cross-asset blockers (2026-10-24)
+
+- **FX source (loaded)**: 39,088 historical ECB EUR-base reference observations, 7 pairs, sourced by actual SDMX URL/CSV content hash. These are explicitly information-only and NOT guaranteed exchangeable prices; independent historical publication and rights evidence must be collected.
+- **Funding/inflation/macro feed (not loaded)**: FRED historical source endpoint timed out from MotherDuck twice. Require an accessible authorized source transport (scoped official API key/connection if appropriate), original ALFRED provider revision-history and formal native daily/weekly/monthly units before claim of ingestion. Do not assume any DFF/SOFR/NFCI/CPI/UNRATE/WALCL observation exists from this new importer.
+- **Cross-asset covariance (research loaded)**: 7x7 unit-standardized rate/FX/style factor matrix and train-only shrinkage pipeline exists. **69.94% train-to-holdout relative covariance discrepancy** calls for regime-change/robustness investigations. No production portfolio risk model or VaR approval.
+- **Measured release gates**: **14 of 29 automatic pass**, 15 block and four owner/manual controls remain open. Successfully materializing new research families is progress, but true time-vintage and vendor-permission gates remain blocked. Full details: [Cross-Asset Research Methodology](CROSS_ASSET_FX_MACRO_RISK_METHOD.md).
