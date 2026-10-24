@@ -873,3 +873,31 @@ def style_factor_research_coverage() -> dict[str,Any]:
             "source_redistribution_rights_verified":False,
             "raw_factor_return_api_enabled":False,
             "approved_for_institutional_risk_use":False}
+
+
+@app.get("/v1/research/style-factors/security-model-coverage", dependencies=[Depends(require_api_key)])
+def style_factor_security_model_coverage() -> dict[str,Any]:
+    """Count descriptive research models, never expose copyrighted source returns."""
+    rows=_query(
+        "SELECT build_id,built_at,seven_factor_joint_dates,"
+        "included_security_models,factor_coefficients,"
+        "global_bh_q_under_05,holdout_improved_over_market,"
+        "excluded_or_unfit_securities,anomalous_price_exposed_models,"
+        "largest_training_condition,certified_source_vintages,"
+        "licensed_released_betas,release_state "
+        "FROM eventrisk_factor_lab.main.lab_ff6_research_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Style-security model not materialized")
+    return {"build":rows[0],
+            "model":"US_FF5_PLUS_MOM_RESEARCH",
+            "regressors":["Mkt-RF","SMB","HML","RMW","CMA","Mom"],
+            "risk_free_measure":"French_daily_RF",
+            "return_measure":"security_ex_post_adjusted_simple_return_minus_RF",
+            "raw_source_returns_served":False,
+            "security_beta_coefficients_served":False,
+            "point_in_time_certified":False,
+            "rights_for_external_use_verified":False,
+            "model_risk_approved":False,
+            "research_only":True}
