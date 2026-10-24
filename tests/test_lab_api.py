@@ -266,5 +266,28 @@ class AuthAndResearchGates(unittest.TestCase):
 
 
 
+    def test_production_gate_workstreams_are_not_completion_percentage(self):
+        lab.app.state.query_fn = lambda sql,params: [
+            {"workstream":"Point-in-time provenance","n_gates":6,
+             "n_passed":1,"percent_gates_passed":16.7}
+        ]
+        summary=lab.production_workstream_gates()
+        self.assertFalse(summary["is_project_completion_percent"])
+        self.assertFalse(summary["institutional_release_approved"])
+        self.assertEqual(summary["items"][0]["n_gates"],6)
+
+    def test_blocker_register_is_paginated_and_unapproved(self):
+        calls=[]
+        lab.app.state.query_fn=lambda sql,params: calls.append(params) or [
+            {"gate_id":"genuine_pit_factor_panel",
+             "acceptance_evidence":"source vintage verification"}
+        ]
+        result=lab.production_action_register(limit=3,offset=7)
+        self.assertEqual(calls[0],(3,7))
+        self.assertEqual(len(result["items"]),1)
+        self.assertFalse(result["institutional_release_approved"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
