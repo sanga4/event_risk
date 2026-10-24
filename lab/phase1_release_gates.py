@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.5.0"
+VERSION="phase1-gates-v1.6.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -81,6 +81,12 @@ def main():
         ("independent_rate_factor_vintage_certification",
          f"SELECT COUNT(*) FROM {P}lab_factor_exposure_specifications_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_diagnostics_builds_v1 ORDER BY built_at DESC LIMIT 1) AND independently_verified_source_vintage AND eligible_for_independent_production_model",
          18,"MIN_COUNT","Release requires independent source/rights and as-of vintage verification, plus collinearity-safe multi-factor selection"),
+        ("us_equity_style_source_archive_research_backfill",
+         f"SELECT COUNT(*) FROM {P}lab_style_factor_returns_v1 WHERE research_status='EX_POST_RESEARCH_SNAPSHOT_NOT_PIT_OR_LICENSED' AND NOT approved_for_institutional_risk_use",
+         100000,"MIN_COUNT","Official daily US FF5/MOM source snapshots backfilled with original file checksums; NO historical PIT or redistribution rights implied"),
+        ("us_equity_style_vintages_and_rights_certified",
+         f"SELECT COUNT(DISTINCT factor_id) FROM {P}lab_style_factor_returns_v1 WHERE source_publication_time_independently_verified AND historical_point_in_time_verified AND licensed_for_distribution AND approved_for_institutional_risk_use",
+         7,"MIN_COUNT","Require source revision/publication vintage audit, permitted-use license and independent model approval for all 7 research US factor labels"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),

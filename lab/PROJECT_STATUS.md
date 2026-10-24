@@ -9,7 +9,7 @@
 | Factor Lab service process liveness | https://factor-lab-api-production.up.railway.app/health/live |
 | Source code in sanga4 main | https://github.com/sanga4/event_risk |
 | All GitHub pipeline/CI runs | https://github.com/sanga4/event_risk/actions |
-| Latest institutional milestone pull request | https://github.com/sanga4/event_risk/pull/13 |
+| Latest institutional milestone pull request | https://github.com/sanga4/event_risk/pulls |
 | Institutional Beta Methodology | https://github.com/sanga4/event_risk/blob/main/lab/INSTITUTIONAL_FACTOR_BETA_METHODOLOGY.md |
 | Institutional Data Dictionary & Backfill | https://github.com/sanga4/event_risk/blob/main/lab/INSTITUTIONAL_DATA_DICTIONARY_AND_BACKFILL.md |
 | Required source/rights approvals | https://github.com/sanga4/event_risk/blob/main/lab/PHASE1_PRODUCTION_UNBLOCK_PLAN.md |
@@ -19,7 +19,17 @@
 
 Source-controlled risk-methodology code: [Treasury Curve Factor Model](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) and `phase1_curve_factor_research.py`. MotherDuck Flight successfully fitted **48** joint SPY + Treasury nominal curve models (LEVEL/SLOPE/CURVATURE), and persisted **144** coefficient rows over **701** historical rate-change dates. **6** slopes have exploratory BH q under .05, **17** same-day holdout comparisons improve on SPY-only, **4** models contain previously flagged abnormal price movements; maximum standardized training design condition number **1.7616**. All model and source PIT/rights/production release flags remain **FALSE**. These are descriptive historical security-rate sensitivities, not independently approved betas or event-to-factor causal responses.
 
-The formal institutional gate score is **still 11/24 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
+The formal institutional gate score is **still 12/26 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
+
+
+
+## New official U.S. equity-style factor data and six-factor model — October 24, 2026
+
+See the [source/license/PIT and six-factor beta methodology](STYLE_FACTOR_SOURCE_AND_BETA_METHOD.md). The *official* Kenneth French daily U.S. five-factor + RF and separate momentum archives were downloaded into independently versioned private MotherDuck research tables. **121,598 historical factor-return observations, 7 source series**, daily factor histories through **2026-08-31**, 2 independently SHA256-recorded ZIP archive versions. A second execution made **0 duplicate rows**. Dates are historical observation dates; first source retrieval in our system was October 24, **not known-at in 1963/1926**, and commercial re-use/distribution approval is not established.
+
+First complete **six-factor (Mkt-RF/SMB/HML/RMW/CMA/Mom)** USD-security research run: **48 models / 288 coefficients**, 15,897 complete joint U.S. factor days, 1,555–1,673 matched security observations/model, 151 global FDR q<5% *exploratory associations*, 27 same-day holdout improvements versus market-only, 9 models exposed to >25% adjusted-price-return flags, and **0** independently released institutional betas. RF is a *research cash return*, not a seventh risky beta. Source return percentages converted to daily simple decimals; dependent asset adjusted-close log returns converted back to daily simple returns before subtracting RF. Raw style returns/coefficients are deliberately not exposed via the service API.
+
+New release check version v1.6: **12/26 passing, 14 blocking, 4 separate manual approvals open**. The new source-loaded gate passes; independent provider PIT/vintage/licensing gate stays blocked. Institutional mandatory field coverage improved to **119/255 ~47%**, with 135 required fields missing and one existing field entirely empty. Neither a loaded source nor a research FDR statistic implies institutional model approval.
 
 
 ## Current independent readiness checks
@@ -36,7 +46,7 @@ The formal institutional gate score is **still 11/24 (45.8%)** with four externa
 | API serving and operating controls | 0/1 = 0% | Public /health/live success is not private /health/ready and auth approval |
 | Quantitative model validation | 0/3 = 0% | Exploration exists, zero independently approved risk betas or event impacts |
 
-Formal automatic release gates = **11 passed / 24 total (45.8%)**. There are **13 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
+Formal automatic release gates = **12 passed / 26 total (45.8%)**. There are **14 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
 
 ## Real datasets loaded
 

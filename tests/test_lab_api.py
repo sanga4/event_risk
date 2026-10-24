@@ -352,5 +352,38 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(result["risk_model_approved"])
 
 
+    def test_style_factor_coverage_never_redistributes_source_values(self):
+        sqls=[]
+        def provider(sql, params):
+            sqls.append(sql)
+            if "lab_style_factor_ingest_builds_v1" in sql:
+                return [{"build_id":"style-build","rows_downloaded":121598,
+                         "source_publication_vintages_verified":0,
+                         "production_risk_factors_approved":0}]
+            return [{"factor_id":"FF_US_HML","research_rows":15897,
+                     "prohibited_release_claims":0}]
+        lab.app.state.query_fn=provider
+        result=lab.style_factor_research_coverage()
+        self.assertEqual(result["build"]["rows_downloaded"],121598)
+        self.assertFalse(result["source_redistribution_rights_verified"])
+        self.assertFalse(result["raw_factor_return_api_enabled"])
+        self.assertFalse(result["approved_for_institutional_risk_use"])
+        self.assertEqual(result["series"][0]["factor_id"],"FF_US_HML")
+        self.assertNotIn("factor_return",result["series"][0])
+
+
+    def test_ff6_security_coverage_does_not_serve_vendor_coefficients(self):
+        lab.app.state.query_fn=lambda sql,params: [
+            {"build_id":"ff6-research","included_security_models":48,
+             "factor_coefficients":288,"licensed_released_betas":0}
+        ]
+        r=lab.style_factor_security_model_coverage()
+        self.assertEqual(r["build"]["factor_coefficients"],288)
+        self.assertFalse(r["raw_source_returns_served"])
+        self.assertFalse(r["security_beta_coefficients_served"])
+        self.assertFalse(r["rights_for_external_use_verified"])
+        self.assertFalse(r["model_risk_approved"])
+
+
 if __name__ == "__main__":
     unittest.main()

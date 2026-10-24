@@ -842,3 +842,62 @@ def research_curve_model_quality(
     )
     return {"items":rows,"limit":limit,"offset":offset,
             "research_only":True,"risk_model_approved":False}
+
+
+@app.get("/v1/research/style-factors/coverage", dependencies=[Depends(require_api_key)])
+def style_factor_research_coverage() -> dict[str,Any]:
+    """Summary counts ONLY. No factor returns may be served without rights signoff."""
+    builds=_query(
+        "SELECT build_id,built_at,provider_archives_checked,archives_new,"
+        "rows_downloaded,rows_appended,distinct_style_series,"
+        "oldest_factor_date,newest_factor_date,"
+        "source_publication_vintages_verified,"
+        "production_risk_factors_approved,release_state "
+        "FROM eventrisk_factor_lab.main.lab_style_factor_ingest_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not builds:
+        raise HTTPException(503, detail="Style factor research sources not loaded")
+    series=_query(
+        "SELECT factor_id,COUNT(*) AS research_rows,"
+        "MIN(observed_date) AS first_date,MAX(observed_date) AS last_date,"
+        "COUNT(*) FILTER (WHERE licensed_for_distribution OR "
+        "approved_for_institutional_risk_use OR historical_point_in_time_verified) "
+        "AS prohibited_release_claims "
+        "FROM eventrisk_factor_lab.main.lab_style_factor_returns_v1 "
+        "GROUP BY factor_id ORDER BY factor_id"
+    )
+    return {"build":builds[0],"series":series,
+            "research_only":True,"downloaded_original_files_sha256_recorded":True,
+            "historical_publication_vintage_independently_verified":False,
+            "source_redistribution_rights_verified":False,
+            "raw_factor_return_api_enabled":False,
+            "approved_for_institutional_risk_use":False}
+
+
+@app.get("/v1/research/style-factors/security-model-coverage", dependencies=[Depends(require_api_key)])
+def style_factor_security_model_coverage() -> dict[str,Any]:
+    """Count descriptive research models, never expose copyrighted source returns."""
+    rows=_query(
+        "SELECT build_id,built_at,seven_factor_joint_dates,"
+        "included_security_models,factor_coefficients,"
+        "global_bh_q_under_05,holdout_improved_over_market,"
+        "excluded_or_unfit_securities,anomalous_price_exposed_models,"
+        "largest_training_condition,certified_source_vintages,"
+        "licensed_released_betas,release_state "
+        "FROM eventrisk_factor_lab.main.lab_ff6_research_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Style-security model not materialized")
+    return {"build":rows[0],
+            "model":"US_FF5_PLUS_MOM_RESEARCH",
+            "regressors":["Mkt-RF","SMB","HML","RMW","CMA","Mom"],
+            "risk_free_measure":"French_daily_RF",
+            "return_measure":"security_ex_post_adjusted_simple_return_minus_RF",
+            "raw_source_returns_served":False,
+            "security_beta_coefficients_served":False,
+            "point_in_time_certified":False,
+            "rights_for_external_use_verified":False,
+            "model_risk_approved":False,
+            "research_only":True}
