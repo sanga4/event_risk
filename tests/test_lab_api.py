@@ -289,5 +289,30 @@ class AuthAndResearchGates(unittest.TestCase):
 
 
 
+    def test_price_quality_summary_never_marks_beta_approved(self):
+        lab.app.state.query_fn=lambda sql,params: [
+            {"source_exception_rows":12,"beta_sensitivity_models":72,
+             "models_with_beta_shift_ge_20pct":30,"source_reconciled_exceptions":0}
+        ]
+        result=lab.security_price_quality_summary()
+        self.assertEqual(result["quality"]["source_exception_rows"],12)
+        self.assertFalse(result["production_betas_approved"])
+        self.assertFalse(result["source_quality_independently_approved"])
+
+    def test_price_quality_cases_and_beta_sensitivity_pagination(self):
+        query_args=[]
+        lab.app.state.query_fn=lambda sql,args: query_args.append(args) or [
+            {"ticker":"INTC","observed_date":"2024-08-02"}
+        ]
+        cases=lab.security_price_exception_cases(ticker="INTC",limit=4,offset=1)
+        beta=lab.security_price_beta_sensitivity(
+            ticker="INTC",factor_id="DGS10",limit=2,offset=3)
+        self.assertEqual(query_args[0],("INTC","INTC",4,1))
+        self.assertEqual(query_args[1],("INTC","INTC","DGS10","DGS10",2,3))
+        self.assertTrue(cases["unverified_evidence_not_false_data"])
+        self.assertFalse(beta["production_beta_release"])
+        self.assertTrue(beta["without_flagged_days_is_not_primary_model"])
+
+
 if __name__ == "__main__":
     unittest.main()
