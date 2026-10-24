@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.4.0"
+VERSION="phase1-gates-v1.5.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -69,6 +69,18 @@ def main():
         ("security_betas_independently_approved",
          f"SELECT COUNT(*) FROM {P}lab_security_rate_betas_retro_v1 WHERE point_in_time_verified AND independent_data_rights_verified AND released_for_risk_use",
          1,"MIN_COUNT","Production model risk approval and data provenance must precede any released security beta"),
+        ("institutional_field_contract_inventory",
+         f"SELECT COUNT(*) FROM {P}lab_institutional_field_contracts_v1 WHERE build_id=(SELECT build_id FROM {P}lab_institutional_data_contract_builds_v1 ORDER BY built_at DESC LIMIT 1)",
+         250,"MIN_COUNT","All risk data products have versioned source fields, units, time and licensing expectations; does NOT mean populated or approved"),
+        ("institutional_required_field_certification",
+         f"SELECT COUNT(*) FROM {P}lab_institutional_dataset_audit_v1 WHERE build_id=(SELECT build_id FROM {P}lab_institutional_data_contract_builds_v1 ORDER BY built_at DESC LIMIT 1) AND source_certification_complete",
+         16,"MIN_COUNT","Require all 16 source domains including portfolio and event innovations to have independently certified complete fields"),
+        ("rate_factor_covariance_collinearity_report",
+         f"SELECT COUNT(*) FROM {P}lab_factor_collinearity_pairs_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_diagnostics_builds_v1 ORDER BY built_at DESC LIMIT 1)",
+         150,"MIN_COUNT","Computed pairwise risk-factor correlations with actual unit-preserving source returns; this is NOT a release approval"),
+        ("independent_rate_factor_vintage_certification",
+         f"SELECT COUNT(*) FROM {P}lab_factor_exposure_specifications_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_diagnostics_builds_v1 ORDER BY built_at DESC LIMIT 1) AND independently_verified_source_vintage AND eligible_for_independent_production_model",
+         18,"MIN_COUNT","Release requires independent source/rights and as-of vintage verification, plus collinearity-safe multi-factor selection"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
