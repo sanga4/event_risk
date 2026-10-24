@@ -520,3 +520,70 @@ def forward_mapping_queue(
     return {"items":rows,"limit":limit,"offset":offset,
             "review_only": True,"hypotheses_not_evidence":True,
             "analyst_approval_required":True,"signals_released":False}
+
+
+@app.get("/v1/research/security-betas/coverage", dependencies=[Depends(require_api_key)])
+def retrospective_security_beta_coverage() -> dict[str, Any]:
+    """These rate sensitivities are historically computed, NOT PIT/approved betas."""
+    models=_query(
+        "SELECT COUNT(*) AS fitted_research_models, "
+        "COUNT(DISTINCT ticker) AS usd_instruments, "
+        "COUNT(DISTINCT factor_id) AS treasury_rate_factors, "
+        "MIN(n_observations) AS min_matched_days, "
+        "MAX(n_observations) AS max_matched_days, "
+        "COUNT(*) FILTER (WHERE rate_bh_fdr_q < 0.05) AS fdr_candidates, "
+        "COUNT(*) FILTER (WHERE test_r2_vs_spy_only > 0) AS positive_holdout, "
+        "COUNT(*) FILTER (WHERE rate_bh_fdr_q < 0.05 "
+        "AND test_r2_vs_spy_only > 0) AS double_screen_research_candidates, "
+        "COUNT(*) FILTER (WHERE point_in_time_verified "
+        "OR independent_data_rights_verified OR released_for_risk_use) "
+        "AS incorrectly_released_rows "
+        "FROM eventrisk_factor_lab.main.lab_security_rate_betas_retro_v1"
+    )
+    sources=_query(
+        "SELECT COUNT(*) AS usd_adjusted_return_days, "
+        "COUNT(DISTINCT ticker) AS usd_adjusted_return_instruments, "
+        "COUNT(*) FILTER(WHERE large_absolute_log_return) "
+        "AS suspicious_large_return_days "
+        "FROM eventrisk_factor_lab.main.lab_security_returns_retro_v1"
+    )
+    return {"models":models[0] if models else {},
+            "inputs":sources[0] if sources else {},
+            "estimation_type":"retrospective_market_controlled_rate_sensitivity",
+            "factor_shock_unit":"yield_basis_points",
+            "security_return_unit":"log_return_basis_points",
+            "model_benchmark":"SPY_adjusted_close",
+            "research_only":True,
+            "independent_historical_vintage_verified":False,
+            "authorized_security_beta_release":False}
+
+
+@app.get("/v1/research/security-betas/retrospective", dependencies=[Depends(require_api_key)])
+def retrospective_security_betas(
+    research_use: bool = False,
+    ticker: str | None = Query(None, min_length=1, max_length=24),
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Retrospective security factor estimates are disabled")
+    rows=_query(
+        "SELECT ticker,market_benchmark,factor_id,response_unit,predictor_unit, "
+        "beta_unit,n_observations,n_train,n_test,first_date,last_date, "
+        "beta_rate,beta_spy,intercept,train_r_squared,hac_lags, "
+        "hac_rate_se,rate_z_approx,rate_p_normal,rate_bh_fdr_q, "
+        "rate_ci95_lower,rate_ci95_upper,test_r2_vs_spy_only, "
+        "test_rmse_bps,baseline_spy_only_rmse_bps, "
+        "large_return_observations,point_in_time_verified, "
+        "independent_data_rights_verified,released_for_risk_use,model_status,build_id "
+        "FROM eventrisk_factor_lab.main.lab_security_rate_betas_retro_v1 "
+        "WHERE (? IS NULL OR ticker=?) AND (? IS NULL OR factor_id=?) "
+        "ORDER BY ticker,factor_id LIMIT ? OFFSET ?",
+        (ticker,ticker,factor_id,factor_id,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "status":"RETROSPECTIVE_RESEARCH_UNAPPROVED",
+            "independent_point_in_time_verified":False,
+            "released_for_risk_use":False,
+            "warning":"EX_POST_ADJUSTED_PRICES_AND_FACTOR_VALUES_NOT_PRODUCTION_BETAS"}
