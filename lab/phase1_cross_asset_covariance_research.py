@@ -171,7 +171,7 @@ def main():
               f"VALUES ({','.join(['?']*15)})",items)
             con.execute(f"""
               INSERT INTO {P}lab_cross_asset_risk_diagnostics_v1
-              VALUES (?,?,?,current_timestamp,?,?,?,?,?,?,?,?,?,?,?,?,FALSE,
+              VALUES (?,?,?,current_timestamp,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE,
                 FALSE,FALSE,'RETROSPECTIVE_NOT_A_LICENSED_OR_PIT_PORTFOLIO_RISK_MODEL')
             """,[build,sha,digest,rows[0][0],rows[-1][0],rows[train_n-1][0],
                  rows[train_n][0],n,train_n,n-train_n,len(IDS),SHRINK,
