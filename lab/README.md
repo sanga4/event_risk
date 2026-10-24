@@ -182,3 +182,44 @@ checks passing, **8/14** blocking, and **4** external/manual gates outstanding.
 The new passes are engineering/data-lineage checks only. Independently
 validated point-in-time history, legal rights, approved mappings, source
 publication/quote-time evidence and validated causal models remain blockers.
+
+## Institutional factor-return and beta methodology — 2026-10-24
+
+The authoritative specification is
+[`INSTITUTIONAL_FACTOR_BETA_METHODOLOGY.md`](INSTITUTIONAL_FACTOR_BETA_METHODOLOGY.md),
+which separates (a) the 108-item qualitative catalog, (b) measured market
+factors, (c) *security return beta* to those factors, and (d) identified
+event-information shocks and **factor responses**. The old same-day
+venue-level regression coefficient is neither a security beta nor an
+event-to-factor causal impact.
+
+The source-controlled materializer
+[`phase1_methodology_coverage.py`](phase1_methodology_coverage.py) created
+`lab_institutional_data_coverage_v1` (factor-by-factor and venue coverage)
+and `lab_institutional_beta_readiness_v1` (build-wide scorecard).
+First MotherDuck Flight `eventrisk-factor-lab-institutional-methodology-coverage`
+succeeded on October 24, 2026. It measured 22 quantitative catalog series,
+20 active, 18 with any historical observations, 0 with independently certified
+source publication vintages, 11,101,967 older snapshots, 565,695 retrospective
+market-day features, 10,556 newly captured quotes, 190,008 warehouse-as-of
+co-observations, 0 evidenced approved economic mappings, 36 exploratory
+OLS fits, 72 retrospective HAC/OOS fits, and **zero independently validated
+security betas or event-factor response estimates**.
+
+### Backfill boundaries
+
+Historical market and factor backfill is already materialized for retrospective
+research. The audit explicitly records missing factor families and identifies
+where factor histories are absent. No non-existent equity, FX, commodity,
+style portfolio or asset total-return data may be fabricated from the
+qualitative factor labels. Sources must be individually licensed, unit-
+standardized, timestamped, revision-versioned and release-reviewed before
+they can be used to estimate security betas. Older event-market snapshots
+cannot be reclassified as truly point-in-time merely because a 2026 warehouse
+now contains them.
+
+Institutional model release remains **BLOCKED** until actual investment
+return-dependent variables, PIT source factor shocks, eligible event
+innovations, approved economic transmission links, robust pre-registered
+event-time regressions, governance review and API/data rights have been
+independently validated.
