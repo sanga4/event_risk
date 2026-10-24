@@ -587,3 +587,78 @@ def retrospective_security_betas(
             "independent_point_in_time_verified":False,
             "released_for_risk_use":False,
             "warning":"EX_POST_ADJUSTED_PRICES_AND_FACTOR_VALUES_NOT_PRODUCTION_BETAS"}
+
+
+@app.get("/v1/research/data-contracts/summary", dependencies=[Depends(require_api_key)])
+def institutional_data_contract_summary() -> dict[str, Any]:
+    """Field presence is not independent source, rights or MRM certification."""
+    build=_query(
+        "SELECT build_id,built_at,contracts_defined,field_rules_defined, "
+        "required_fields_missing,required_fields_unpopulated, "
+        "uncertified_required_fields,institutional_release_approved,release_state "
+        "FROM eventrisk_factor_lab.main.lab_institutional_data_contract_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not build:
+        raise HTTPException(503, detail="Institutional data contracts not yet materialized")
+    dataset_rows=_query(
+        "SELECT dataset_id,source_table,grain,table_exists,source_row_count, "
+        "total_fields_required,required_fields_missing, "
+        "required_fields_unpopulated,populated_required_fields, "
+        "source_certification_complete,data_class,status "
+        "FROM eventrisk_factor_lab.main.lab_institutional_dataset_audit_v1 "
+        "WHERE build_id=? ORDER BY dataset_id", (build[0]["build_id"],)
+    )
+    return {"audit":build[0],"datasets":dataset_rows,
+            "source_certification_complete":False,
+            "production_beta_authorized":False,
+            "warning":"FIELD_PRESENCE_IS_NOT_DATA_RIGHTS_OR_POINT_IN_TIME_CERTIFICATION"}
+
+
+@app.get("/v1/research/data-contracts/fields", dependencies=[Depends(require_api_key)])
+def institutional_data_contract_fields(
+    dataset_id: str | None = Query(None, min_length=2, max_length=100),
+    status: str | None = Query(None, pattern="^(MISSING_DATASET|MISSING_FIELD|TYPE_MISMATCH|EMPTY|PARTIALLY_POPULATED|POPULATED_NOT_CERTIFIED)$"),
+    limit: int = Query(100, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows=_query(
+        "SELECT dataset_id,source_table,field_name,requirement_level, "
+        "source_table_exists,actual_source_type,expected_type_class, "
+        "type_class_pass,source_table_rows,nonnull_field_rows,nonnull_rate, "
+        "inventory_status,independently_certified_for_production "
+        "FROM eventrisk_factor_lab.main.lab_institutional_field_audit_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_institutional_data_contract_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1) "
+        "AND (? IS NULL OR dataset_id=?) AND (? IS NULL OR inventory_status=?) "
+        "ORDER BY dataset_id,requirement_level,field_name LIMIT ? OFFSET ?",
+        (dataset_id,dataset_id,status,status,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "certified_for_production":False, "research_only":True}
+
+
+@app.get("/v1/research/factors/collinearity", dependencies=[Depends(require_api_key)])
+def retrospective_rate_factor_collinearity(
+    strong_only: bool = True,
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    rows=_query(
+        "SELECT factor_a,factor_b,factor_a_family,factor_b_family, "
+        "matched_dates,observed_date_min,observed_date_max, "
+        "pearson_daily_shock_corr,abs_corr_gt_095, "
+        "derived_identity_component_risk,inference_status "
+        "FROM eventrisk_factor_lab.main.lab_factor_collinearity_pairs_v1 "
+        "WHERE build_id=(SELECT build_id FROM "
+        "eventrisk_factor_lab.main.lab_factor_diagnostics_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1) "
+        "AND (?=FALSE OR abs_corr_gt_095=TRUE) "
+        "ORDER BY ABS(pearson_daily_shock_corr) DESC LIMIT ? OFFSET ?",
+        (strong_only,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "source_vintage_verified":False,
+            "independent_factor_model_approved":False,
+            "notice":"HIGH_CORRELATION_REQUIRES_KEY_RATE_OR_PCA_TRAINING_WINDOW_POLICY"}
