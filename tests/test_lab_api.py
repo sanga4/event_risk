@@ -197,6 +197,36 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertTrue(result["analyst_approval_required"])
 
 
+    def test_retro_security_beta_coverage_never_grants_approval(self):
+        calls=[]
+        def source(sql,params):
+            calls.append(sql)
+            if "lab_security_rate_betas_retro_v1" in sql:
+                return [{"fitted_research_models":864,"incorrectly_released_rows":0}]
+            return [{"usd_adjusted_return_days":83427}]
+        lab.app.state.query_fn=source
+        result=lab.retrospective_security_beta_coverage()
+        self.assertEqual(result["models"]["fitted_research_models"],864)
+        self.assertFalse(result["authorized_security_beta_release"])
+        self.assertFalse(result["independent_historical_vintage_verified"])
+
+    def test_security_beta_rows_disabled_without_explicit_retro_flag(self):
+        with patch.dict(os.environ,{"LAB_ENABLE_RETROSPECTIVE_READ":""}):
+            with self.assertRaises(HTTPException) as err:
+                lab.retrospective_security_betas(research_use=True)
+            self.assertEqual(err.exception.status_code,403)
+
+    def test_security_beta_api_pagination_and_research_label(self):
+        args=[]
+        lab.app.state.query_fn=lambda sql,params:args.append(params) or [{"ticker":"TLT","factor_id":"DGS10"}]
+        with patch.dict(os.environ,{"LAB_ENABLE_RETROSPECTIVE_READ":"true"}):
+            result=lab.retrospective_security_betas(
+                research_use=True,ticker="TLT",factor_id="DGS10",limit=5,offset=2)
+        self.assertEqual(args[0],("TLT","TLT","DGS10","DGS10",5,2))
+        self.assertFalse(result["released_for_risk_use"])
+        self.assertEqual(result["status"],"RETROSPECTIVE_RESEARCH_UNAPPROVED")
+
+
 
 if __name__ == "__main__":
     unittest.main()
