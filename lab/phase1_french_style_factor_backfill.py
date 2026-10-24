@@ -213,7 +213,7 @@ def main():
             for label,url,sha,nbytes,http_last,_,_,_ in sources:
                 con.execute(f"""
                   INSERT INTO {P}lab_style_factor_source_archives_v1
-                  SELECT 'KENNETH_FRENCH_DATA_LIBRARY',?,?,?,?,?,
+                  SELECT 'KENNETH_FRENCH_DATA_LIBRARY',?,?,?,?,?,?,
                     FALSE,TRUE,FALSE,?
                   WHERE NOT EXISTS(
                     SELECT 1 FROM {P}lab_style_factor_source_archives_v1
