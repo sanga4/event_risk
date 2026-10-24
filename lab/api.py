@@ -959,3 +959,57 @@ def cross_asset_covariance_research_coverage() -> dict[str,Any]:
             "licensed_for_external_data_serving":False,
             "matrix_entries_exposed":False,
             "notice":"HOLDOUT_COVARIANCE_DRIFT_NOT_A_PREDICTIVE_RISK_MODEL"}
+
+
+@app.get("/v1/research/funding/nyfed-coverage", dependencies=[Depends(require_api_key)])
+def nyfed_funding_source_coverage() -> dict[str, Any]:
+    """Research source metadata only. No unpublished/rights-uncleared rates."""
+    runs=_query(
+        "SELECT build_id,built_at,source_rates,new_source_versions,"
+        "raw_reference_records,new_reference_records,daily_rate_deltas,"
+        "independently_verified_vintages,institutional_rate_shocks_released,"
+        "release_state FROM eventrisk_factor_lab.main.lab_nyfed_rate_backfill_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not runs:
+        raise HTTPException(503,detail="NY Fed rate research source not loaded")
+    coverage=_query(
+        "SELECT series_id,COUNT(*) AS available_historical_source_rows,"
+        "MIN(effective_date) AS first_effective_date,"
+        "MAX(effective_date) AS last_effective_date,"
+        "COUNT(*) FILTER(WHERE original_provider_published_at IS NOT NULL "
+        "AND first_published_timestamp_verified) AS original_publish_clock_certified "
+        "FROM eventrisk_factor_lab.main.lab_nyfed_rate_observations_retro_v1 "
+        "GROUP BY series_id ORDER BY series_id"
+    )
+    return {"build":runs[0],"sources":coverage,
+            "original_provider_publication_at_verified":False,
+            "last_observation_is_not_publication_clock":True,
+            "source_rights_for_external_use_verified":False,
+            "source_values_returned":False,
+            "approved_overnight_rate_surprises":False,
+            "research_only":True}
+
+
+@app.get("/v1/research/cross-asset/rolling-stability", dependencies=[Depends(require_api_key)])
+def cross_asset_rolling_stability() -> dict[str,Any]:
+    """Aggregate rolling regime screening; does not disclose licensed source values."""
+    rows=_query(
+        "SELECT build_id,created_at,source_joint_days,seven_factors,"
+        "rolling_train_days,forward_test_days,step_days,n_windows,"
+        "windows_flagged_regime_review,median_covariance_relative_drift,"
+        "p90_covariance_relative_drift,max_covariance_relative_drift,"
+        "max_variance_ratio,original_source_publication_certified,"
+        "institutional_risk_release,release_state "
+        "FROM eventrisk_factor_lab.main.lab_cross_asset_rolling_builds_v1 "
+        "ORDER BY created_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Rolling covariance research not built")
+    return {"build":rows[0],
+            "covariance_stability_independently_approved":False,
+            "portfolio_risk_model_released":False,
+            "provider_time_vintage_certified":False,
+            "licensing_for_external_source_data_verified":False,
+            "no_raw_copyrighted_provider_observations_in_response":True,
+            "warning":"ROLLING_COVARIANCE_REGIME_INSTABILITY_REVIEW_REQUIRED"}
