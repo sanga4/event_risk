@@ -24,7 +24,7 @@ def archive(text):
 
 def sample(n,header,values):
     out=["Provider Data Library source metadata","",header]
-    d=date(2010,1,1)
+    d=date(2023,1,1)
     from datetime import timedelta
     for i in range(n):
         day=d+timedelta(days=i)
@@ -43,12 +43,12 @@ class FrenchArchiveTests(unittest.TestCase):
         self.assertEqual(rows[0][1],"FF_US_MKT_RF")
         self.assertAlmostEqual(rows[0][2],0.01)
         self.assertAlmostEqual(rows[1][2],-.005)
-        self.assertEqual(start,date(2010,1,1))
-        self.assertEqual(end,date(2012,9,28))
+        self.assertEqual(start,date(2023,1,1))
+        self.assertEqual(end,date(2025,9,28))
 
     def test_momentum_sentinel_is_missing_not_zero(self):
         from datetime import timedelta
-        first=date(2019,1,1)
+        first=date(2023,1,1)
         ls=["Kenneth French research returns",",Mom"]
         for i in range(1005):
             d=first+timedelta(days=i)
