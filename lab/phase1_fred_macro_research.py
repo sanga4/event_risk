@@ -67,8 +67,8 @@ def read_fred(blob:bytes,series_id:str,frequency:str):
 
 
 def download(series_id,frequency,unit,transform):
-    params={"id":series_id}
-    response=requests.get(BASE,params=params,timeout=(12,70),
+    params={"id":series_id,"cosd":"2018-01-01"}
+    response=requests.get(BASE,params=params,timeout=(10,25),
         headers={"User-Agent":"Mozilla/5.0 (EventRiskFactor Internal Research)","Accept":"text/csv"})
     response.raise_for_status()
     points=read_fred(response.content,series_id,frequency)
