@@ -227,6 +227,44 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertEqual(result["status"],"RETROSPECTIVE_RESEARCH_UNAPPROVED")
 
 
+    def test_field_gap_summary_keeps_certification_blocked(self):
+        def query(sql,params):
+            if "lab_institutional_data_contract_builds_v1" in sql and "FROM eventrisk_factor_lab.main.lab_institutional_data_contract_builds_v1" in sql and "SELECT build_id,built_at" in sql:
+                return [{"build_id":"contract-build","contracts_defined":16,
+                         "field_rules_defined":274,"required_fields_missing":146}]
+            return [{"dataset_id":"factor_observation",
+                     "source_certification_complete":False}]
+        lab.app.state.query_fn=query
+        r=lab.institutional_data_contract_summary()
+        self.assertEqual(r["audit"]["field_rules_defined"],274)
+        self.assertFalse(r["source_certification_complete"])
+        self.assertFalse(r["production_beta_authorized"])
+
+    def test_field_details_are_bounded_and_not_certified(self):
+        captured=[]
+        lab.app.state.query_fn=lambda sql,args: captured.append(args) or [
+            {"field_name":"source_published_at","inventory_status":"MISSING_FIELD"}
+        ]
+        r=lab.institutional_data_contract_fields(
+            dataset_id="factor_observation",status="MISSING_FIELD",
+            limit=7,offset=9)
+        self.assertEqual(captured[0],
+            ("factor_observation","factor_observation",
+             "MISSING_FIELD","MISSING_FIELD",7,9))
+        self.assertFalse(r["certified_for_production"])
+
+    def test_high_correlation_factor_returns_do_not_approve_risk_model(self):
+        captured=[]
+        lab.app.state.query_fn=lambda sql,args: captured.append(args) or [
+            {"factor_a":"DGS20","factor_b":"DGS30",
+             "pearson_daily_shock_corr":0.981}]
+        r=lab.retrospective_rate_factor_collinearity(
+            strong_only=True,limit=5,offset=0)
+        self.assertEqual(captured[0],(True,5,0))
+        self.assertFalse(r["independent_factor_model_approved"])
+        self.assertFalse(r["source_vintage_verified"])
+
+
 
 if __name__ == "__main__":
     unittest.main()

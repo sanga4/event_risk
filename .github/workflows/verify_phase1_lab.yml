@@ -2,7 +2,7 @@ name: Verify EventRisk Phase I laboratory API
 on:
   push:
     branches:
-      - feat/phase1-security-rate-beta-backfill-20261024
+      - feat/phase1-institutional-data-contracts-20261024
       - main
   pull_request:
 permissions:
@@ -18,6 +18,6 @@ jobs:
       - name: Install pinned laboratory runtime and offline-test dependencies
         run: pip install -r lab/requirements.txt httpx==0.27.2
       - name: Compile all laboratory scripts without database or secrets
-        run: python -m py_compile lab/api.py lab/phase1_build_v3.py lab/phase1_historical_regressions.py lab/phase1_robust_regressions.py lab/phase1_release_gates.py lab/phase1_live_capture.py lab/phase1_prospective_features.py lab/phase1_warehouse_asof_grid.py lab/phase1_forward_mapping_review.py lab/phase1_methodology_coverage.py lab/phase1_security_rate_beta_backfill.py lab/phase1_security_rate_beta_backfill.py
+        run: python -m py_compile lab/api.py lab/phase1_build_v3.py lab/phase1_historical_regressions.py lab/phase1_robust_regressions.py lab/phase1_release_gates.py lab/phase1_live_capture.py lab/phase1_prospective_features.py lab/phase1_warehouse_asof_grid.py lab/phase1_forward_mapping_review.py lab/phase1_methodology_coverage.py lab/phase1_security_rate_beta_backfill.py lab/institutional_data_contracts.py lab/phase1_field_coverage.py lab/phase1_factor_risk_diagnostics.py lab/phase1_security_rate_beta_backfill.py
       - name: Validate API, robust regression math, data rights and research-mode gates
         run: python -m unittest discover -s tests -p 'test_lab_*.py' -v
