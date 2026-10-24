@@ -19,7 +19,7 @@
 
 Source-controlled risk-methodology code: [Treasury Curve Factor Model](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) and `phase1_curve_factor_research.py`. MotherDuck Flight successfully fitted **48** joint SPY + Treasury nominal curve models (LEVEL/SLOPE/CURVATURE), and persisted **144** coefficient rows over **701** historical rate-change dates. **6** slopes have exploratory BH q under .05, **17** same-day holdout comparisons improve on SPY-only, **4** models contain previously flagged abnormal price movements; maximum standardized training design condition number **1.7616**. All model and source PIT/rights/production release flags remain **FALSE**. These are descriptive historical security-rate sensitivities, not independently approved betas or event-to-factor causal responses.
 
-The formal institutional gate score is **still 12/26 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
+The formal institutional gate score is **still 14/29 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
 
 
 
@@ -29,8 +29,18 @@ See the [source/license/PIT and six-factor beta methodology](STYLE_FACTOR_SOURCE
 
 First complete **six-factor (Mkt-RF/SMB/HML/RMW/CMA/Mom)** USD-security research run: **48 models / 288 coefficients**, 15,897 complete joint U.S. factor days, 1,555–1,673 matched security observations/model, 151 global FDR q<5% *exploratory associations*, 27 same-day holdout improvements versus market-only, 9 models exposed to >25% adjusted-price-return flags, and **0** independently released institutional betas. RF is a *research cash return*, not a seventh risky beta. Source return percentages converted to daily simple decimals; dependent asset adjusted-close log returns converted back to daily simple returns before subtracting RF. Raw style returns/coefficients are deliberately not exposed via the service API.
 
-New release check version v1.6: **12/26 passing, 14 blocking, 4 separate manual approvals open**. The new source-loaded gate passes; independent provider PIT/vintage/licensing gate stays blocked. Institutional mandatory field coverage improved to **119/255 ~47%**, with 135 required fields missing and one existing field entirely empty. Neither a loaded source nor a research FDR statistic implies institutional model approval.
+New release check version v1.6: **14/29 passing, 14 blocking, 4 separate manual approvals open**. The new source-loaded gate passes; independent provider PIT/vintage/licensing gate stays blocked. Institutional mandatory field coverage improved to **119/255 ~47%**, with 135 required fields missing and one existing field entirely empty. Neither a loaded source nor a research FDR statistic implies institutional model approval.
 
+
+## Latest verified research milestone — ECB FX and cross-asset risk matrix
+
+Source-controlled [FX/Macro/Covariance Institutional Methodology](CROSS_ASSET_FX_MACRO_RISK_METHOD.md).
+
+- **ECB primary source loaded:** 7 EUR-base informational reference pairs, **39,088 historical rates** and **39,081 daily log quote-per-EUR changes** over 2005-01-03 through 2026-10-23. Retried full source load and verified **zero duplicate source versions** and zero false PIT/execution/trading rights approvals.
+- **Seven-factor cross-asset research:** Three Treasury nominal curve components, two ECB FX quote changes, two U.S. French research style portfolio returns, all matched on the same date with no weekly/monthly forward-fill. **655 calendar observations**, 458 training/197 holdout, **49 covariance cells**, 10% fixed diagonal shrinkage, training-only normalization. **Holdout covariance drift 69.94%**, material instability; risk model and source-license approvals FALSE.
+- **U.S. FRED macro funding and conditions:** Versioned native-unit importer for DFF, SOFR, NFCI, CPIAUCSL, UNRATE and WALCL created and tested offline; the **actual FRED source service timed out twice** from MotherDuck. **ZERO of those source rows loaded**; official API/network access and original release-vintage history remain blocked.
+- **Formal Phase I release gate v1.7:** 14 of 29 automatic PASS (**48.3%**), 15 BLOCKED, four manual sign-offs outstanding. New available-research-data checks pass but independent FX source/vintage/rights remains blocked.
+- **Field inventory remains measured on the previous 16-domain scope**: 119/255 required fields structurally populated (~47%), 135 missing. New ECB/FRED source contracts need a future explicit versioned scope expansion; existing contract metric should NOT be silently enlarged or misrepresented as all global factor fields.
 
 ## Current independent readiness checks
 
@@ -46,7 +56,7 @@ New release check version v1.6: **12/26 passing, 14 blocking, 4 separate manual 
 | API serving and operating controls | 0/1 = 0% | Public /health/live success is not private /health/ready and auth approval |
 | Quantitative model validation | 0/3 = 0% | Exploration exists, zero independently approved risk betas or event impacts |
 
-Formal automatic release gates = **12 passed / 26 total (45.8%)**. There are **14 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
+Formal automatic release gates = **14 passed / 29 total (48.3%)**. There are **15 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
 
 ## Real datasets loaded
 
