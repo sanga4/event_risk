@@ -93,3 +93,12 @@ P2: Train actual factor models and event-response models, with pre-registered ho
 ## New equity style backfill — not a rights or as-of certification (October 24, 2026)
 
 The formerly empty `risk_factor_portfolio` data domain now has 121,598 **Ken French US daily FF5/RF + momentum** observations across 7 IDs (2 official file-SHA256-identified snapshots). These are simple daily return decimals derived from source percentages, not nominal yield levels or security total-return index prices. The `vintage_date` is the **warehouse retrieval snapshot date**, explicitly not first public historical publication; vendor/CRSP rights remain pending, so no public redistribution and no institutional beta release. Factor data ends August 31, 2026 and is **not a current October equity-style feed**. The first source-field re-audit reduced missing required fields from 146 to **135**, leaving 119/255 structurally populated, one empty provider quote-time field and **all independent release certifications false**. Research-only beta details: [source and six-factor model methodology](STYLE_FACTOR_SOURCE_AND_BETA_METHOD.md).
+
+
+## Official ECB FX observations, source unavailability and cross-asset risk (2026-10-24)
+
+Seven official ECB daily EUR-base currency reference rates were materialized as 39,088 historical observations and 39,081 derived daily quote-currency-per-EUR log changes (bps); FX base/quote orientation, source SHA-256, original retrieved_at and versioning are explicit. Reference FX is informational **not executable** and actual original publication clocks/rights are unverified. Portfolio trading FX requires actual executable source quotes, calendar, spread/liquidity and terms.
+
+An institutionally required six-series macro source importer (DFF, SOFR, NFCI, CPIAUCSL, UNRATE, WALCL) exists but **FAILED** twice on official FRED CSV timeouts: **zero** rows were added. Proper API credentials, original revision/release time and source use rights remain blockers.
+
+First joint cross-asset rate/FX/style covariance research: 655 strict common dates, seven standardized dimensions, 49 covariance cells, fixed 10% shrinkage; **69.94% holdout covariance difference** indicates model/market-regime instability rather than production risk readiness. Technical source and exact semantic units are documented in [FX, Macro, and Cross-Asset Methodology](CROSS_ASSET_FX_MACRO_RISK_METHOD.md). Do not count the new dimensions in the original 16-domain/255-required-field contract without a versioned methodology scope change.
