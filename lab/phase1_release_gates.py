@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.3.0"
+VERSION="phase1-gates-v1.4.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -57,6 +57,18 @@ def main():
         ("forward_mapping_candidate_temporal_leakage",
          f"SELECT COUNT(*) FROM {P}lab_forward_mapping_hypotheses_v1 WHERE mapping_available_at > first_eligible_capture_at OR graph_asof > first_eligible_capture_at OR factor_ingested_at > first_eligible_capture_at OR factor_available_at > first_eligible_capture_at OR evidence_approved OR historically_backtest_released",
          0,"MAX_COUNT","Forward mapping hypothesis staging must not use post-capture warehouse information or claim approved evidence/release"),
+        ("market_controlled_security_rate_research_backfill",
+         f"SELECT COUNT(*) FROM {P}lab_security_rate_betas_retro_v1 WHERE model_status='EX_POST_MARKET_CONTROLLED_SENSITIVITY_NOT_PIT' AND NOT released_for_risk_use",
+         500,"MIN_COUNT","Backfilled retrospective SPY-controlled security sensitivities; successful calculations do not validate beta release"),
+        ("security_prices_original_vintage_certified",
+         f"SELECT COUNT(*) FROM {P}lab_security_returns_retro_v1 WHERE source_availability_pit_verified AND corporate_action_vintage_verified",
+         10000,"MIN_COUNT","Require verified historic first availability AND price corporate-action-adjustment revision vintages"),
+        ("unreviewed_large_price_moves",
+         f"SELECT COUNT(*) FROM {P}lab_security_returns_retro_v1 WHERE large_absolute_log_return",
+         0,"MAX_COUNT","Outlier adjusted returns require independent corporate-action and market-event investigation before release"),
+        ("security_betas_independently_approved",
+         f"SELECT COUNT(*) FROM {P}lab_security_rate_betas_retro_v1 WHERE point_in_time_verified AND independent_data_rights_verified AND released_for_risk_use",
+         1,"MIN_COUNT","Production model risk approval and data provenance must precede any released security beta"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
