@@ -194,6 +194,11 @@ def main():
               [build,sha,digest,old,v2run[0][0],metrics["rows"],metrics["factors"],
                metrics["source_date_repaired"],metrics["carry_flag_repaired"],
                metrics["material_daily_change_repaired"],rows])
+            con.execute(f"""CREATE OR REPLACE VIEW {P}lab_event_factor_panel_v3_1_latest AS
+               SELECT * FROM {P}lab_event_factor_panel_v3_1
+               WHERE build_id = (SELECT build_id
+                 FROM {P}lab_event_factor_v31_repairs_v1
+                 ORDER BY built_at DESC LIMIT 1)""")
             con.execute("COMMIT")
         except Exception:
             con.execute("ROLLBACK")
