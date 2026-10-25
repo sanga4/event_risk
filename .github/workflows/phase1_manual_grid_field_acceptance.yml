@@ -1,0 +1,169 @@
+name: Phase I research grid and institutional field audit (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Default read-only. Append-only research writes require confirmation."
+        type: choice
+        required: true
+        default: preflight_only
+        options:
+          - preflight_only
+          - incremental_grid_only
+          - field_contracts_only
+          - incremental_grid_and_field_contracts
+      confirm_research_writes:
+        description: "Confirm research-only writes, never institutional release"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+# Shared with existing prospective capture workflow for controlled writes.
+concurrency:
+  group: factor-lab-prospective-capture
+  cancel-in-progress: false
+
+jobs:
+  manual-lab-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+      LAB_GRID_FULL_REPLAY: "false"
+      OPERATION: ${{ inputs.operation }}
+      RESEARCH_WRITE_ACK: ${{ inputs.confirm_research_writes }}
+    steps:
+      - name: Validate intent and require explicit research-write acknowledgment
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$OPERATION" in
+            preflight_only|incremental_grid_only|field_contracts_only|incremental_grid_and_field_contracts) ;;
+            *) echo "::error::Unsupported operation"; exit 1 ;;
+          esac
+          if [ "$OPERATION" != preflight_only ] && [ "$RESEARCH_WRITE_ACK" != true ]; then
+            echo "::error::Explicit manual research-write confirmation required"
+            exit 1
+          fi
+          echo "Pinned source commit: $LAB_PIPELINE_COMMIT"
+          echo "Research mode: $OPERATION"
+          echo 'Institutional release: NOT AUTHORIZED'
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install research requirements and offline-test dependencies
+        run: pip install -r lab/requirements.txt httpx==0.27.2
+
+      - name: Run complete offline research lab regression suite
+        run: python -m unittest discover -s tests -p 'test_lab_*.py' -v
+
+      - name: Require properly scoped MotherDuck secret
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Set scoped Actions secret MOTHERDUCK_TOKEN for the research database."
+            exit 1
+          fi
+
+      - name: Record pre-run read-only integrity and field coverage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python lab/phase1_grid_preflight.py > "$RUNNER_TEMP/grid_before.json"
+          python lab/phase1_source_field_gap_preflight.py > "$RUNNER_TEMP/fields_before.json"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          a=json.loads((p/"grid_before.json").read_text())
+          b=json.loads((p/"fields_before.json").read_text())
+          print("PRE_GRID_STATE="+a["status"])
+          print("PRE_GRID_ROWS="+str(a["persisted_grid_rows"]))
+          print("PRE_PENDING_CAPTURE_IDENTITIES="+str(a["incremental_candidate_capture_rows"]))
+          print("PRE_FIELD_AUDIT_BUILD="+b["build_id"])
+          print("PRE_MISSING_MANDATORY_FIELDS="+str(b["required_missing"]))
+          print("NO_INSTITUTIONAL_APPROVAL=TRUE")
+          PY
+
+      - name: Materialize explicitly opted-in incremental grid research
+        if: ${{ inputs.operation == 'incremental_grid_only' || inputs.operation == 'incremental_grid_and_field_contracts' }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python lab/phase1_warehouse_asof_grid.py
+
+      - name: Materialize explicitly opted-in field-contract audit research
+        if: ${{ inputs.operation == 'field_contracts_only' || inputs.operation == 'incremental_grid_and_field_contracts' }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python lab/phase1_field_coverage.py
+
+      - name: Verify pinned append-only producer manifests
+        if: ${{ inputs.operation != 'preflight_only' }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python lab/phase1_grid_field_producer_handoff.py \
+            --source-commit "$LAB_PIPELINE_COMMIT" \
+            --mode "$OPERATION"
+
+      - name: Recheck source identity and field-gap invariants
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python lab/phase1_grid_preflight.py > "$RUNNER_TEMP/grid_after.json"
+          python lab/phase1_source_field_gap_preflight.py > "$RUNNER_TEMP/fields_after.json"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          before=json.loads((p/"grid_before.json").read_text())
+          after=json.loads((p/"grid_after.json").read_text())
+          fields=json.loads((p/"fields_after.json").read_text())
+          if after["persisted_grid_rows"] < before["persisted_grid_rows"]:
+              raise SystemExit("Append-only grid row count decreased")
+          if after["incremental_candidate_capture_rows"] > before["incremental_candidate_capture_rows"]:
+              raise SystemExit("Unrepresented source captures increased during acceptance")
+          if any(after[k] != 0 for k in (
+              "future_warehouse_factor_rows","duplicate_event_factor_keys",
+              "invalid_warehouse_receipt_flags","unexpected_research_approval_rows"
+          )):
+              raise SystemExit("Future factor data or false approval in the grid")
+          if fields["institutional_release_approved"] or fields["required_independently_uncertified"] != 255:
+              raise SystemExit("Unexpected institutional field certification")
+          print("POST_GRID_STATE="+after["status"])
+          print("POST_GRID_ROWS="+str(after["persisted_grid_rows"]))
+          print("POST_FIELD_AUDIT_BUILD="+fields["build_id"])
+          print("POST_MISSING_MANDATORY_FIELDS="+str(fields["required_missing"]))
+          print("RESEARCH_ONLY_VALIDATION=TRUE INSTITUTIONAL_RELEASE=FALSE")
+          PY
+
+      - name: State the release boundary even when a step failed
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Phase I manual research acceptance'
+            echo "Source commit: $LAB_PIPELINE_COMMIT"
+            echo "Operation: $OPERATION"
+            echo 'MotherDuck Flight v2 execution: **NOT CLAIMED by this workflow**'
+            echo 'Original source first-publication clocks: **UNVERIFIED**'
+            echo 'Licensed data and institutional beta approval: **NOT AUTHORIZED**'
+            echo 'Research build success does not imply point-in-time market availability.'
+          } >> "$GITHUB_STEP_SUMMARY"
