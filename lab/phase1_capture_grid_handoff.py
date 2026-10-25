@@ -43,7 +43,7 @@ def assess(feeds, source_runs, grid_runs, grid_integrity):
             or not 0<=f[3]<=MAX_AGE_MINUTES or f[4] is not True
             or f[5] is not False or n<1 or n!=f[2] or bad
             or received_at is None or received_at.tzinfo is None
-            or g[1]!=run_id or g[2]<n or g[3]<1 or g[3]>n
+            or g[1]!=run_id or g[2]<n or g[3]!=n
             or g[4] is None or g[4].tzinfo is None
             or g[5]!=0 or g[6]!=0
             or g[4]>received_at
