@@ -29,6 +29,16 @@ https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
 - Each appended `lab_factor_observations` row has **`ingested_at=availability_at=actual_http_response_received_at`**. The `availability_basis` expressly states `official_xml_http_receipt_not_original_publication`. Original first-published date/time, Treasury revision-vintage PIT, source reuse/redistribution and all beta releases remain **FALSE/UNVERIFIED**. Warehouse-as-known is strictly not Treasury first-known.
 - Successful opt-in writes append records transactionally alongside original binary packets and a source-Git-pinned manifest. A no-op feed can have an audit manifest with zero new values, but may not fabricate 18 fresh rate realizations when source values have not changed.
 
+## Independent persisted-receipt acceptance (PR #60)
+
+The manual source-refresh workflow now runs **a separate SELECT-only acceptance script after any opted-in research append**:
+
+    python lab/phase1_treasury_receipt_acceptance.py --source-commit <reviewed 40-char commit>
+
+It examines the latest source run manifest, archives both exact Treasury nominal and real XML byte packets, recomputes each source payload SHA256, authenticates the immutable producer source-file hash against the Git SHA of this execution, and checks that the source URL, UTC received-at clock and stored digest have not drifted. It reparses the original archived XML, recalculates the approved research 11 nominal + five real + two derived rates, and independently reconciles every newly persisted factor source value, original SHA link, source URL, percent unit, `ingested_at` and `availability_at` against the original HTTP receipt evidence. Duplicate source identities, missing rows, changed source payloads, forged publication or license approvals, or a mismatch to original source counts terminate acceptance. A documented zero-new-factor-value ingestion can legitimately pass with both original response packet hashes archived.
+
+**Successful script execution does NOT create the right to distribute Treasury data, establish original first-publication, prove retrospective point-in-time market knowledge or license an institutional rate/beta product.** Failures are research-data consistency failures, not reasons to erase original packets or silently correct source history.
+
 ## Operation and requirements
 
 1. Set a valid least-privilege GitHub Actions `MOTHERDUCK_TOKEN` with internal warehouse source archive write permission, respecting provider terms. Never paste the secret in chat or a commit.
