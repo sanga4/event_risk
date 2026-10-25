@@ -1013,3 +1013,33 @@ def cross_asset_rolling_stability() -> dict[str,Any]:
             "licensing_for_external_source_data_verified":False,
             "no_raw_copyrighted_provider_observations_in_response":True,
             "warning":"ROLLING_COVARIANCE_REGIME_INSTABILITY_REVIEW_REQUIRED"}
+
+
+@app.get("/v1/research/production/source-family-coverage", dependencies=[Depends(require_api_key)])
+def source_family_evidence_coverage() -> dict[str,Any]:
+    """Exact row counts and missing source domains; no source values, licenses or approvals."""
+    builds=_query(
+        "SELECT build_id,created_at,expected_domains,loaded_domains,"
+        "missing_domains,loaded_source_observations,"
+        "independent_original_pit_certified_domains,"
+        "independent_rights_certified_domains,risk_production_released "
+        "FROM eventrisk_factor_lab.main.lab_source_family_evidence_builds_v1 "
+        "ORDER BY created_at DESC LIMIT 1"
+    )
+    if not builds:
+        raise HTTPException(503,detail="Institutional source inventory not built")
+    rows=_query(
+        "SELECT domain,source_table,source_table_exists,source_row_count,"
+        "first_observed_date,latest_observed_date,last_local_retrieved_at,"
+        "expected_frequency,research_semantics,next_required_evidence,"
+        "provider_original_publication_verified,commercial_reuse_approved,"
+        "institutional_factor_model_approved "
+        "FROM eventrisk_factor_lab.main.lab_source_family_evidence_v1 "
+        "WHERE build_id=? ORDER BY domain",(builds[0]["build_id"],)
+    )
+    return {"build":builds[0],"sources":rows,
+            "missing_domains_count_is_not_source_coverage_certification":True,
+            "source_published_at_is_not_warehouse_received_at":True,
+            "institutional_source_family_release_authorized":False,
+            "production_portfolio_risk_approved":False,
+            "research_only":True}
