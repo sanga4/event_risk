@@ -175,7 +175,7 @@ def inspect(con,prefix=P):
         FROM {prefix}lab_factor_warehouse_vintages_v1 GROUP BY 1
       ),
       prospective AS (
-        SELECT factor_id,COUNT(*) rows,
+        SELECT factor_id,COUNT(*) AS n_rows,
            COUNT(DISTINCT event_run_id) capture_runs,
            COUNT(DISTINCT factor_observed_date) observed_days,
            COUNT(DISTINCT factor_source_sha256) vintages,
@@ -183,7 +183,7 @@ def inspect(con,prefix=P):
         FROM {prefix}lab_prospective_event_factor_grid_v1
         GROUP BY 1
       )
-      SELECT p.factor_id,p.rows,p.capture_runs,p.observed_days,
+      SELECT p.factor_id,p.n_rows,p.capture_runs,p.observed_days,
              p.vintages,p.distinct_values,a.source_days
       FROM prospective p LEFT JOIN archive a USING (factor_id)
       ORDER BY p.factor_id
