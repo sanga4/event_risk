@@ -15,3 +15,5 @@ The preflight refuses source joins that introduce duplicates/missing rows, any o
 **No independent historical PIT certification:** the source price/value file was ingested later; source observation day is not original public release time. V3.1 is a more internally consistent **retrospective** factor alignment only. Underlying event quote prices, factor values, issuer corporate actions and provider original publication clocks remain unapproved. The builder does not compute a causal event effect or grant licensed institutional reuse.
 
 The only required run variables are LAB_RESEARCH_SCOPE=internal-only and LAB_PIPELINE_COMMIT pinned to the versioned source Git SHA. There is no cron, protected API export or distribution license authorization.
+
+Use the read-only `lab_event_factor_panel_v3_1_latest` view to select a single current build safely. The append-only history table intentionally contains multiple builds after reruns and must never be analyzed without an explicit build filter. The latest view is an **internal research convenience only**, not an approved signal feed.
