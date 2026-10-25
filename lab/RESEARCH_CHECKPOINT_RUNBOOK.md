@@ -1,0 +1,27 @@
+# Phase I — checkpointed research validation batch
+
+**Producer:** `lab/phase1_research_checkpoint_runner.py`. It is a source-pinned, on-demand MotherDuck Flight that performs five *append-only research diagnostics* sequentially: independent original source-clock gaps, seven-factor covariance tail calibration, FF6 rolling beta integrity, institutionally blocked release-gate recomputation, and its downstream blocker register. It does **not** import new market data, repair prices, grant licenses, run model approvals or deploy the API.
+
+## Usage and restart semantics
+
+The MotherDuck Flight is created with `LAB_RESEARCH_SCOPE=internal-only`, `LAB_RUNNER_COMMIT=<40hex actual Git commit of runner>`, and `LAB_BATCH_ID=<32hex unique identifier>`. Source scripts are fetched only from hard-pinned GitHub commit `dd7f4dcff70dba20e35db358fec4233c7282361f`, and each fetched payload is checked against its *exact Git blob hash*, compiled, then SHA-256 recorded. The Flight itself runs without a calendar schedule and without external user-supplied secrets; the MotherDuck Flight infrastructure supplies its own attached warehouse token.
+
+Re-run the Flight with **the same batch ID and pinned runner version** after an interruption: all `SUCCEEDED` stages are re-verified against exact source/build/approval manifests and skipped; any unfinished stage is re-executed. Use a **fresh batch ID** to recompute metrics on newly loaded data. Different runner/source identities, incomplete prior stages, missing source artifacts, conflicting successful builds and any institutional release flags cause immediate failure. A failed subprocess must not persist raw stderr, source URLs or tokens; journal records only a safe exception class. One flight can perform all five stages in a single remote execution without additional ChatGPT prompts.
+
+The journal `eventrisk_factor_lab.main.lab_research_checkpoint_events_v1` has stable batch ID, distinct attempt ID, stage ordinal, state, build identifier, immutable producer SHA lineage, runner SHA256, timestamp and explicit release FALSE. A successful downstream register must cite the same batch's immediately preceding release-gate build. No operator should treat `SUCCEEDED` as commercial model authorization.
+
+## Explicit engineering limits
+
+**This is at-least-once stage execution, not exactly-once replay or an immutable historical data snapshot.** A worker may die after a producer committed but before its success journal entry; an ensuing retry then produces a separate append-only research build. Source market prices and original snapshots are never updated by these stages. Source upstream datasets are mutable between runs. No distributed mutex or atomic execution lease exists: operators MUST serialize invocations for a batch and all production warehouse writers. Do not schedule overlapping warehouse runs. This runner deliberately has no automatic transient retries of child writes.
+
+**An on-demand MotherDuck Flight is not persistent autonomous continuous operation.** Actual no-chat future scheduling or alerting requires independently provisioned least-privilege credentials, a supported GitHub Actions/worker scheduler, tested alarms, data-rights approval for each source, and a separate ops decision. The repository already has an on-demand, serial GitHub Actions QA workflow gated on a scoped `MOTHERDUCK_TOKEN` repository secret.
+
+The run neither certifies historical provider original publication clocks nor solves the FRED registered-key, nine absent source families, four manual approvals or beta/covariance model-risk deficiencies. The institutional release switch remains FALSE.
+
+## Verified acceptance, 2026-10-25 04:14 UTC
+
+Flight `eventrisk-lab-checkpointed-institutional-research-audit` UUID `05d616b8-57be-45ff-8576-d4b111a94ba1`, version 1, pinned branch source `f6d77c0734ebd24107660fb3b606692650fd853a`, initial batch `a1b2c3d4e5f600112233445566778899`. Flight run #1 SUCCEEDED (exit 0) and wrote five verified success checkpoints. Flight run #2 SUCCEEDED with the SAME batch and wrote exactly five `SKIPPED_VERIFIED` events tied to all five original persisted producer builds; no fresh build was required on the second run. CI for the original tested branch passed 175 Lab tests, including offline simulated interruption after stage two and exact checkpoint recovery.
+
+A one-click GitHub Actions entrypoint is `.github/workflows/phase1_checkpointed_research_audit.yml`. It is explicitly **manual** (`workflow_dispatch`, no schedule), serialized in its own concurrency group, and fails closed unless an owner supplies a scoped `MOTHERDUCK_TOKEN` repository secret. When no batch ID is given, it derives a 32-hex stable key from the Actions run ID, so a failed-job rerun uses the same checkpoint namespace; the optional explicit validated 32-hex ID supports intentional recovery. The workflow does not change MotherDuck Flight schedules, licensing flags, or API exposure. All future event collection schedules remain separately dependent on proper credentials, alerts and vendor rights.
+
+**Once this PR is merged**, the verified Flight should use the *merge commit* as LAB_RUNNER_COMMIT with a **fresh batch ID** (the first batch's identity is intentionally immutable). Preserve the old on-demand Flight for provenance but never reuse its batch ID with a different runner commit. Any new pipeline input source publication clocks/rights remain unverified.
