@@ -243,7 +243,81 @@ def panel_v3(
     return {"items": rows, "limit": limit, "offset": offset,
             "mode": "retrospective", "research_only": True,
             "released_for_backtesting": False,
-            "warning": "RETROSPECTIVE_AND_UNREVIEWED_NOT_CAUSAL_OR_BACKTEST_SAFE"}
+            "warning": "LEGACY_V3_SOURCE_DATE_AND_CARRY_SEMANTICS_UNRECONCILED_USE_V3_1",
+            "legacy_factor_source_date_defect": True, "recommended_research_panel": "v3_1"}
+
+
+
+@app.get("/v1/research/v3_1/summary", dependencies=[Depends(require_api_key)])
+def summary_v31() -> dict[str, Any]:
+    """Versioned source-date repair counts only, not original publisher PIT."""
+    rows = _query(
+        "SELECT build_id,source_git_sha,original_v3_rows,source_factor_families, "
+        "corrected_factor_observed_dates,corrected_carried_labels, "
+        "corrected_material_factor_deltas,verified_join_rows, "
+        "original_source_pit_verified,independently_approved_event_factor_model, "
+        "institutional_release_approved "
+        "FROM eventrisk_factor_lab.main.lab_event_factor_v31_repairs_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503, detail="Source-linked v3.1 research build unavailable")
+    manifest = rows[0]
+    if (manifest.get("original_source_pit_verified") is not False
+        or manifest.get("independently_approved_event_factor_model") is not False
+        or manifest.get("institutional_release_approved") is not False):
+        raise HTTPException(503, detail="Research-only source approval state inconsistent")
+    return {"panel_version": "v3_1", "manifest": manifest,
+            "source_date_consistency_reconciled": True,
+            "original_provider_publication_time_certified": False,
+            "licensed_for_institutional_factor_risk": False,
+            "causal_event_factor_mapping_approved": False,
+            "released_for_historical_backtesting": False,
+            "research_only": True}
+
+
+@app.get("/v1/research/v3_1/panel", dependencies=[Depends(require_api_key)])
+def panel_v31(
+    mode: str = Query("as_known", pattern="^(as_known|retrospective)$"),
+    research_use: bool = False,
+    proposition_id: str | None = Query(None, min_length=2, max_length=200),
+    factor_id: str | None = Query(None, min_length=2, max_length=100),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int = Query(50, ge=1, le=MAX_PAGE),
+    offset: int = Query(0, ge=0, le=100000),
+) -> dict[str, Any]:
+    if mode == "as_known":
+        raise HTTPException(409, detail="Original source first-published-at is not certified")
+    if not research_use or os.environ.get("LAB_ENABLE_RETROSPECTIVE_READ") != "true":
+        raise HTTPException(403, detail="Retrospective research source is disabled")
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(422, detail="date_from must not exceed date_to")
+    rows = _query(
+        "SELECT proposition_id,factor_id,observed_date,event_cutoff_at, "
+        "event_known_at,event_probability,event_delta_pp,factor_observed_date, "
+        "factor_value,factor_unit,previous_aligned_factor_value,factor_change_bps, "
+        "factor_carried_forward,factor_available_at,factor_ingested_at, "
+        "data_lookahead_warning,relation_status,data_use_class, "
+        "pipeline_version,build_id,source_v3_build_id,source_v2_research_run_id "
+        "FROM eventrisk_factor_lab.main.lab_event_factor_panel_v3_1_latest "
+        "WHERE observed_mode='retrospective' "
+        "AND reconciled_to_existing_factor_hash_and_run=TRUE "
+        "AND original_publication_pit_independently_certified=FALSE "
+        "AND institutional_event_factor_approved=FALSE "
+        "AND (? IS NULL OR proposition_id=?) AND (? IS NULL OR factor_id=?) "
+        "AND (? IS NULL OR observed_date>=?) AND (? IS NULL OR observed_date<=?) "
+        "ORDER BY observed_date DESC,proposition_id,factor_id LIMIT ? OFFSET ?",
+        (proposition_id,proposition_id,factor_id,factor_id,
+         date_from,date_from,date_to,date_to,limit,offset)
+    )
+    return {"items": rows, "limit": limit, "offset": offset,
+            "panel_version": "v3_1", "mode": "retrospective", "research_only": True,
+            "source_date_consistency_reconciled": True,
+            "original_publisher_point_in_time_verified": False,
+            "approved_event_factor_causality": False,
+            "released_for_historical_backtesting": False,
+            "warning": "REPAIRED_FACTOR_DATES_BUT_EX_POST_NOT_BACKTEST_SAFE"}
 
 
 @app.get("/v1/research/history/coverage", dependencies=[Depends(require_api_key)])
