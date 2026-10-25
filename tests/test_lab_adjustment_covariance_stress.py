@@ -22,11 +22,11 @@ class CorporateAdjustmentQA(unittest.TestCase):
               volume DOUBLE,currency VARCHAR,source VARCHAR,
               fetched_at TIMESTAMPTZ,run_id VARCHAR)""")
             con.execute("""INSERT INTO security_prices VALUES
-              ('AAA','2024-01-02',100,80,10000,'USD','Vendor','2026-10-16 01:00+00','r1'),
-              ('AAA','2024-01-03',101,80.8,10000,'USD','Vendor','2026-10-16 01:00+00','r1'),
-              ('AAA','2024-01-04',102,102,10000,'USD','Vendor','2026-10-16 01:00+00','r1'),
-              ('JPY=X','2024-01-02',150,150,10000,'JPY','Vendor','2026-10-16 01:00+00','r1'),
-              ('JPY=X','2024-01-02',151,151,10000,'JPY','Vendor','2026-10-16 01:00+00','r2')""")
+              ('AAA','2024-01-02',100,80,10000,'USD','Vendor','2026-10-16 01:00:00+00:00','r1'),
+              ('AAA','2024-01-03',101,80.8,10000,'USD','Vendor','2026-10-16 01:00:00+00:00','r1'),
+              ('AAA','2024-01-04',102,102,10000,'USD','Vendor','2026-10-16 01:00:00+00:00','r1'),
+              ('JPY=X','2024-01-02',150,150,10000,'JPY','Vendor','2026-10-16 01:00:00+00:00','r1'),
+              ('JPY=X','2024-01-02',151,151,10000,'JPY','Vendor','2026-10-16 01:00:00+00:00','r2')""")
             adjust.stage(con)
             row=con.execute("""SELECT ratio_step_bps,raw_close_return_bps,
                  adjusted_close_return_bps FROM p1_adj_diffs
