@@ -33,11 +33,16 @@ DISPOSITION = "RETROSPECTIVE_PAIRED_PREDICTION_LOSSES_NO_PIT_OR_LICENSE_RELEASE"
 VARIANTS = frozenset(("full_training", "training_tail_exclusion"))
 
 
+def finite_number(value):
+    """Real scalar from DuckDB or NumPy; never bool, text or nonfinite."""
+    return (not isinstance(value, (bool, np.bool_))
+            and isinstance(value, (int, float, np.integer, np.floating))
+            and math.isfinite(float(value)))
+
+
 def approx(actual, expected, metric, tolerance=RESULT_TOL):
-    if (type(actual) not in (int, float)
-        or type(expected) not in (int, float)
-        or not math.isfinite(actual) or not math.isfinite(expected)
-        or not math.isclose(actual, expected, **tolerance)):
+    if (not finite_number(actual) or not finite_number(expected)
+        or not math.isclose(float(actual), float(expected), **tolerance)):
         raise ValueError("Persisted loss/boot model metric drift: " + metric)
 
 
@@ -103,7 +108,7 @@ def verify(manifest, parent, original, losses, summaries, expected_commit,
         if not (cutoff == parent_cutoff and first <= day <= last and cutoff < day):
             raise ValueError("Changed training cutoff or dated heldout observation")
         for value in (actual,pred_b,pred_j,loss_b,loss_j):
-            if type(value) not in (float,int) or not math.isfinite(value):
+            if not finite_number(value):
                 raise ValueError("Invalid prediction or nonfinite daily loss")
         if loss_b < 0 or loss_j < 0:
             raise ValueError("Negative squared forecast loss")
