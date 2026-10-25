@@ -415,5 +415,49 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(obj["portfolio_risk_covariance_approved"])
 
 
+    def test_nyfed_source_coverage_returns_only_rate_counts(self):
+        sqls=[]
+        def query(sql,args):
+            sqls.append(sql)
+            if "lab_nyfed_rate_backfill_builds_v1" in sql:
+                return [{"build_id":"nyfed","source_rates":2,
+                         "raw_reference_records":500,"new_reference_records":0}]
+            return [{"series_id":"SOFR","available_historical_source_rows":250,
+                     "original_publish_clock_certified":0}]
+        lab.app.state.query_fn=query
+        result=lab.nyfed_funding_source_coverage()
+        self.assertEqual(result["build"]["source_rates"],2)
+        self.assertFalse(result["source_values_returned"])
+        self.assertFalse(result["source_rights_for_external_use_verified"])
+        self.assertTrue(result["last_observation_is_not_publication_clock"])
+        self.assertEqual(len(sqls),2)
+
+    def test_rolling_regime_risk_summary_is_not_approval(self):
+        lab.app.state.query_fn=lambda sql,args: [
+            {"n_windows":17,"windows_flagged_regime_review":17,
+             "median_covariance_relative_drift":.5906,
+             "institutional_risk_release":False}
+        ]
+        result=lab.cross_asset_rolling_stability()
+        self.assertEqual(result["build"]["windows_flagged_regime_review"],17)
+        self.assertFalse(result["portfolio_risk_model_released"])
+        self.assertFalse(result["provider_time_vintage_certified"])
+        self.assertTrue(result["no_raw_copyrighted_provider_observations_in_response"])
+
+    def test_source_family_ledger_reports_missing_not_certified(self):
+        def query(sql,args):
+            if "lab_source_family_evidence_builds_v1" in sql:
+                return [{"build_id":"inventory","expected_domains":16,
+                         "loaded_domains":7,"missing_domains":9}]
+            self.assertEqual(args,("inventory",))
+            return [{"domain":"macro_release_consensus",
+                     "source_row_count":0,"source_table_exists":False}]
+        lab.app.state.query_fn=query
+        result=lab.source_family_evidence_coverage()
+        self.assertEqual(result["build"]["missing_domains"],9)
+        self.assertFalse(result["institutional_source_family_release_authorized"])
+        self.assertFalse(result["production_portfolio_risk_approved"])
+
+
 if __name__ == "__main__":
     unittest.main()
