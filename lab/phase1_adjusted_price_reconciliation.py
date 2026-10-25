@@ -142,21 +142,32 @@ def main():
         """).fetchone()[0]
         con.execute(f"""
         CREATE OR REPLACE TEMP TABLE p1_candidates AS
-        SELECT ?,sha256(ticker||':'||CAST(date AS VARCHAR)||':'||run_id),
-          ticker,date,prev_date,close,prev_close,adj_close,prev_adj_close,
-          adj_close/close,ratio_step_bps,raw_close_return_bps,
-          adjusted_close_return_bps,
-          adjusted_close_return_bps-raw_close_return_bps-ratio_step_bps,
-          source,currency,fetched_at,run_id,
-          ABS(ratio_step_bps)>=?,FALSE,FALSE,FALSE,FALSE,
+        SELECT ? AS build_id,sha256(ticker||':'||CAST(date AS VARCHAR)||':'||run_id) AS candidate_id,
+          ticker,date AS observed_date,prev_date AS previous_observed_date,
+          close AS original_vendor_close,prev_close AS prior_vendor_close,
+          adj_close AS original_vendor_adjusted_close,
+          prev_adj_close AS prior_vendor_adjusted_close,
+          adj_close/close AS close_to_adjusted_ratio,
+          ratio_step_bps AS log_adjustment_ratio_step_bps,
+          raw_close_return_bps,adjusted_close_return_bps,
+          adjusted_close_return_bps-raw_close_return_bps-ratio_step_bps
+            AS return_difference_identity_residual_bps,
+          source AS source_vendor,currency AS source_currency,
+          fetched_at AS source_fetched_at,run_id AS source_run_id,
+          ABS(ratio_step_bps)>=? AS large_ratio_step_requires_source_review,
+          FALSE AS original_issuer_action_verified,
+          FALSE AS original_vendor_revision_asof_verified,
+          FALSE AS external_data_rights_approved,
+          FALSE AS approved_for_institutional_beta,
           'PROVIDER_ADJUSTMENT_RATIO_DISCONTINUITY_NOT_VERIFIED_ACTION'
+            AS candidate_label
         FROM p1_adj_diffs
         WHERE ABS(ratio_step_bps)>=?
         """,[build,MATERIAL_STEP_BPS,RATIO_STEP_BPS])
         candidates,material,residual=con.execute("""
            SELECT COUNT(*),
-             COUNT(*) FILTER(WHERE column19),
-             COALESCE(MAX(ABS(column14)),0)
+             COUNT(*) FILTER(WHERE large_ratio_step_requires_source_review),
+             COALESCE(MAX(ABS(return_difference_identity_residual_bps)),0)
            FROM p1_candidates
         """).fetchone()
         if ninputs<50000 or ntickers<50:
@@ -165,14 +176,19 @@ def main():
             raise RuntimeError("Close/adjusted-close identity did not reconcile")
         con.execute(f"""
         CREATE OR REPLACE TEMP TABLE p1_cases_linked AS
-        SELECT ?,e.ticker,e.observed_date,e.log_return_bps,
-          e.source_unadjusted_close,e.source_adjusted_close,
-          p.ratio_step_bps,p.raw_close_return_bps,
+        SELECT ? AS build_id,e.ticker,e.observed_date,e.log_return_bps AS outlier_adjusted_log_return_bps,
+          e.source_unadjusted_close AS vendor_unadjusted_day_close,
+          e.source_adjusted_close AS vendor_adjusted_day_close,
+          p.ratio_step_bps AS same_day_adjustment_step_bps,
+          p.raw_close_return_bps AS same_day_unadjusted_return_bps,
           CASE WHEN p.ratio_step_bps IS NOT NULL AND
              ABS((p.adjusted_close_return_bps-p.raw_close_return_bps)-
                   p.ratio_step_bps)<0.000001
-          THEN TRUE ELSE FALSE END,
-          FALSE,FALSE,FALSE,NULL
+          THEN TRUE ELSE FALSE END AS mathematically_adjustment_step_explains_return_difference,
+          FALSE AS original_vendor_quote_time_verified,
+          FALSE AS issuer_corporate_action_original_evidence_verified,
+          FALSE AS problem_cause_unambiguously_identified,
+          NULL::VARCHAR AS reviewer_or_approver_decision
         FROM {P}lab_security_price_exception_cases_v1 e
         LEFT JOIN p1_adj_diffs p
           ON p.ticker=e.ticker AND p.date=e.observed_date
@@ -181,7 +197,7 @@ def main():
           ORDER BY built_at DESC LIMIT 1)
         """,[build])
         ncases,material_in_cases=con.execute("""
-           SELECT COUNT(*),COUNT(*) FILTER(WHERE ABS(column7)>=?)
+           SELECT COUNT(*),COUNT(*) FILTER(WHERE ABS(same_day_adjustment_step_bps)>=?)
            FROM p1_cases_linked
         """,[MATERIAL_STEP_BPS]).fetchone()
         if ncases!=12:
