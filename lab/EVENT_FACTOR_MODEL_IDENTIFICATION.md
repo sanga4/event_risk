@@ -9,3 +9,11 @@ For each factor, the audit reports observed proposition-factor rows, truly disti
 **Econometric implication:** eventually use event-release-time-matched independent market outcomes, temporal blocked/rolling evaluation, source-known-at timestamps, predeclared event/industry clusters, suitable HAC/cluster/heteroskedastic covariance and independent model risk review. Cross-sectional quote changes for many event propositions on one day do not magically create independent factor shocks. Cluster count cannot be inferred from the 192,294 joined rows; source-provenance-valid temporal replication is required before statistical claims. Current event-channel mapping has no independent signed approval.
 
 No underlying raw factor or event data are changed; no license or historical backtest is authorized. Run as an internal-only MotherDuck Flight, pinned to a 40-character Git SHA.
+
+## First executed warehouse validation — October 25, 2026 UTC
+
+MotherDuck Flight `eventrisk-lab-event-outcome-cluster-adequacy-audit`, UUID `096b41c0-318f-4399-9f25-6799d4f12e3b`, version 1 run 1 SUCCEEDED (exit 0); source commit `5f8fd06884597bd5a029c0e2767a4d6fc0a4267c` and build `phase1-event-pseudoreplication-v1.0.0-20261025T044939227465Z`. The exact source-native v4 manifest was `phase1-v4-native-event-factor-v1.0.0-20261025T044634884777Z`.
+
+All **18** factors had exactly **6** observed event dates and **5** dates with paired non-null event/factor changes. Sum of all paired rows **192,294**. Apparent repeated paired rows per factor-date were **2,136.6** for each factor, not 2,136 independent observations. **18/18** factor families fail the deliberately conservative, predeclared 60 paired-date *exploratory screening criterion*, with **zero** independently approved causal betas and **zero** original source PIT attestations. The audit wrote a versioned one-row manifest and 18 factor review subjects. All four GitHub CI workflows passed and the expanded Lab suite passed **214 offline tests**, including seven new adverse inference-model tests.
+
+This validates accurate warehouse counting and conservative non-approval only; independence, stationarity, information availability, event exogeneity, confounders, beta reliability, production use and source rights remain unverified.
