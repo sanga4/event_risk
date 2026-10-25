@@ -7,7 +7,7 @@ Absent vendor datasets are zero/NOT_LOADED rather than synthetic observations.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime,timezone
+from datetime import date,datetime,timezone
 from pathlib import Path
 import hashlib,os
 import duckdb
@@ -27,7 +27,7 @@ class Spec:
 
 SOURCES=(
  Spec("venue_prospective_receipts","lab_live_market_captures_v1","capture_received_at","on_demand","FORWARD_RECEIPT_ONLY","Original venue quote timestamps/terms and scheduled capture","capture_received_at"),
- Spec("historical_market_snapshots","market_snapshots","","mixed_retrospective","RETROSPECTIVE_ONLY","Original source provider publication and first-local-capture history"),
+ Spec("historical_market_snapshots","market_snapshots","ts","mixed_retrospective","RETROSPECTIVE_ONLY","Original source provider publication and first-local-capture history"),
  Spec("usd_security_prices","security_prices","date","daily","RETROSPECTIVE_ADJUSTED","Licensed original security IDs, split/dividend vintages, delisted universe","fetched_at"),
  Spec("treasury_par_yields","lab_factor_observations","observed_date","daily","RETROSPECTIVE_RATES","Historical original provider publication/revisions and source rights"),
  Spec("us_equity_style_factors","lab_style_factor_returns_v1","observed_date","daily","RETROSPECTIVE_STYLE","Ken French/CRSP usage rights, historical source snapshots as-known","downloaded_at"),
@@ -43,6 +43,13 @@ SOURCES=(
  Spec("macro_release_consensus","lab_macro_release_surprises_v1","source_published_at","event_intraday","NOT_LOADED","Timestamped pre-release consensus, original first-print and amendments"),
  Spec("event_evidence_archive","lab_evidence","","event_publication","CANDIDATE_ONLY","Attributable original evidence, first publication, license and independent reviewer"),
 )
+
+
+def validate_snapshot_span(n:int,first:date|None,last:date|None,today:date):
+    """Source *observation day* coverage, not original quote published-at PIT."""
+    if n<=0 or first is None or last is None or first>last or last>today or first<date(2000,1,1):
+        raise ValueError("Historical market snapshot observation-date coverage invalid")
+    return (last-first).days+1
 
 
 def main():
@@ -108,6 +115,10 @@ def main():
                       f"SELECT MIN(CAST({s.date_col} AS DATE)),"
                       f"MAX(CAST({s.date_col} AS DATE)) FROM {P}{s.table}"
                     ).fetchone()
+                if s.domain=="historical_market_snapshots" and count>0:
+                    # Source event timestamps support a descriptive calendar span.
+                    # NEVER label these as provider first-publication clocks.
+                    validate_snapshot_span(count,first,last,datetime.now(timezone.utc).date())
                 if count>0 and s.received_col and s.received_col in cols[s.table]:
                     retrieved=con.execute(
                       f"SELECT MAX({s.received_col}) FROM {P}{s.table}"
