@@ -1,0 +1,19 @@
+# Prospective public market capture → factor grid → release-evidence handoff
+
+This is a single *manual* GitHub Actions workflow: [Factor Lab prospective public-market capture](../.github/workflows/phase1_prospective_capture.yml). It requires a **scoped** `MOTHERDUCK_TOKEN` stored as a GitHub Actions secret; no token is stored in code or CI step summaries. The workflow is intentionally not scheduled until the owner authorizes ongoing polling and verifies venue terms of use, quotas and operational costs. It uses source Git SHA pinning and serializes capture runs, preventing concurrent duplicate producer invocations.
+
+The workflow performs: (1) official public-market capture, (2) refresh research-only venue feature views, (3) append warehouse-as-of factor grid, (4) independent **latest-capture-to-grid** reconciliation `lab/phase1_capture_grid_handoff.py`, (5) refresh the source-family evidence ledger, (6) refresh independent original-publication-clock evidence gaps, (7) evaluate all institutional release gates, and (8) persist the role-linked release blocker register.
+
+The reconciliation is a *fail-closed read-only* query. For **both** Kalshi and Polymarket it independently joins their latest stored `run_id` to the grid's `event_run_id`, verifies the collector reports `ok` and a non-empty run from the last 12 hours, enforces identical unique market counts (not just many factor rows), checks that the latest warehouse factor co-observation timestamps trail the original capture receipts by no more than two minutes, and rejects any duplicate event×factor source keys, future factor ingestion/availability values, provider-clock claims or independent institutional approvals. It does not modify source observations or gate definitions.
+
+**Hard source semantics:** HTTP `capture_received_at` timestamps are warehouse receipt clocks. `factor_available_at` is the declared *warehouse availability* clock. Neither is the independently verified venue `published_at` time or the first-publication timestamp of a macroeconomic release. Successful capture is an operational freshness prerequisite, *not* a historical first-known quote certification, permission to redistribute venue data, signed event/factor mapping review or approved security beta.
+
+If grid rebuild or reconciliation fails, the workflow aborts before generating any new release-gate snapshot; the most recent prior snapshot may already be stale. The owner must inspect the run logs, check original warehouse ingestion, and rerun the GitHub Action after remediation. Failed runs do not grant approval or silently catch exceptions.
+
+## Latest verified operational event
+
+On October 25, 2026 at approximately 17:54 UTC the existing Mother's Duck prospective capture Flight version 4 run #12 succeeded with **1,888 Kalshi and 3,000 Polymarket** new receipt observations, for **44,778 cumulative**. Both `collector_operational_recently` rows were `TRUE`, with `institutional_quote_freshness_certified=FALSE`.
+
+At about 17:55 UTC the existing as-of grid Flight started run #8. These producer Flights consume a limited daily compute allocation; an attempt to start a **separate** five-stage source-QA Flight was rejected when MotherDuck reported the organization's included 30 daily Flight minutes had been exhausted. Therefore use a scoped GitHub Action for the complete chain *if* the repository owner has configured the secret; do not claim that the action ran or that MotherDuck Flight allotments were reset.
+
+The prior formal gate snapshot remains **22 / 47** PASS, 25 blocked, plus four manual approvals, and institutional release FALSE until a new source-controlled gate build is independently verified. The operational capture-freshness view indicates both venues are currently healthy after receipt; a gate score must **not** be updated solely by inferring what a future run would report.
