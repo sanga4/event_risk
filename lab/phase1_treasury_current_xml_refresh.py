@@ -29,7 +29,7 @@ import requests
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-treasury-current-xml-refresh-v1.1.0"
+VERSION="phase1-treasury-current-xml-refresh-v1.2.0"
 BASE="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml"
 DATASET={"nominal":"daily_treasury_yield_curve",
          "real":"daily_treasury_real_yield_curve"}
@@ -156,9 +156,9 @@ def assemble(nominal,real,received_at,month):
 def prepare(raw, existing, run_id,now=None):
     """Build proposal from exact current source bytes and current warehouse.
 
-    existing: (factor_id,observed_date,value) of each latest original source
-    version per factor/day in the bounded recent window. No retrospective
-    archive may be silently retroactively labeled as a new PIT capture.
+    existing: (factor_id,observed_date,value) from previously captured
+    ORIGINAL XML packet-backed vintages only. An equal retrospective CSV
+    level does not prove a source HTTP receipt or provenance.
     """
     if len(raw)!=2 or {p["category"] for p in raw}!=set(DATASET):
         raise ValueError("Need both original nominal and real source packets")
@@ -225,7 +225,12 @@ def existing_inventory(con,now):
           row_number() OVER(PARTITION BY factor_id,observed_date
                             ORDER BY ingested_at DESC,record_sha256 DESC) rank
           FROM {P}lab_factor_observations
-          WHERE observed_date>=? AND factor_id IN (
+          WHERE observed_date>=?
+            AND provider IN ('US_TREASURY_CURRENT_XML',
+                             'US_TREASURY_DERIVED_CURRENT_XML')
+            AND availability_basis =
+                'official_xml_http_receipt_not_original_publication'
+            AND factor_id IN (
             {','.join(["'"+s+"'" for s in sorted(ALL_FACTORS)])})
         ) q WHERE rank=1
     """,[oldest]).fetchall()
@@ -254,16 +259,19 @@ def append(con,proposed,raw,run,source_sha,script_hash,complete_days):
         institutional_beta_release BOOLEAN NOT NULL,
         status VARCHAR NOT NULL)
     """)
-    # Existing factor table has no per-row original-publisher certification;
-    # conservatively set availability_at = our actual response receipt time.
-    rows=[(x["factor_id"],x["date"],x["value"],"percent",
-          x["received"],x["received"],x["availability_basis"],
-          x["provider"],x["source_url"],x["digest"],x["run_id"])
-          for x in proposed]
+    # Exact external HTTP receipt is preserved separately in packet rows.
+    # Database availability cannot be backdated to the earlier HTTP receipt.
     packets=[(run,p["category"],p["url"],p["received"],p["sha256"],
               p["bytes"],False,False) for p in raw]
     con.execute("BEGIN TRANSACTION")
     try:
+        warehouse_load_at=datetime.now(timezone.utc)
+        if any(p["received"]>warehouse_load_at for p in raw):
+            raise ValueError("Treasury response received after warehouse load clock")
+        rows=[(x["factor_id"],x["date"],x["value"],"percent",
+              warehouse_load_at,warehouse_load_at,x["availability_basis"],
+              x["provider"],x["source_url"],x["digest"],x["run_id"])
+              for x in proposed]
         con.executemany(f"""
             INSERT INTO {P}lab_treasury_current_xml_packets_v1
             VALUES ({','.join(['?']*8)})""",packets)
@@ -272,9 +280,9 @@ def append(con,proposed,raw,run,source_sha,script_hash,complete_days):
                 INSERT INTO {P}lab_factor_observations
                 VALUES ({','.join(['?']*11)})""",rows)
         con.execute(f"""INSERT INTO {P}lab_treasury_current_xml_runs_v1
-            VALUES (?,?,?,current_timestamp,?,?,?,?,FALSE,FALSE,FALSE,
+            VALUES (?,?,?,?,?,?,?,?,FALSE,FALSE,FALSE,
               'OFFICIAL_XML_RECEIVED_RESEARCH_ONLY_NO_PROVIDER_PIT_OR_RIGHTS')
-        """,[run,source_sha,script_hash,
+        """,[run,source_sha,script_hash,datetime.now(timezone.utc),
              next(p["sha256"] for p in raw if p["category"]=="nominal"),
              next(p["sha256"] for p in raw if p["category"]=="real"),
              complete_days,len(rows)])
