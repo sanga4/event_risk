@@ -36,6 +36,12 @@ class WarehouseAsOfJoinTests(unittest.TestCase):
             probability DOUBLE,probability_delta_pp DOUBLE,quote_basis VARCHAR,
             source_record_sha256 VARCHAR,capture_time_verified BOOLEAN)
         """)
+        # Incremental producer requires the existing immutable grid as a
+        # reconciliation reference; a fresh source repository starts empty.
+        self.con.execute("""
+           CREATE TABLE lab_prospective_event_factor_grid_v1(
+             event_run_id VARCHAR,venue VARCHAR,market_id VARCHAR,factor_id VARCHAR)
+        """)
         self.con.execute("""
           INSERT INTO lab_factor_catalog VALUES
             ('DGS10','percent',TRUE,'government_source_via_treasury'),
