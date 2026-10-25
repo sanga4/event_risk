@@ -2,6 +2,14 @@
 
 **As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
+## Source-native event–factor v4 and effective observation QA (October 25, 2026 UTC)
+
+New independently source-rebuilt `lab_event_factor_panel_v4_latest` reconstructs **233,442** retrospective event–Treasury factor observations across **18** factors directly from event-feature and source-factor records, without depending on v2/v3/v3.1 as transformation inputs. It uses explicit source factor observation dates and proposition-specific aligned prior values; independent comparison against all **233,442** previously corrected v3.1 observations finds **zero** date/carry/change discrepancies. Its **76,662** carried values and **192,294** non-null paired changes are source-reconciled; **233,442** underlying factor values were only ingested/available after the relevant historical event cutoffs.
+
+An additional source-pinned methodological model-identification audit now measures distinct outcome dates rather than duplicated event-proposition rows: **only six observed event calendar days and five complete paired days per factor**, producing **2,136.6 apparent replicated pairs per factor/paired calendar day**. All **18 of 18** families fail the deliberately predeclared minimum **60 independent paired event dates** *exploratory screening* rule; this screen is not a universal model-risk acceptance criterion, and even a pass cannot validate causality, original PIT source clocks, licensed reuse or institutional production. The independently executed v4 and methodological Flight runs succeeded. Source GitHub PRs [#32](https://github.com/sanga4/event_risk/pull/32) and [#33](https://github.com/sanga4/event_risk/pull/33) document code, tests and evidence.
+
+**Institutional gate remains 23/47 automatic PASS (48.9%), 24 blocked and 4 external manual approvals required; release FALSE.** Software/model implementation integrity is not sufficient for independently certified historical event-factor identification. The six observed days and missing first-publication/rights evidence are substantive P0 research blockers.
+
 ## New Phase I milestone — original source-linked event–factor semantics (October 25, 2026 UTC)
 
 The **v2/v3 point-in-time and factor-alignment semantic firewall** was executed on 233,442 historical event–factor rows in each of v2 and v3 plus 630,018 warehouse-as-of prospective coobservations. Both historic panels contain **233,442/233,442 later-available factor rows** and remain unapproved retrospective research, not historical as-known event impacts. Prospective warehouse-as-of future-factor violations remain **zero**, but original quote and factor publication times remain uncertified.
