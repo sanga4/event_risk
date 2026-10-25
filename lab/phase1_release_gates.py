@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.8.0"
+VERSION="phase1-gates-v1.9.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -108,6 +108,12 @@ def main():
         ("rolling_crossasset_covariance_regime_stability_screen",
          f"SELECT COUNT(*) FROM {P}lab_cross_asset_rolling_windows_v1 WHERE build_id=(SELECT build_id FROM {P}lab_cross_asset_rolling_builds_v1 ORDER BY created_at DESC LIMIT 1) AND requires_independent_regime_review",
          0,"MAX_COUNT","No rolling covariance regime drift flags under preregistered materiality threshold; independent risk and source rights still separate"),
+        ("institutional_source_family_evidence_inventory",
+         f"SELECT COUNT(*) FROM {P}lab_source_family_evidence_v1 WHERE build_id=(SELECT build_id FROM {P}lab_source_family_evidence_builds_v1 ORDER BY created_at DESC LIMIT 1)",
+         16,"MIN_COUNT","Source-count, temporal-grain and independent-certification gap ledger across 16 institutional source families"),
+        ("institutional_source_family_rights_and_pit_certification",
+         f"SELECT COUNT(DISTINCT domain) FROM {P}lab_source_family_evidence_v1 WHERE build_id=(SELECT build_id FROM {P}lab_source_family_evidence_builds_v1 ORDER BY created_at DESC LIMIT 1) AND provider_original_publication_verified AND commercial_reuse_approved AND institutional_factor_model_approved",
+         16,"MIN_COUNT","All 16 source families require real original source time, permitted-use evidence and independent model-risk signoff; scripts cannot self-certify"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
