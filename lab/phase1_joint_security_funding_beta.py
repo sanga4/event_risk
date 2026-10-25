@@ -218,7 +218,7 @@ def sql_inputs(con):
        FROM {P}lab_security_returns_retro_v1 r
        JOIN {P}lab_security_returns_retro_v1 m
          ON r.observed_date=m.observed_date AND m.ticker='SPY'
-       JOIN treasury t USING (observed_date)
+       JOIN treasury t ON r.observed_date=t.observed_date
        JOIN {P}lab_funding_basis_levels_retro_latest f
          ON r.observed_date=f.effective_date
        WHERE r.ticker<>'SPY' AND t.n_factors=2 AND
