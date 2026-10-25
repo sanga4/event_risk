@@ -2,7 +2,25 @@
 
 **As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
-## Latest verified Phase I engineering milestone — source reconciliation and risk stress
+## Latest Phase I milestone — real forward-scored covariance and flagged-price beta sensitivity
+
+**October 25, 2026 UTC / October 24 Los Angeles.** Latest institutional gate **v2.2.0: 23/47 automatic PASS (48.9%), 24 BLOCKED, plus four manual signoffs required. Production institutional release FALSE.** Latest production blocker register **v1.7.0: 51 owner-linked requirements across nine workstreams**, none falsely approved.
+
+[Full walk-forward model methods and historical data audit](WALKFORWARD_COVARIANCE_AND_BETA_SENSITIVITY.md) · [Institutional unblock plan](PHASE1_PRODUCTION_UNBLOCK_PLAN.md) · [Live app health](https://factor-lab-api-production.up.railway.app/health/live).
+
+| Current executed research output | Verified value |
+|---|---|
+| Walk-forward seven-factor risk model observations | **655** aligned historical research dates, **164** final chronological scoring dates, **252** strictly prior training observations per date |
+| Prespecified equal-weight/EWMA model forecasts | **656** dated Gaussian covariance loss scores across **4** fixed methods; **0 of 3** alternatives reduced average holdout loss versus fixed 252d / 10%-shrink baseline |
+| Bootstrap uncertainty (paired, ten-date circular blocks, fixed seed) | None of the alternatives had a paired mean-loss 95% bootstrap interval entirely below zero; baseline not approved by this fact |
+| Six-factor extreme-price beta sensitivity | **48** security models, **288** regression coefficient pair comparisons using same 70/30 chronological split and unchanged evaluation observations |
+| Source price extreme-day exposure | **8** securities with flagged training days, **2** with flagged heldout days; **2** securities had >=10% relative change across six betas |
+| Same-heldout squared error comparison | Counterfactual flagged TRAIN-day exclusion improved SSE for **6** of 48; source price records changed **0**, original issuer actions independently verified **0** |
+| Vendor/data rights and original first-available timestamps | **0 new independent attestations**; all institutional factor/covariance approvals remain false |
+
+These are retrospective **research robustness diagnostics**, not a backtest of historically knowable prices, a tradable risk factor, event causality, or production risk capital. Latest seven-factor cross-asset static shrinkage holdout/price reconciliation results remain documented in the earlier milestone below.
+
+## Earlier Phase I milestone — source reconciliation and risk stress
 
 **Formal release gate v2.1:** **21/43 automatic PASS (48.8%)**, 22 BLOCKED, **four further manual approvals required**. **Institutional risk release FALSE.** Acceptance backlog v1.6: **47 requirements across nine workstreams**. Earlier percentages below refer to older gate versions and are historical, not current.
 
