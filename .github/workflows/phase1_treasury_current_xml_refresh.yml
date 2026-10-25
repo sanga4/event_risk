@@ -1,0 +1,74 @@
+name: Phase I Treasury nominal and real recent source XML (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      append_research_records:
+        description: "Default preview only; opt in to append exact Treasury source receipts to internal research"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+# Source-vintage appends must serialize with market-grid research ingestion.
+concurrency:
+  group: factor-lab-prospective-capture
+  cancel-in-progress: false
+
+jobs:
+  treasury-current-rate-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned internal research dependencies
+        run: pip install -r lab/requirements.txt
+      - name: Validate offline XML source and temporal regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_lab_treasury_current_xml_refresh.py' -v
+          python -m unittest discover -s tests -p 'test_lab_prospective_effective_information.py' -v
+          python -m unittest discover -s tests -p 'test_lab_prospective_lineage_reconciliation.py' -v
+      - name: Require an authorized scoped MotherDuck token
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo '::error::No authorized scoped MOTHERDUCK_TOKEN set'
+            exit 1
+          fi
+      - name: Fetch exact current-month official Treasury XML and preview candidate dates
+        if: ${{ !inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python lab/phase1_treasury_current_xml_refresh.py
+      - name: Append only source-receipt-timed internal rate research rows (explicit opt-in)
+        if: ${{ inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_SOURCE_REFRESH_WRITE_ACK: confirmed
+        run: python lab/phase1_treasury_current_xml_refresh.py --append-research
+      - name: Preserve explicit data-rights and event-beta release boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Treasury current-month official feed research intake'
+            echo "Source commit: $GITHUB_SHA"
+            echo 'All observed-date records use our actual HTTP receive time for as-of availability.'
+            echo 'Original publisher first publication / data revision PIT: **NOT VERIFIED**'
+            echo 'Institutional redistribution, event-factor causality and beta release: **NOT AUTHORIZED**'
+            echo 'A source refresh is NOT an approved original venue quote backfill.'
+            echo 'A separately authorized new future market capture is still needed to join newer factor vintages.'
+          } >> "$GITHUB_STEP_SUMMARY"
