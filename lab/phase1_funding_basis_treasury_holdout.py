@@ -55,7 +55,7 @@ def review_models(rows,source_days):
             raise ValueError("Duplicated or unsupported feature/factor model")
         seen.add((fid,feature))
         if (n<MIN_HISTORY or months<MIN_MONTHS or train+test!=n
-            or train!=math.floor(n*TRAIN_FRACTION) or train<MIN_TRAIN
+            or train!=(n*7)//10 or train<MIN_TRAIN
             or test<MIN_HOLDOUT or not(first<=last_train<first_test<=last)
             or max_gap_days>7 or max_gap_days<0):
             raise ValueError("Insufficient or temporally invalid independent days")
@@ -190,7 +190,7 @@ def build(con):
       SELECT t.factor_id,t.feature_name,count(*) total,
         count(*) FILTER(WHERE t.train) train_n,
         count(*) FILTER(WHERE NOT t.train) test_n,
-        count(DISTINCT date_trunc('month',t.observed_date)) months,
+        count(DISTINCT date_trunc('month',t.observed_date)) AS n_months,
         min(t.observed_date) first_date,
         max(t.observed_date) FILTER(WHERE t.train) train_last,
         min(t.observed_date) FILTER(WHERE NOT t.train) test_first,
@@ -241,7 +241,7 @@ def inspect(con):
     if missing:
         raise ValueError("Duplicate factor/date/feature rows are not independent")
     rows=con.execute("""SELECT factor_id,feature_name,total,train_n,test_n,
-       months,first_date,train_last,test_first,last_date,train_r2,
+       n_months,first_date,train_last,test_first,last_date,train_r2,
        holdout_r2,future_placebo_r2,train_variance,baseline_test_mse,
        max_rate_gap,invalid_source
        FROM funding_oos_scores ORDER BY factor_id,feature_name""").fetchall()
