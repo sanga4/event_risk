@@ -28,16 +28,23 @@ import phase1_shared_date_holdout_bootstrap as shared_date
 
 DB = "eventrisk_factor_lab"
 P = DB + ".main."
-VERSION = "phase1-joint-daily-loss-v1.0.0"
+VERSION = "phase1-joint-daily-loss-v1.1.0"
+# All 27 non-approval source model columns, matching the original parent
+# source versioned build's original storage contract, *not just funding slope*.
+# Any omitted factor coefficient could silently alter the risk interpretation.
 PARENT_METRICS = (
-    "ticker","variant","n","n_train","n_fit","n_holdout","first",
-    "train_last","holdout_first","last","funding_beta","funding_hac_se",
-    "baseline_mse","joint_mse","incremental_skill",
+    "ticker", "variant", "n", "n_train", "n_fit", "n_holdout",
+    "first", "train_last", "holdout_first", "last",
+    "excluded_train", "flagged_holdout", "condition",
+    "market_beta", "dgs2_beta", "dgs10_beta", "funding_beta",
+    "funding_hac_se", "ci_low", "ci_high", "first_half_beta",
+    "second_half_beta", "sign_stable", "baseline_mse",
+    "joint_mse", "incremental_skill", "research_status",
 )
 
 def check_parent_record(source, row):
     """Fail closed on altered or falsely approved parent model coefficients."""
-    if len(source) != 16:
+    if len(source) != len(PARENT_METRICS) + 1:
         raise ValueError("Changed parent model evidence contract")
     (*values, approved) = source
     if approved != 0:
@@ -45,10 +52,14 @@ def check_parent_record(source, row):
     for j, key in enumerate(PARENT_METRICS):
         expected = row[key]
         actual = values[j]
-        if isinstance(expected, float):
-            if not (isinstance(actual, (float,int)) and
-                    math.isfinite(float(actual)) and
-                    math.isclose(float(actual), expected, rel_tol=1e-8, abs_tol=1e-7)):
+        if isinstance(expected, bool):
+            if type(actual) is not bool or actual is not expected:
+                raise ValueError(f"Parent replay coefficient/heldout drift: {key}")
+        elif isinstance(expected, float):
+            if not (type(actual) in (float, int)
+                    and math.isfinite(float(actual))
+                    and math.isclose(float(actual), expected,
+                                     rel_tol=1e-8, abs_tol=1e-7)):
                 raise ValueError(f"Parent replay coefficient/heldout drift: {key}")
         elif actual != expected:
             raise ValueError(f"Parent replay source chronology/identity drift: {key}")
@@ -172,10 +183,16 @@ def read_parent(con):
     model_rows=con.execute(f"""
       SELECT ticker,variant,matched_dates,training_dates,fit_training_dates,
         heldout_dates,first_day,train_last_day,heldout_first_day,last_day,
+        excluded_training_days,flagged_heldout_price_days,
+        standardized_design_condition,market_spy_beta,
+        dgs2_yield_change_beta,dgs10_yield_change_beta,
         funding_basis_beta,funding_hac_nw5_se,
+        funding_ci95_low,funding_ci95_high,
+        training_first_half_funding_beta,training_second_half_funding_beta,
+        training_halves_sign_stable,
         market_and_treasury_heldout_mse,
         joint_market_treasury_funding_heldout_mse,
-        incremental_heldout_skill,
+        incremental_heldout_skill,research_screen_status,
         CAST(issuer_pit_verified AS INTEGER)+
         CAST(vendor_adjustments_and_rights_approved AS INTEGER)+
         CAST(institutional_beta_released AS INTEGER)
@@ -183,6 +200,18 @@ def read_parent(con):
       WHERE build_id=? ORDER BY ticker,variant
     """,[record[0]]).fetchall()
     return record,model_rows
+
+
+def check_original_method_hash(con, parent_build_id):
+    """Enforce exact original model estimator bytes, not a new silent refit."""
+    expected = con.execute(f"""
+      SELECT source_code_sha256 FROM {P}lab_joint_security_funding_builds_v1
+      WHERE build_id=?
+    """, [parent_build_id]).fetchone()
+    actual = hashlib.sha256(Path(parent_method.__file__).read_bytes()).hexdigest()
+    if (not expected or len(expected)!=1 or expected[0]!=actual):
+        raise ValueError("Original parent model implementation SHA256 changed")
+    return actual
 
 
 def append_research(con,build,sha,script_sha,parent_build,daily,variant_reports):
@@ -263,6 +292,7 @@ def main():
     with duckdb.connect(f"md:{DB}?attach_mode=single") as con:
         con.execute("SET TimeZone='UTC'")
         parent_build,models=read_parent(con)
+        check_original_method_hash(con,parent_build[0])
         rows=parent_method.sql_inputs(con)
         source_sha=hashlib.sha256(repr(rows).encode("utf-8")).hexdigest()
         if source_sha!=parent_build[2]:
