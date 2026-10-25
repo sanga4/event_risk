@@ -2,6 +2,25 @@
 
 **As-of:** October 24, 2026 (checked against MotherDuck/GitHub/Railway). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
+## Current Phase I release snapshot — October 24, 2026 (Los Angeles)
+
+**Measured institutional automatic controls:** **17/35 passing (48.6%)**, 18 blocked, **four additional manual signoffs outstanding**; **production authorization remains FALSE**. The total number of controls grew as real new source and stability requirements were added. This is a gate pass fraction, not a business-completion percentage.
+
+**Fast links:** [Closeout roadmap and number of requests](PHASE1_CLOSEOUT_ROADMAP.md) · [New rolling covariance / NY Fed report](PHASE1_CLOSEOUT_ROADMAP.md) · [Institutional blocker register](PHASE1_PRODUCTION_UNBLOCK_PLAN.md) · [Latest GitHub Actions](https://github.com/sanga4/event_risk/actions).
+
+| Latest verified dataset or risk control | State |
+|---|---|
+| Prospective two-venue HTTP receipts | **20,334** captured; source quote-at independently verified **FALSE** |
+| New York Fed official SOFR/EFFR rates | **500** publisher-sourced overnight rate levels (250 each), **498** descriptive daily bps changes; zero duplicate source observations on rerun |
+| ECB informational EUR FX | **39,088** rates, seven currency pairs; nontradable with no original publication PIT |
+| U.S. French equity style and RF research factors | **121,598** history observations across seven factor IDs; source commercial rights/vintages unapproved |
+| Rolling mixed Treasury/FX/equity factor covariance | **17** historical 252/63-day windows; **17 flagged** for instability; median drift **59.1%**, p90 **202.9%** |
+| Institutional source availability gap matrix | **7/16** source families loaded, **9 missing** (unapproved original vintages, licensed credit, executable FX, futures, options, portfolio, economic releases/evidence, corporate actions) |
+| Original 255-field institutional source-contract audit | **119/255 populated (~47%)**, 135 missing, one empty first quote timestamp; separate schema scope from new family inventory |
+| FRED economic source feed | Public FRED endpoint timed out twice; **zero FRED macro rows** loaded by that importer. NY Fed SOFR/EFFR partially fills separate official overnight rate requirement |
+
+**Change in methodology:** the 7×7 factor covariance is only research descriptive; **all 17** rolling stability windows exceed prespecified drift/variance-review thresholds. This blocks institutional VaR/portfolio risk use without independent model-risk investigation, regime handling, true source published-at clocks, legal rights and authorized portfolios.
+
 ## Quick links
 
 | What to inspect | Link |
@@ -19,7 +38,7 @@
 
 Source-controlled risk-methodology code: [Treasury Curve Factor Model](INSTITUTIONAL_TREASURY_CURVE_MODEL.md) and `phase1_curve_factor_research.py`. MotherDuck Flight successfully fitted **48** joint SPY + Treasury nominal curve models (LEVEL/SLOPE/CURVATURE), and persisted **144** coefficient rows over **701** historical rate-change dates. **6** slopes have exploratory BH q under .05, **17** same-day holdout comparisons improve on SPY-only, **4** models contain previously flagged abnormal price movements; maximum standardized training design condition number **1.7616**. All model and source PIT/rights/production release flags remain **FALSE**. These are descriptive historical security-rate sensitivities, not independently approved betas or event-to-factor causal responses.
 
-The formal institutional gate score is **still 14/29 (45.8%)** with four external/manual requirements; adding a model calculation is not acceptance evidence and has not changed the formal release gates.
+At the **earlier Treasury-curve milestone**, 11/24 automatic release gates passed (45.8%). This is historical, superseded by the current gate summary above; additional statistical calculations do not alone approve an investment model.
 
 
 
@@ -29,7 +48,7 @@ See the [source/license/PIT and six-factor beta methodology](STYLE_FACTOR_SOURCE
 
 First complete **six-factor (Mkt-RF/SMB/HML/RMW/CMA/Mom)** USD-security research run: **48 models / 288 coefficients**, 15,897 complete joint U.S. factor days, 1,555–1,673 matched security observations/model, 151 global FDR q<5% *exploratory associations*, 27 same-day holdout improvements versus market-only, 9 models exposed to >25% adjusted-price-return flags, and **0** independently released institutional betas. RF is a *research cash return*, not a seventh risky beta. Source return percentages converted to daily simple decimals; dependent asset adjusted-close log returns converted back to daily simple returns before subtracting RF. Raw style returns/coefficients are deliberately not exposed via the service API.
 
-New release check version v1.6: **14/29 passing, 14 blocking, 4 separate manual approvals open**. The new source-loaded gate passes; independent provider PIT/vintage/licensing gate stays blocked. Institutional mandatory field coverage improved to **119/255 ~47%**, with 135 required fields missing and one existing field entirely empty. Neither a loaded source nor a research FDR statistic implies institutional model approval.
+At the **earlier style-factor milestone**, gate v1.6 had **12/26 passing, 14 blocked and 4 manual approvals open**. The new source-loaded gate passes; independent provider PIT/vintage/licensing gate stays blocked. Institutional mandatory field coverage improved to **119/255 ~47%**, with 135 required fields missing and one existing field entirely empty. Neither a loaded source nor a research FDR statistic implies institutional model approval.
 
 
 ## Latest verified research milestone — ECB FX and cross-asset risk matrix
@@ -56,7 +75,7 @@ Source-controlled [FX/Macro/Covariance Institutional Methodology](CROSS_ASSET_FX
 | API serving and operating controls | 0/1 = 0% | Public /health/live success is not private /health/ready and auth approval |
 | Quantitative model validation | 0/3 = 0% | Exploration exists, zero independently approved risk betas or event impacts |
 
-Formal automatic release gates = **14 passed / 29 total (48.3%)**. There are **15 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
+Formal automatic release gates = **17 passed / 35 total (48.6%)**. There are **18 automatic blockers** and **four separate manual approval requirements**. Institutional release is **FALSE**. Product implementation maturity is a separate engineering estimate (~35% institutional production), not the same as gate count or probability of economic accuracy.
 
 ## Real datasets loaded
 
