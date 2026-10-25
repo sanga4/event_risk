@@ -66,3 +66,12 @@ Run on-demand prospective capture, forward feature views, warehouse-as-of grid, 
 **Original evidence: 448 formal requests:** 12 adjusted-price anomaly cases (48 requirements), 4 original FX quote conflicts (12), and 97 proposed event-channel review cases (388). Each requires source URI/archived content SHA, as-of published time, compatible rights, analyst rationale and second-review signoff. 0 verified and approved. Missing evidence is now queryable, not solved.
 
 **Current release evaluation:** gate v2.0 **19/39 automatic passed**, 20 blocked, four independent/manual controls outstanding. Owner roles and required proof retained in 43-case, nine-workstream `lab_release_unblock_register_v1`. Do not change approval flags without real first-published sources, signed owner evidence and source rights.
+
+
+## October 25 — issuer action provenance and covariance acceptance gap
+
+The new vendor-adjustment source audit processed **107,149 distinct close/adjusted-close price records**, found 369 candidate source adjustment-ratio changes (51 >=200 bp) and linked all 12 flagged large-return observations without original exchange/company corporate-action verification. No major same-day adjustment-step among the 12 means it is **not justified to automatically mark those days as stock splits/dividends or erroneous**. *P0 unblock:* first-known security master/issuer ID, official split/dividend notification and amendment histories, original exchange close, vendor original adjustment revisions, independent source and reuse rights.
+
+The new 7-factor covariance stress sweep tested six predeclared training diagonal shrinkage values: none meets a 50% holdout covariance drift criterion. Condition improves with stronger shrinkage but unseen covariance fit does not. *P0 unblock:* independently specified regime-aware covariance and tail test evaluated on untouched PIT validation, true exposure/positions and signed model-risk review.
+
+New source & model acceptance gates are deliberately split into **two research PASS and two production BLOCK**. Gate v2.1: **21/43 PASS, 22 BLOCKED**, four manual. Unblock owner register v1.6: **47 requirements**, nine workstreams.
