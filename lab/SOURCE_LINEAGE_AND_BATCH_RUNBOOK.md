@@ -60,3 +60,27 @@ those assumptions rather than bypassing them.
 
 Remaining blockers: original evidence/rights, independent reviewers, source
 vintages, covariance stability, and production access controls remain open.
+
+## MotherDuck single-run alternative
+
+`phase1_source_qa_remote.py` runs the same five producer stages in one Flight,
+without a GitHub Actions credential. It downloads six explicitly named source
+files from commit `c1f17147c0fe6042721c9caafbf91c3f507d458e`, checks each SHA-256
+before executing any child, and gives each child a 150-second timeout. The
+runner's own commit is recorded separately from this pinned producer commit.
+
+Each stage must emit exactly one build ID, and its durable warehouse manifest
+must match the producer commit and script hash. The blocker register must refer
+to this batch's gate build. A failure prevents later stages. Stage STARTED,
+SUCCEEDED and FAILED events are appended to `lab_source_qa_batch_events_v1`;
+only a terminal batch SUCCEEDED event proves all five stages finished. A killed
+Flight may leave STARTED without a terminal record. Check the Flight status.
+
+This runner is a one-shot batch, not automatic resume. A fresh invocation creates
+a new batch UUID and recomputes all stages. Producer writes may already have
+committed when a timeout occurs. No automatic retries or production approval
+are added. Other writers can change latest input builds between stages; this
+runner does not certify snapshot isolation, historical PIT, source rights or
+independent reviews. GitHub's job-level partial rerun remains the separate
+resume option. The remote batch journal records execution, not completion of
+the entire development project.
