@@ -29,7 +29,7 @@ import requests
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-treasury-current-xml-refresh-v1.0.0"
+VERSION="phase1-treasury-current-xml-refresh-v1.1.0"
 BASE="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml"
 DATASET={"nominal":"daily_treasury_yield_curve",
          "real":"daily_treasury_real_yield_curve"}
@@ -42,9 +42,12 @@ NOMINAL={
  "DGS5":"BC_5YEAR","DGS7":"BC_7YEAR","DGS10":"BC_10YEAR",
  "DGS20":"BC_20YEAR","DGS30":"BC_30YEAR",
 }
+# Treasury's REAL yield OData feed uses TC_ tenor tags; nominal par
+# yields use BC_ tags. Confusing them would silently parse zero real rates
+# from otherwise valid source packets (see Treasury/FRED series TC_5YEAR).
 REAL={
- "DGS5R":"BC_5YEAR","DGS7R":"BC_7YEAR","DGS10R":"BC_10YEAR",
- "DGS20R":"BC_20YEAR","DGS30R":"BC_30YEAR",
+ "DGS5R":"TC_5YEAR","DGS7R":"TC_7YEAR","DGS10R":"TC_10YEAR",
+ "DGS20R":"TC_20YEAR","DGS30R":"TC_30YEAR",
 }
 DERIVED={"PAR_NOMINAL_REAL_GAP_5Y":("DGS5","DGS5R"),
          "PAR_NOMINAL_REAL_GAP_10Y":("DGS10","DGS10R")}

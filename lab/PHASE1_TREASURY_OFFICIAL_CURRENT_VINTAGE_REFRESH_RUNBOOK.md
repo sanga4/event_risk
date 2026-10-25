@@ -16,7 +16,7 @@ https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
 ### Specific narrow source coverage
 
 - Daily nominal par yield curve: `DGS1MO`, `DGS3MO`, `DGS6MO`, `DGS1`, `DGS2`, `DGS3`, `DGS5`, `DGS7`, `DGS10`, `DGS20`, `DGS30` (11).
-- Daily real par yield curve: `DGS5R`, `DGS7R`, `DGS10R`, `DGS20R`, `DGS30R` (five).
+- Daily real par yield curve: `DGS5R`, `DGS7R`, `DGS10R`, `DGS20R`, `DGS30R` (five). **These use source XML properties `TC_5YEAR`, `TC_7YEAR`, `TC_10YEAR`, `TC_20YEAR`, and `TC_30YEAR`, NOT nominal yield properties `BC_*`.** This field distinction was verified against Treasury-sourced public series and externally documented Treasury XML examples in PR #61; source-controlled tests now fail closed on a wrong BC-tag real feed.
 - Two **derived rate gaps**, not tradeable breakeven proxies: `PAR_NOMINAL_REAL_GAP_5Y`, `PAR_NOMINAL_REAL_GAP_10Y`. These are source-native percent yield level differences, NOT identified market inflation shocks.
 - Explicitly EXCLUDED: FRED `T10YIE` and `NFCI` (different source/rights), Kalshi/Polymarket quote times, licensed credit spreads, futures, option vol and portfolio positions.
 

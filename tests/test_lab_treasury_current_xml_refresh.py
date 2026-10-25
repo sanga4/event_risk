@@ -56,6 +56,30 @@ def example(packets=None,existing=None):
 
 
 class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
+    def test_source_real_curve_uses_independent_treasury_tc_tags_not_nominal_bc(self):
+        self.assertEqual(set(m.REAL.values()),
+                         {"TC_5YEAR","TC_7YEAR","TC_10YEAR",
+                          "TC_20YEAR","TC_30YEAR"})
+        self.assertEqual(set(m.REAL.values()) & set(m.NOMINAL.values()),set())
+        recent=date(2026,10,23)
+        original=xml_feed([recent],"real")
+        for key in m.REAL.values():
+            self.assertIn(("<d:"+key+">").encode(),original)
+        values=m.parse_xml(original,m.REAL)
+        self.assertEqual(set(values[recent]),set(m.REAL.values()))
+        # A feed with ONLY nominal BC tenor tags must not be interpreted
+        # as an authentic real-par-yield source.
+        wrong=original
+        for tenor in ("5","7","10","20","30"):
+            wrong=wrong.replace(f"TC_{tenor}YEAR".encode(),
+                                f"BC_{tenor}YEAR".encode())
+        self.assertFalse(m.parse_xml(wrong,m.REAL)[recent])
+        with self.assertRaisesRegex(ValueError,"Incomplete official"):
+            original_p=packets([recent])
+            original_p[1]["bytes"]=wrong
+            original_p[1]["sha256"]=hashlib.sha256(wrong).hexdigest()
+            example(original_p)
+
     def test_exact_eighteen_factor_codes_and_derived_curve_units(self):
         self.assertEqual(len(m.ALL_FACTORS),18)
         self.assertEqual(len(m.NOMINAL),11)
@@ -86,8 +110,8 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         existing=[(x["factor_id"],x["date"],x["value"]) for x in rows]
         changed=packets([date(2026,10,23)])
         new_real=xml_feed([date(2026,10,23)],"real").replace(
-            b'<d:BC_5YEAR>4.1</d:BC_5YEAR>',
-            b'<d:BC_5YEAR>4.25</d:BC_5YEAR>')
+            b'<d:TC_5YEAR>4.1</d:TC_5YEAR>',
+            b'<d:TC_5YEAR>4.25</d:TC_5YEAR>')
         changed[1]["bytes"]=new_real
         changed[1]["sha256"]=hashlib.sha256(new_real).hexdigest()
         self.assertNotEqual(new_real,packets([date(2026,10,23)])[1]["bytes"])
@@ -109,7 +133,7 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"Incomplete"):
             example(packets([date(2026,10,23)],missing_nominal="BC_2YEAR"))
         with self.assertRaisesRegex(ValueError,"Incomplete"):
-            example(packets([date(2026,10,23)],missing_real="BC_5YEAR"))
+            example(packets([date(2026,10,23)],missing_real="TC_5YEAR"))
 
     def test_malformed_xml_html_invalid_numbers_and_nan_fail(self):
         for raw in (b"<html></html>",b"<feed/>",b"junk",
