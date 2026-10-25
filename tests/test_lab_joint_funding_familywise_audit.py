@@ -97,6 +97,38 @@ class JointBetaMultiplicity(unittest.TestCase):
             with self.subTest(index=index),self.assertRaises(ValueError):
                 q.score(items)
 
+    def test_atomically_persist_complete_96_hypotheses_in_local_duckdb(self):
+        import duckdb
+        prior=q.P
+        q.P="main."
+        try:
+            with duckdb.connect(":memory:") as con:
+                report=q.score(fixture())
+                q.append_validated_audit(
+                    con,"isolated-test-build","a"*40,"b"*64,"c"*64,
+                    ("original-parent",),report)
+                counts=con.execute("""SELECT count(*),sum(CAST(institutional_beta_released AS INTEGER)),
+                     min(holm_familywise_p),max(familywise_rank)
+                     FROM main.lab_joint_funding_familywise_models_v1""").fetchone()
+                self.assertEqual(counts[0],96)
+                self.assertEqual(counts[1],0)
+                self.assertAlmostEqual(counts[2],report["min_holm_adjusted_p"])
+                self.assertEqual(counts[3],96)
+                build=con.execute("""SELECT model_cells,security_assets,
+                     jointly_research_screen_pass,issuer_first_published_at_verified,
+                     corporate_action_price_vintage_verified,
+                     redistribution_rights_verified,institutional_risk_beta_released
+                     FROM main.lab_joint_funding_familywise_builds_v1""").fetchone()
+                self.assertEqual(build,(96,48,2,False,False,False,False))
+                rejected=dict(report);rejected["rows"]=report["rows"][:-1]
+                with self.assertRaisesRegex(ValueError,"Incomplete"):
+                    q.append_validated_audit(con,"bad","a"*40,"b"*64,"c"*64,
+                                             ("original-parent",),rejected)
+                self.assertEqual(con.execute(
+                    "SELECT count(*) FROM main.lab_joint_funding_familywise_builds_v1").fetchone()[0],1)
+        finally:
+            q.P=prior
+
     def test_no_original_time_or_institutional_beta_autoapprovals(self):
         source=SRC.read_text()
         for text in ("math.erfc","FAMILY=96","RELATIVE_SHIFT_THRESHOLD=0.25",
