@@ -183,7 +183,7 @@ class OriginalReceiptAcceptanceTests(unittest.TestCase):
 
     def test_read_only_validator_cannot_self_approve(self):
         text=(LAB/"phase1_treasury_receipt_acceptance.py").read_text()
-        self.assertIn("source.prepare(raw,[],run",text)
+        self.assertIn("source.prepare(raw,prior_source_inventory,run",text)
         self.assertIn("official_first_published_at_independently_verified",text)
         self.assertNotIn("INSERT INTO",text)
         self.assertNotIn("UPDATE main.",text)
