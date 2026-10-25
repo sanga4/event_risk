@@ -11,6 +11,7 @@
 | Latest verified dataset or risk control | State |
 |---|---|
 | Prospective two-venue HTTP receipts | **20,334** captured; source quote-at independently verified **FALSE** |
+| Prospective warehouse event/factor same-receipt research grid | **366,012** rows after another successful 88,002-row append, with **zero future-warehouse factor timing violations**; independent provider release-time certification FALSE |
 | New York Fed official SOFR/EFFR rates | **500** publisher-sourced overnight rate levels (250 each), **498** descriptive daily bps changes; zero duplicate source observations on rerun |
 | ECB informational EUR FX | **39,088** rates, seven currency pairs; nontradable with no original publication PIT |
 | U.S. French equity style and RF research factors | **121,598** history observations across seven factor IDs; source commercial rights/vintages unapproved |
@@ -88,7 +89,7 @@ Formal automatic release gates = **17 passed / 35 total (48.6%)**. There are **1
 | Daily rate shocks | 12,618 | Yield-change basis points |
 | Historical single-rate-plus-SPY sensitivity estimates | 864 | **Zero** approved security risk betas |
 | Prospective API market receipt observations | 15,445 | 1,889 Kalshi + 3,000 Polymarket newly captured October 24 |
-| Forward event–factor warehouse-as-of grid | 278,010 | Warehouse-known timing, not historical published-at PIT |
+| Forward event–factor warehouse-as-of grid | 366,012 | Warehouse-known timing, not historical published-at PIT |
 | Graph path hypotheses | 8,216 | Proposed only |
 | Pending human review cases | 97 | None independently approved |
 | Security source >0.25 abs(log return) QA cases | 12 | Source review pending; large moves may be real |
