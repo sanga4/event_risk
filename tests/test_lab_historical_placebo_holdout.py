@@ -77,7 +77,7 @@ class TemporalPlaceboTests(unittest.TestCase):
         res=p.assess(src,updated)
         self.assertEqual(sum(x[15] for x in res),36)
         self.assertEqual(sum(x[16] for x in res),36)
-        self.assertTrue(all("NOT_TRADEABLE" not in x[18] or "RETROSPECTIVE" in x[18]
+        self.assertTrue(all("NOT_TRADEABLE" not in x[17] or "RETROSPECTIVE" in x[17]
                             for x in res))
 
 if __name__=="__main__":
