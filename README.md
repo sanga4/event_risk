@@ -243,3 +243,6 @@ calibration slope). First run (2026-10-18, 62 priced securities, daily data): di
 titles are linked to Wikipedia articles, Wikidata supplies each entity's type and parent country,
 and entities are connected by Wikidata statements and by normalized co-occurrence on Wikipedia
 (how many articles mention both, relative to each alone). Lookups are cached in MotherDuck.
+
+
+**New methodology milestone:** [Rolling six-factor beta stability and original evidence-review requirements](lab/ROLLING_SECURITY_BETA_AND_EVIDENCE_METHODOLOGY.md) · 958 security-window fits, 448 mandatory original-source evidence requests. Current automatic institutional gates **19/39 PASS**, release blocked. This is research-only, not investment advice or approved portfolio risk.
