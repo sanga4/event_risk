@@ -6,7 +6,20 @@ The latest merged joint risk-factor research model fitted exactly **96** contemp
 
 `lab/phase1_joint_funding_familywise_audit.py` reads the original source-pinned versioned parent model build without modifying or refitting it. From the reported funding coefficient and original five-lag HAC standard error it calculates a **two-sided normal-approximation** p-value, `erfc(abs(beta / HAC_se)/sqrt(2))`. Every one of the **96** original cells, including those with negative holdout skill or unstable training signs, belongs to the **same multiplicity family**. The conservative step-down Holm familywise adjusted p-value is `max_{j<=i}((m-j+1) × p_(j))` capped at 1. Because Holm's dependence robustness applies only when constituent p-values are valid, the original HAC small-sample and historically unverified source inputs still prevent an institutional statistical-certification claim. Choosing one fitting variant after looking at its heldout skill would be invalid; therefore the whole 96-cell prespecified family is retained.
 
+## Binding cross-variant reject gates (v1.1 methodology)
+
+The preceding audit output included sign reversals and >25% coefficient shifts as diagnostics but did **not** always incorporate them into the model's final research screen state. That allowed a statistically strong model to be labelled as passing multiplicity even if its paired security fit reversed sign when prespecified training-tail exclusions were applied. This is corrected by the audited v1.1 code: **both variants of each security** now receive a binding reject status when (in priority order) the funding coefficient flips sign, the full-to-trim coefficient relative shift exceeds 25%, or either variant has nonpositive incremental holdout skill. Only stable pairs can proceed to inherited parent-model holdout/sign/HAC screening and then the global 96-cell Holm familywise screen. Earlier parent-model passes with nonpositive holdout skill, unstable training-half sign or a funding HAC interval including zero are rejected as inconsistent source claims.
+
+The three new states are:
+- REJECT_CROSS_VARIANT_FUNDING_BETA_SIGN_REVERSAL
+- REJECT_CROSS_VARIANT_FUNDING_BETA_SHIFT_GT25PCT
+- REJECT_CROSS_VARIANT_HOLDOUT_SKILL
+
+These conditions can only **reject** candidate research models; passing does not approve original source PIT, issuer actions, licensing, multiple-testing statistics, identified economic risk betas, or institutional risk use. The 48-asset source still needs shared-date clustered uncertainty and later truly prospective validation.
+
 Separate **source robustness checks** pair each security's `full_training` and `training_tail_exclusion` fits while requiring **identical original training and held-out date windows**. A sign reversal is `beta_full × beta_trim < 0`; a large relative shift is `abs(beta_full−beta_trim) / max(abs(beta_full),1e−6) > 0.25`. For near-zero baseline betas the relative magnitude should be treated carefully and signed level shifts should also be inspected. All original training-only price exception flags and unusually large funding changes remain retained in the parent model's audit record; the new diagnostic never repairs prices.
+
+As of October 25, 2026, an independent source-side query confirmed **48 securities, 10 sign reversals, 30 above-25% coefficient changes, 12 with positive holdout skill in both variants**, and **one asset with an original exploratory pass among the unstable assets**. The prior materialized familywise v1.0 counts, if any, are not retroactively reclassified: v1.1 must be executed and manifest-verified before describing updated audit rows as persisted.
 
 At 2026-10-25 18:18 UTC, a *read-only independent check of the existing warehouse coefficients* yielded:
 

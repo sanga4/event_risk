@@ -16,7 +16,7 @@ import os
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-joint-funding-familywise-v1.0.0"
+VERSION="phase1-joint-funding-familywise-v1.1.0"
 VARIANTS=frozenset(("full_training","training_tail_exclusion"))
 ASSETS=48
 FAMILY=96
@@ -50,6 +50,13 @@ def score(rows):
             or not all(isinstance(x,(int,float)) and math.isfinite(x)
                        for x in (beta,se,skill)) or se<=0):
             raise ValueError("Invalid key, chronology, standard error or source approval")
+        # A parent fit's claimed pass must be supported by its originally
+        # prespecified holdout, training-half sign and HAC interval. Reporting
+        # a contradictory parent state is an input-integrity failure, not a
+        # reason to silently upgrade the fit at this later audit stage.
+        if (prior=="RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL"
+            and (skill<=0 or not stable or abs(beta/se)<=1.96)):
+            raise ValueError("Parent research screen contradicts fitted diagnostics")
         p=math.erfc(abs(beta/se)/math.sqrt(2.0))
         if not 0<=p<=1:
             raise ValueError("Invalid nominal two-sided Gaussian/HAC tail probability")
@@ -79,10 +86,21 @@ def score(rows):
         r=parsed[ticker,variant]["row"]
         s=parsed[ticker,variant]
         sign_flip,shift,excluded=variation[ticker]
+        full_skill=parsed[ticker,"full_training"]["row"][12]
+        trim_skill=parsed[ticker,"training_tail_exclusion"]["row"][12]
         nominal=s["p"]<=ALPHA
         adjusted=s["holm_p"]<=ALPHA
-        # Never elevate a failed base model or missing source rights.
-        status=("REJECT_EXISTING_HOLDOUT_OR_STABILITY_SCREEN"
+        # Variant sensitivity is a *joint asset-level* reject gate, not merely
+        # a report column. Both versions of an unstable asset are rejected
+        # before any multiplicity-screened candidate can be described as
+        # passing. Do not choose a favourable variant using holdout results.
+        status=("REJECT_CROSS_VARIANT_FUNDING_BETA_SIGN_REVERSAL"
+                if sign_flip else
+                "REJECT_CROSS_VARIANT_FUNDING_BETA_SHIFT_GT25PCT"
+                if shift>RELATIVE_SHIFT_THRESHOLD else
+                "REJECT_CROSS_VARIANT_HOLDOUT_SKILL"
+                if full_skill<=0 or trim_skill<=0 else
+                "REJECT_EXISTING_HOLDOUT_OR_STABILITY_SCREEN"
                 if r[14]!="RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL" else
                 "REJECT_FAMILYWISE_HOLM_MULTIPLE_TESTING"
                 if not adjusted else
@@ -91,6 +109,13 @@ def score(rows):
                        nominal,adjusted,r[12],r[13],r[14],sign_flip,shift,
                        excluded,status))
     return {"models":FAMILY,"assets":ASSETS,
+            "cross_variant_rejected_model_cells":sum(
+                x[-1].startswith("REJECT_CROSS_VARIANT_") for x in output),
+            "cross_variant_rejected_assets":sum(
+                variation[t][0] or variation[t][1]>RELATIVE_SHIFT_THRESHOLD
+                or parsed[t,"full_training"]["row"][12]<=0
+                or parsed[t,"training_tail_exclusion"]["row"][12]<=0
+                for t in tickers),
             "nominal_hac_p_below_05":sum(x[7] for x in output),
             "holm_p_below_05":sum(x[8] for x in output),
             "original_research_screen_pass":sum(x[11]=="RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL" for x in output),
@@ -203,6 +228,7 @@ def main():
     print(f"NOMINAL_HAC_P_LT_05={report['nominal_hac_p_below_05']} HOLM_P_LT_05={report['holm_p_below_05']}")
     print(f"BASE_SCREEN_PASS={report['original_research_screen_pass']} JOINT_SCREEN_PASS={report['joint_screen_pass']}")
     print(f"SECURITY_SIGN_FLIPS={report['sign_flip_assets']} SECURITY_BETA_SHIFTS_GT25PCT={report['relative_shift_gt25_assets']}")
+    print(f"CROSS_VARIANT_REJECTED_ASSETS={report['cross_variant_rejected_assets']} CROSS_VARIANT_REJECTED_MODEL_CELLS={report['cross_variant_rejected_model_cells']}")
     print("ASYMPTOTIC_PVALUES_ONLY=TRUE CROSS_SECTION_DEPENDENCE_UNRESOLVED=TRUE")
     print("PUBLICATION_PIT=FALSE LICENSE_RIGHTS=FALSE INSTITUTIONAL_BETA_RELEASE=FALSE")
 
