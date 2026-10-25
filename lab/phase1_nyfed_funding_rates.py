@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NY Fed SOFR and EFFR original-publisher JSON backfill; internal-only.
+"""NY Fed SOFR and EFFR full-history original-publisher JSON; internal-only.
 
 percentRate is an annualized overnight interest rate in PERCENT, not a daily
 security return; 100×daily rate-level difference gives change in yield bps.
@@ -15,10 +15,12 @@ import requests,duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-nyfed-overnight-rates-v1.0.0"
+VERSION="phase1-nyfed-overnight-rates-v1.1.0"
 BASE="https://markets.newyorkfed.org/api/rates"
 SOURCES=(("SOFR","secured/sofr"),("EFFR","unsecured/effr"))
 MAX_BYTES=5_000_000
+HISTORICAL_START=date(2018,4,2)
+MIN_EXPECTED_HISTORY_ROWS=1500
 
 def parse_records(raw:bytes,expect:str):
     if len(raw)<40 or len(raw)>MAX_BYTES:raise ValueError("Source payload unacceptable")
@@ -49,15 +51,38 @@ def parse_records(raw:bytes,expect:str):
     if out[-1][0]<"2024-01-01":raise ValueError("Historical endpoint stale")
     return out
 
+def historical_request(sid,part,today=None):
+    """Official historical search URL, never inferred publication timestamps."""
+    if (sid,part) not in SOURCES:
+        raise ValueError("Unapproved source series or rate endpoint")
+    end=today or datetime.now(timezone.utc).date()
+    if not isinstance(end,date) or end<HISTORICAL_START:
+        raise ValueError("Invalid historical end date")
+    url=f"{BASE}/{part}/search.json"
+    params={"startDate":HISTORICAL_START.isoformat(),"endDate":end.isoformat()}
+    return url,params
+
+
 def download(sid,part):
-    url=f"{BASE}/{part}/last/250.json"
-    r=requests.get(url,timeout=(10,40),
-        headers={"Accept":"application/json",
-                 "User-Agent":"EventRiskFactor-internal-research/1.0"})
-    r.raise_for_status()
+    url,params=historical_request(sid,part)
+    try:
+        r=requests.get(url,params=params,timeout=(12,55),
+            headers={"Accept":"application/json",
+                     "User-Agent":"EventRiskFactor-internal-research/1.1"})
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        raise RuntimeError("NYFED_HISTORICAL_PROVIDER_REQUEST_FAILED:"+
+                           type(exc).__name__) from None
     raw=r.content
     parsed=parse_records(raw,sid)
-    return sid,url,hashlib.sha256(raw).hexdigest(),len(raw),r.headers.get("Last-Modified"),parsed
+    # Search endpoints can return truncated or too-narrow data without error.
+    # Require a useful official history, not simply a successful HTTP response.
+    if (len(parsed)<MIN_EXPECTED_HISTORY_ROWS or
+        parsed[0][0]>"2018-12-31" or parsed[-1][0]<"2024-01-01"):
+        raise RuntimeError("NYFED_HISTORICAL_COVERAGE_INCOMPLETE")
+    safe_url=url+"?startDate="+params["startDate"]+"&endDate="+params["endDate"]
+    return (sid,safe_url,hashlib.sha256(raw).hexdigest(),len(raw),
+            r.headers.get("Last-Modified"),parsed)
 
 def setup(con):
     con.execute(f"""
