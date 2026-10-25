@@ -12,10 +12,30 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.2.0"
+VERSION="phase1-release-unblock-register-v1.4.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"institutional_source_family_evidence_inventory":("Schema and cross-asset factors","P0","Institutional source data architect",
+ "Run consistent source-family snapshot after source ingestion and release-gate rebuild. Track actual loaded row counts and gaps without synthetic rows.",
+ "16 source-family observations with table-present, row count, native grain, first/last observation and actionable evidence gaps"),
+"institutional_source_family_rights_and_pit_certification":("Point-in-time provenance","P0","Independent source licensor/data QA/model-risk committee",
+ "Obtain and review original source publication/vintage evidence, vendor data rights and independent approval across each product-required domain.",
+ "All applicable source families independently certified and signed off, with missing domains explicitly unavailable rather than approved"),
+
+"nyfed_sofr_effr_reference_research_loaded":("Schema and cross-asset factors","P1","Rates data engineering",
+ "Keep two official NY Fed source observations separately versioned with original response SHA and percentage units; verify replay and deduplication.",
+ "500 or more exact response-hashed reference observations; labels must remain research-only, no source publication clock approval"),
+"nyfed_funding_provider_vintages_rights_verified":("Point-in-time provenance","P0","NY Fed release-data QA + legal data owner",
+ "Obtain original rate as-published times and historical revision records with permission to store/use and redistribute as intended.",
+ "Both SOFR and EFFR independently publication/vintage verified with signed reuse and original source evidence"),
+"rolling_crossasset_covariance_diagnostics_materialized":("Statistical model validation","P1","Institutional quant risk research",
+ "Maintain fixed 252/63-day rolling, train-only covariance scaling/diagonal shrink and 21-day moving window checks.",
+ "At least 15 source-linked windows, full holdout metrics and zero source/PIT release claims"),
+"rolling_crossasset_covariance_regime_stability_screen":("Statistical model validation","P0","Independent quantitative model-risk owner",
+ "Review all covariance instability windows, diagnose market regime effects, stress scenarios, temporal validity and document accepted calibration.",
+ "Zero unresolved materially unstable rolling windows under prospectively approved threshold, signed independent model-risk review separately required"),
+
 "official_ecb_eur_fx_research_loaded":("Schema and cross-asset factors","P1","Cross-asset source engineering",
  "Maintain source-hashed informational EUR currency-pair history with unambiguous quote orientation and dated reference values.",
  "Seven ECB reference currencies, >30000 price records, immutable source hashes and unit-aware log change; no false tradability approval"),

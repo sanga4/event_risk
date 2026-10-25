@@ -2,6 +2,8 @@
 
 **[Open current project status, production readiness percentages, data counts and quick links](lab/PROJECT_STATUS.md)**
 
+**[Institutional Phase I remaining work and estimated continuation requests](lab/PHASE1_CLOSEOUT_ROADMAP.md)** · **[Institutional source blockers](lab/PHASE1_PRODUCTION_UNBLOCK_PLAN.md)**
+
 The dedicated research Factor Lab lives in the [sanga4 repository](https://github.com/sanga4/event_risk). Its service health endpoint is [here](https://factor-lab-api-production.up.railway.app/health/live). This is **not** an independently approved institutional risk model: historical factor timings, source licenses, human mapping approval and beta model-risk validation remain blocked. The separate historical MVP and earlier sections below have their own operational status.
 
 ---
