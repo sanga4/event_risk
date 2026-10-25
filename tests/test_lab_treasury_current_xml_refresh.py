@@ -86,10 +86,11 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         existing=[(x["factor_id"],x["date"],x["value"]) for x in rows]
         changed=packets([date(2026,10,23)])
         new_real=xml_feed([date(2026,10,23)],"real").replace(
-            b'<d:BC_5YEAR>4.0</d:BC_5YEAR>',
+            b'<d:BC_5YEAR>4.1</d:BC_5YEAR>',
             b'<d:BC_5YEAR>4.25</d:BC_5YEAR>')
         changed[1]["bytes"]=new_real
         changed[1]["sha256"]=hashlib.sha256(new_real).hexdigest()
+        self.assertNotEqual(new_real,packets([date(2026,10,23)])[1]["bytes"])
         proposed,_=example(changed,existing)
         self.assertEqual({x["factor_id"] for x in proposed},{
             "DGS5R","PAR_NOMINAL_REAL_GAP_5Y"})
@@ -113,7 +114,7 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
     def test_malformed_xml_html_invalid_numbers_and_nan_fail(self):
         for raw in (b"<html></html>",b"<feed/>",b"junk",
                     xml_feed([date(2026,10,23)],"nominal").replace(
-                      b'<d:BC_2YEAR>4.8</d:BC_2YEAR>',
+                      b'<d:BC_2YEAR>4.9</d:BC_2YEAR>',
                       b'<d:BC_2YEAR>NaN</d:BC_2YEAR>')):
             with self.subTest(raw=raw[:20]),self.assertRaises(ValueError):
                 m.parse_xml(raw,m.NOMINAL)
