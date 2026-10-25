@@ -130,7 +130,7 @@ class EffectiveInformationResearchTests(unittest.TestCase):
         with fixture() as con:
             con.execute(
                 "DELETE FROM main.lab_factor_warehouse_vintages_v1 WHERE factor_id='DGS10'")
-            with self.assertRaisesRegex(ValueError,"factor-date support"):
+            with self.assertRaisesRegex(ValueError,"inventory"):
                 m.inspect(con,"main.")
 
     def test_missing_factor_in_one_capture_prevents_false_coverage(self):
