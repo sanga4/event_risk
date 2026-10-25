@@ -157,11 +157,29 @@ class OriginalReceiptAcceptanceTests(unittest.TestCase):
                 main.lab_treasury_current_xml_runs_v1
                 WHERE run_id='noop-unit-test'""").fetchone()
             self.assertEqual(r,(0,))
-            # The independent acceptance can also validate an ordinary
-            # no-op manifest when asked to inspect the latest build.
-            latest=con.execute("""SELECT run_id FROM main.lab_treasury_current_xml_runs_v1
-                ORDER BY finished_at DESC,run_id DESC LIMIT 1""").fetchone()[0]
-            self.assertIn(latest,("unit-test-run","noop-unit-test"))
+            # An unbacked zero-row report is NOT a legitimate no-op.
+            manifest=con.execute("""SELECT run_id,source_git_sha,source_script_sha256,
+                finished_at,source_nominal_sha256,source_real_sha256,
+                source_observation_days,new_factor_vintages,
+                original_publication_pit_verified,licensed_distribution_approved,
+                institutional_beta_release,status
+                FROM main.lab_treasury_current_xml_runs_v1
+                WHERE run_id='noop-unit-test'""").fetchone()
+            packet_rows=con.execute("""SELECT run_id,source_category,source_url,
+                source_received_at,original_payload_sha256,original_payload_bytes,
+                original_publisher_first_release_verified,
+                licensed_institutional_risk_use_approved
+                FROM main.lab_treasury_current_xml_packets_v1
+                WHERE run_id='noop-unit-test' ORDER BY source_category""").fetchall()
+            prior=con.execute("""SELECT factor_id,observed_date,value
+                FROM main.lab_factor_observations WHERE run_id='unit-test-run'""").fetchall()
+            verified=qa.audit(manifest,packet_rows,[],COMMIT,SOURCE_SHA,
+                              prior_source_inventory=prior)
+            self.assertEqual(verified["new_or_revised_factor_rows"],0)
+            with self.assertRaisesRegex(ValueError,
+                                        "does not match actual new/revised"):
+                qa.audit(manifest,packet_rows,[],COMMIT,SOURCE_SHA,
+                         prior_source_inventory=[])
 
     def test_read_only_validator_cannot_self_approve(self):
         text=(LAB/"phase1_treasury_receipt_acceptance.py").read_text()
