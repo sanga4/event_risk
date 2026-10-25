@@ -43,9 +43,10 @@ def simulate(days=3,runs=11,variable=False,static_factor=None):
                 value=float(factor_i*.1)
             records.append((day.isoformat(),f"capture_{run:04d}",
                             factor,observed.isoformat(),value))
-    con.executemany(
-        "INSERT INTO main.lab_prospective_event_factor_grid_v1 VALUES (?,?,?,?,?)",
-        records)
+    if records:
+        con.executemany(
+            "INSERT INTO main.lab_prospective_event_factor_grid_v1 VALUES (?,?,?,?,?)",
+            records)
     return con
 
 
