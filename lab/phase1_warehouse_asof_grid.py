@@ -98,6 +98,23 @@ def setup(con):
     )""")
 
 
+def capture_scope_sql(prefix=P):
+    """Replay safety: select by complete immutable capture-market identity.
+
+    Incremental mode drops only keys already represented by at least one
+    existing as-of factor row. The original producer transaction is atomic.
+    Use explicit full replay for historic source-method revisions.
+    """
+    return f"""
+    CREATE OR REPLACE TEMP TABLE p1_capture_scope AS
+    SELECT e.* FROM {prefix}lab_live_event_features_v1 e
+    WHERE ?::BOOLEAN OR NOT EXISTS (
+       SELECT 1 FROM {prefix}lab_prospective_event_factor_grid_v1 g
+       WHERE g.event_run_id=e.run_id
+         AND g.venue=e.venue AND g.market_id=e.market_id
+    )"""
+
+
 def stage(con,full_replay=False):
     # A completed source event×factor cohort is immutable and was materialized
     # transactionally. Normal refreshes must NOT recompute the complete multi-year
@@ -105,14 +122,7 @@ def stage(con,full_replay=False):
     # A controlled explicit full replay is available if source eligibility,
     # factor catalog or as-of mapping rules change. Both modes still preserve
     # original rows and deduplicate by event×factor identity.
-    con.execute(f"""
-    CREATE OR REPLACE TEMP TABLE p1_capture_scope AS
-    SELECT e.* FROM {P}lab_live_event_features_v1 e
-    WHERE ?::BOOLEAN OR NOT EXISTS (
-       SELECT 1 FROM {P}lab_prospective_event_factor_grid_v1 g
-       WHERE g.event_run_id=e.run_id
-         AND g.venue=e.venue AND g.market_id=e.market_id
-    )""",[full_replay])
+    con.execute(capture_scope_sql(),[full_replay])
     # Never import restricted_ice_bofa or unreviewed sources like T10YIE:
     # source licensing is an explicit allowlist.
     labels = ", ".join("'" + x + "'" for x in ALLOWED_LICENSE_CLASSES)
