@@ -293,3 +293,12 @@ Source-controlled, executed [security adjustment and covariance stress methodolo
 Six prespecified covariance-shrinkage variants on the seven-factor training/holdout matrices all breach 50% holdout covariance drift: 69.94% to 74.11%. Increasing shrinkage improves numerical conditioning but **worsens or fails to improve holdout mismatch**; hindsight tuning is prohibited, portfolio covariance/VaR remains unapproved. Both pipelines have succeeded as on-demand research-only MotherDuck Flights.
 
 Release v2.1 automatic gates: **21/43 pass (48.8%)**, 22 block, four manual owner signoffs outstanding; 47 institutional evidence/action items across 9 workstreams. New authenticated API endpoints expose summaries only, not licensed raw source close prices or unapproved risk models.
+
+
+## Latest (2026-10-25 UTC): daily walk-forward factor covariance and six-factor price-outlier sensitivity
+
+See [full executed walk-forward risk / security beta methodology](WALKFORWARD_COVARIANCE_AND_BETA_SENSITIVITY.md). The source-controlled `phase1_regime_cov_walkforward.py` MotherDuck Flight **SUCCEEDED**, producing **656** dated next-day Gaussian covariance scores across 4 predeclared methods × 164 last-quarter chronological holdout dates (252 trailing training observations per day). Relative to baseline 252-day equal-weight/10% diagonal shrinkage, **none of EWMA decay .94/.97 or 50% shrinkage had lower average holdout loss**. Paired circular 10-day block bootstrap (500 fixed-seed draws) did not establish negative mean loss vs baseline for any alternative. No hindsight model selection or approved portfolio VaR.
+
+The separate `phase1_ff6_extreme_return_sensitivity.py` Flight **SUCCEEDED**: **48** retrospective USD-security six-factor model pairs, **288** original/flagged-training-day exclusion coefficient comparisons. **8** securities had flagged dates in training; **2** beta vectors shifted at least 10%; unchanged 30% holdout SSE improved in only **6** experiments. No security rows removed or modified, no source corporate actions independently verified, no external right to serve betas.
+
+Gate build v2.2 SUCCESS: **23/47 automatic PASS (48.9%), 24 BLOCKED and 4 independent manual approvals**, release FALSE. Independent owner register v1.7 SUCCESS: **51 requirements across nine workstreams**. API may return authenticated aggregate model statistics only; Railway currently lacks scoped MotherDuck and API-key secrets for research endpoints.
