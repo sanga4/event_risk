@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v2.0.0"
+VERSION="phase1-gates-v2.1.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -126,6 +126,18 @@ def main():
         ("original_source_evidence_and_second_signoffs",
          f"SELECT COUNT(*) FROM {P}lab_independent_evidence_requirements_v1 WHERE build_id=(SELECT build_id FROM {P}lab_independent_evidence_builds_v1 ORDER BY built_at DESC LIMIT 1) AND factual_evidence_verified AND independent_review_complete AND institutional_risk_use_approved AND original_source_uri IS NOT NULL AND source_archived_sha256 IS NOT NULL AND reviewer_id IS NOT NULL AND independent_second_reviewer_id IS NOT NULL",
          10,"MIN_COUNT","Require at least 10 complete original-source archived evidence records with attributable dual reviews; no automated approval"),
+        ("security_vendor_adjustment_ratio_reconciliation",
+         f"SELECT COUNT(*) FROM {P}lab_security_adjustment_ratio_changes_v1 WHERE build_id=(SELECT build_id FROM {P}lab_security_adjustment_audit_builds_v1 ORDER BY created_at DESC LIMIT 1) AND NOT original_issuer_action_verified",
+         250,"MIN_COUNT","Audit daily vendor adjusted-close over close ratios for source-meaningful jumps, reconcile large-return cases, do not assert corporate action causes"),
+        ("verified_security_corporate_action_vintages",
+         f"SELECT COUNT(*) FROM {P}lab_security_adjustment_ratio_changes_v1 WHERE original_issuer_action_verified AND original_vendor_revision_asof_verified AND external_data_rights_approved AND approved_for_institutional_beta",
+         10,"MIN_COUNT","Original issuer action, exchange reference and time-vintage must be verified with independent rights and signoffs"),
+        ("cross_asset_covariance_shrinkage_stress_research",
+         f"SELECT COUNT(*) FROM {P}lab_factor_covariance_shrinkage_tests_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_covariance_shrinkage_builds_v1 ORDER BY built_at DESC LIMIT 1) AND hindsight_selection_prohibited",
+         6,"MIN_COUNT","Six preregistered shrinkages have retrospective holdout diagnostics; do not select from holdout for production"),
+        ("cross_asset_covariance_stress_robustness_certification",
+         f"SELECT COUNT(*) FROM {P}lab_factor_covariance_shrinkage_tests_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_covariance_shrinkage_builds_v1 ORDER BY built_at DESC LIMIT 1) AND relative_holdout_covariance_distance>0.50",
+         0,"MAX_COUNT","No prespecified shrinkage candidate breaches 50% covariance holdout drift, source PIT/rights and independent model-risk review remain distinct"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),

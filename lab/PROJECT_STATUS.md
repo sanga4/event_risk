@@ -2,7 +2,22 @@
 
 **As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
-## Most recent institutional gate assessment — October 25, 2026 UTC
+## Latest verified Phase I engineering milestone — source reconciliation and risk stress
+
+**Formal release gate v2.1:** **21/43 automatic PASS (48.8%)**, 22 BLOCKED, **four further manual approvals required**. **Institutional risk release FALSE.** Acceptance backlog v1.6: **47 requirements across nine workstreams**. Earlier percentages below refer to older gate versions and are historical, not current.
+
+[New corporate-action and covariance methodology](SECURITY_ADJUSTMENTS_AND_COVARIANCE_STRESS.md) · [Phase I closeout roadmap](PHASE1_CLOSEOUT_ROADMAP.md) · [Release-owner blockers](PHASE1_PRODUCTION_UNBLOCK_PLAN.md).
+
+| Executed source / methodology result | Latest result |
+|---|---|
+| Original provider close-vs-adjusted data | **107,149** unique valid price records across **63** tickers; **4** duplicate ticker/day conflicts excluded, not silently resolved |
+| Retrospective price adjustment ratio discontinuity candidates | **369** absolute ratio changes ≥50 bps, **51** ≥200 bps. These are **not** verified splits, dividends or data errors |
+| Existing large price exceptions | **12/12** mathematically reconciled to source close/adjusted-close return identity; **0** same-day adjustment jumps ≥200 bps, **0** genuine original corporate actions source-certified |
+| Prespecified 7-factor covariance shrinkage stress | **Six** alternatives, 0%/10%/25%/50%/75%/100% diagonal shrinkage, trained on the existing 458-day research covariance and judged on 197-date heldout |
+| Relative covariance holdout drift | **69.94%–74.11%** across all 6; all **6** breach 50% review threshold. Increased shrinkage improves training condition number **3.85→1.00** but not holdout drift |
+| Institutional original PIT / licensed/independent model approval | **Zero** approvals; protected research API serves only aggregates |
+
+## Earlier institutional gate assessment — October 25, 2026 UTC
 
 **19/39 automatic checks PASS (48.7%), 20 BLOCKED, plus four independently required manual approvals. Institutional production release remains FALSE.** Prior readiness snapshots in the historical milestones below are superseded.
 

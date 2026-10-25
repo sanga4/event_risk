@@ -284,3 +284,12 @@ The new [rolling six-factor beta and original evidence methodology](ROLLING_SECU
 The `phase1_independent_evidence_requirements.py` worklist creates **448** explicit missing original source/corporate-action/FX/event-mapping review requirements over **113** underlying cases. Required vendor URI, original source SHA, original publish and revision dates, commercial license, analyst reviewer and independent second decision are **NULL/FALSE**—not fabricated. No source price corrected and no mappings approved.
 
 Gate release v2.0: **19/39 automatic PASS, 20 BLOCKED, four manual requirements remain**, production FALSE. Remediation register: **43** requirements, nine workstreams. Authenticated API endpoints provide summary-only beta stability and evidence triage, without external source values, private original documents or coefficients approved for production.
+
+
+## Vendor adjustment candidate reconciliation and independent covariance shrinkage stress (2026-10-25 UTC)
+
+Source-controlled, executed [security adjustment and covariance stress methodology](SECURITY_ADJUSTMENTS_AND_COVARIANCE_STRESS.md). **107,149 unique source prices**, 63 tickers, four duplicate ticker-date groups excluded, 369 vendor adjustment ratio jumps >=50bp, 51 >=200bp, all 12 existing large-return cases mathematically reconciled; **none of the 12 coincided with a >=200bp same-day adjustment-factor step**. No source issuer splits/dividends independently verified and no price fixes silently made.
+
+Six prespecified covariance-shrinkage variants on the seven-factor training/holdout matrices all breach 50% holdout covariance drift: 69.94% to 74.11%. Increasing shrinkage improves numerical conditioning but **worsens or fails to improve holdout mismatch**; hindsight tuning is prohibited, portfolio covariance/VaR remains unapproved. Both pipelines have succeeded as on-demand research-only MotherDuck Flights.
+
+Release v2.1 automatic gates: **21/43 pass (48.8%)**, 22 block, four manual owner signoffs outstanding; 47 institutional evidence/action items across 9 workstreams. New authenticated API endpoints expose summaries only, not licensed raw source close prices or unapproved risk models.
