@@ -9,3 +9,13 @@ The builder then checks every overlapping key and substantive source/value/previ
 **Important limits:** existing factors are retrospective as downloaded; `source_factor_day` is not verified `first_published_at` and `provider_record_available_at` can refer to an institutional ingestion clock, not the original vintage. The new v4 is an internally consistent research input for further event and risk modeling, **not** a causal event impact, tradable backtest, independently approved beta or commercial reuse entitlement. Never use it to turn data first ingested after the historical event into a historical trading signal.
 
 The v4 build is separate from and does not overwrite v2, v3, v3.1 or raw records. No new public API endpoint, vendor source rights switch, FRED credential, model risk signoff or production authorization is created. Execute with `LAB_RESEARCH_SCOPE=internal-only`, a 40-character `LAB_PIPELINE_COMMIT`, and the explicitly scoped MotherDuck Flight access. The source and acceptance code remain version pinned.
+
+## First executed source-native build — October 25, 2026 UTC
+
+MotherDuck Flight `eventrisk-lab-v4-source-native-event-factor-build`, id `8c3918b7-b472-406f-824b-8e4e743fc1c5`, version 1 run 1 SUCCEEDED, exit code 0. Source commit `3c0e2c424eea7bc056771f744efb3a621ec0dcd4`; audit build `phase1-v4-native-event-factor-v1.0.0-20261025T044454196041Z`.
+
+First run materialized exactly **233,442** independently reconstructed event-factor research rows, **18** factors, **76,662** genuine carried source-factor dates, **192,294** paired event-factor change rows, **233,442** retrospectively later-available factor source rows, and **233,442/233,442** matches to independent corrected v3.1 acceptance history. An independently executed SQL join found **zero** errors in factor observed date, carried flag, previous aligned factor level and material factor change. All **233,442** observations preserve the lookahead warning; **zero** false PIT/model approval rows and zero future source observation dates. The historical v2/v3/v3.1 and raw source tables remain unchanged.
+
+GitHub workflow tests on this branch passed **207** offline Phase I Lab tests, including eight source-native v4 acceptance tests.
+
+These successful checks certify the *implemented historical source-alignment logic*, not source original publication clocks, independent rights approvals, sampled portfolio betas, causal policy/geopolitical event transmission or portfolio risk release.
