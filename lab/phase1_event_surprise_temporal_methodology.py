@@ -95,6 +95,7 @@ def belief_revision(record: dict, *, pre_window_minutes: int = 60,
         "pre_quote_received_at", "post_quote_received_at",
         "pre_probability", "post_probability",
         "pre_quote_source_sha256", "post_quote_source_sha256",
+        "pre_contract_sha256", "post_contract_sha256",
         "decision_asof_at",
     }
     no_approval_inputs(record, allowed)
@@ -126,6 +127,8 @@ def belief_revision(record: dict, *, pre_window_minutes: int = 60,
         raise MethodologyRejected("Out of range quote probability")
     sha(record,"pre_quote_source_sha256")
     sha(record,"post_quote_source_sha256")
+    if sha(record,"pre_contract_sha256") != sha(record,"post_contract_sha256"):
+        raise MethodologyRejected("Changed event contract terms across quoted event window")
     # A quote changing at event time is NOT itself an independent announcement
     # surprise; the exact source clock claims must be independently reviewed.
     return {
@@ -155,6 +158,7 @@ def macro_release_surprise(record: dict) -> dict:
         "actual_first_print", "expected_pre_release",
         "frozen_consensus_std", "actual_source_sha256",
         "consensus_source_sha256", "first_print_revision_id",
+        "actual_unit", "consensus_unit",
     }
     no_approval_inputs(record, allowed)
     for name in ("release_id","series_id","first_print_revision_id"):
@@ -162,7 +166,9 @@ def macro_release_surprise(record: dict) -> dict:
         if not isinstance(v,str) or not 1 <= len(v) <= 200:
             raise MethodologyRejected(f"{name}: original source version identity required")
     unit = field(record,"unit")
-    if unit not in ALLOWED_UNITS:
+    if (unit not in ALLOWED_UNITS
+        or field(record,"actual_unit") != unit
+        or field(record,"consensus_unit") != unit):
         raise MethodologyRejected("Unknown or mismatched source-native release units")
     scheduled=at(field(record,"announcement_scheduled_at"),"announcement_scheduled_at")
     first=at(field(record,"first_print_published_at"),"first_print_published_at")

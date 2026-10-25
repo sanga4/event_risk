@@ -24,6 +24,7 @@ def market():
         "post_quote_received_at":"2026-10-25T12:05:02Z",
         "pre_probability":0.40,"post_probability":0.55,
         "pre_quote_source_sha256":SHA_A,"post_quote_source_sha256":SHA_B,
+        "pre_contract_sha256":SHA_A,"post_contract_sha256":SHA_A,
         "decision_asof_at":"2026-10-25T12:06:00Z"
     }
 
@@ -31,7 +32,8 @@ def market():
 def macro():
     return {
         "release_id":"cpi-2026-09","series_id":"CPI-YOY",
-        "unit":"percent_yoy","announcement_scheduled_at":"2026-10-25T12:00:00Z",
+        "unit":"percent_yoy", "actual_unit":"percent_yoy",
+        "consensus_unit":"percent_yoy","announcement_scheduled_at":"2026-10-25T12:00:00Z",
         "first_print_published_at":"2026-10-25T12:00:01Z",
         "first_print_received_at":"2026-10-25T12:00:02Z",
         "consensus_published_at":"2026-10-25T11:30:00Z",
@@ -132,6 +134,20 @@ class TemporalIdentificationTests(unittest.TestCase):
                     "Unsupported fields")
         self.reject(m.macro_release_surprise,macro(),"original_pit_verified",False,
                     "Unsupported fields")
+
+    def test_same_contract_version_string_cannot_hide_changed_contract_terms(self):
+        self.reject(m.belief_revision,market(),"post_contract_sha256",SHA_B,
+                    "Changed event contract terms")
+        self.reject(m.belief_revision,market(),"pre_contract_sha256",None,
+                    "Missing original source field")
+
+    def test_macro_source_units_must_match_for_actual_and_frozen_consensus(self):
+        self.reject(m.macro_release_surprise,macro(),"consensus_unit",
+                    "basis_points","mismatched source-native")
+        self.reject(m.macro_release_surprise,macro(),"actual_unit",
+                    "index_points","mismatched source-native")
+        self.reject(m.macro_release_surprise,macro(),"actual_unit",None,
+                    "Missing original source field")
 
     def test_cross_timezone_equivalent_times_work_as_instants(self):
         d=market()
