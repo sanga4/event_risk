@@ -1,0 +1,19 @@
+# Phase I — Independent FF6 rolling beta metric integrity audit
+
+The original internal-research FF5+Momentum producer evaluated 958 rolling security windows and 5748 HAC(5) factor coefficients across 48 security ticker series. It uses 378 historically observed training dates, then 63 heldout dates, 63-step windows; conditional outlier flags stem from retrospective adjusted prices, **not** independently validated issuer errors.
+
+An independent new producer `lab/phase1_ff6_metric_integrity_audit.py` reads the latest **versioned** FF6 build. It cross-reconciles source build row totals, the exact six-factor set per security/window, finite beta coefficients and positive HAC uncertainty, training-before-holdout dates, and the source's fixed 378/63 train/holdout split. It then recomputes: (a) adjacent accepted-window six-beta L2 drift / max(previous L2 norm,0.25), with review when strictly >0.5; and (b) holdout SSE ratio from squared full-FF6 RMSE divided by squared market-only RMSE, with review when strictly >1.25. Failure to reproduce ANY persisted drift, review flag, or identity aborts without writing the audit. The source/underlying adjusted closes are never modified.
+
+Output is append-only `lab_ff6_metric_integrity_builds_v1` and one per-ticker audit subject in `lab_ff6_metric_integrity_subjects_v1`, with build SHAs, individual review counts and explicit FALSE approvals. Numerical consistency does not validate the statistical fit's first-publication vintages, model economic rationale, source universe survivorship, original issuer dividends/splits, licensed commercial rights, beta confidence, exposures or portfolio suitability. The experiment does not prove factor betas represent causal event impacts.
+
+Previously verified source manifest: 48 tickers, 958 windows, 5748 six-factor coefficients, 59 adjacent drift reviews, 36 poor-holdout reviews and 65 flagged-return-exposed windows. All source release and independent publication-time flags remain FALSE. Acceptance of the new integrity audit must confirm those exact counts and 0 unreviewed algorithm mismatches, WITHOUT claiming production beta approval.
+
+The audit is on-demand and restricted to `eventrisk_factor_lab` with `LAB_RESEARCH_SCOPE=internal-only` and pinned 40-character source commit. Independent source-clock and licensing evidence must be collected before product release.
+
+## Verified warehouse execution, October 25, 2026 UTC
+
+MotherDuck Flight `eventrisk-lab-ff6-beta-independent-metric-audit` (`fd569b99-2d5c-4a5e-94b9-03fdbf7311fb`) version 1 run 1 SUCCEEDED (exit code 0) with producer source SHA `a36c339b0652f6bb8bb39243a0a863dd0d88abef`, pinned `duckdb==1.5.6` and `pytz==2025.2`. Audit build `phase1-ff6-independent-metric-audit-v1.0.0-20261025T033840948306Z` joins source build `phase1-style-beta-rolling-audit-v1.0.0-20261025T001255125906Z`.
+
+The independent audit reconciled all **48** source security ticker series, **958** rolling training/holdout windows, **5,748** non-missing six-factor beta estimates/HAC uncertainty fields, **59** adjacent vector-shift review windows, **36** poor relative holdout-fit windows, and **65** windows containing flagged source-price movements. Recomputed adjacent-vector shift and squared relative RMSE diagnostics matched the original flags; **zero** duplicate ticker subjects and **zero** falsely approved institutional beta/issuer-corporate-action flags. Largest adjacent beta vector shift was 1.22371317 (relative previous six-beta norm), requiring independent source and model review. The branch's Phase I GitHub CI passed **170 offline tests**, including eight new adversarial FF6 integrity tests.
+
+This is independently executed *software and data-field integrity reconciliation* using the same versioned ex-post source warehouse, **not** independent market-data attestation, source revision reconstruction, external rights approval, original issuer actions or independent beta model-risk approval.
