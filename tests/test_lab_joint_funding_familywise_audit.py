@@ -67,6 +67,61 @@ class JointBetaMultiplicity(unittest.TestCase):
         self.assertEqual(report["relative_shift_gt25_assets"],2)
         self.assertTrue(all(r[12] for r in report["rows"] if r[0]=="ASSET01"))
 
+    def test_strong_holm_significance_never_overrides_variant_sign_reversal(self):
+        rows=fixture()
+        # Both source cells remain highly significant under the original
+        # nominal/Holm family, but the *security* is not beta-stable.
+        altered=[]
+        for r in rows:
+            if r[0]=="ASSET00" and r[1]=="training_tail_exclusion":
+                x=list(r);x[10]=-5.0;r=tuple(x)
+            altered.append(r)
+        report=q.score(altered)
+        self.assertEqual(report["holm_p_below_05"],2)
+        self.assertEqual(report["joint_screen_pass"],0)
+        self.assertEqual(report["cross_variant_rejected_assets"],1)
+        self.assertEqual(report["cross_variant_rejected_model_cells"],2)
+        self.assertEqual(
+            {r[-1] for r in report["rows"] if r[0]=="ASSET00"},
+            {"REJECT_CROSS_VARIANT_FUNDING_BETA_SIGN_REVERSAL"})
+
+    def test_25pct_variant_coefficient_instability_is_binding(self):
+        rows=fixture()
+        modified=[]
+        for r in rows:
+            if r[0]=="ASSET00" and r[1]=="training_tail_exclusion":
+                x=list(r);x[10]=3.5;r=tuple(x)  # 30% relative shift
+            modified.append(r)
+        report=q.score(modified)
+        self.assertEqual(report["joint_screen_pass"],0)
+        self.assertEqual(report["cross_variant_rejected_assets"],1)
+        self.assertEqual(
+            {r[-1] for r in report["rows"] if r[0]=="ASSET00"},
+            {"REJECT_CROSS_VARIANT_FUNDING_BETA_SHIFT_GT25PCT"})
+
+    def test_one_bad_holdout_variant_rejects_otherwise_significant_pair(self):
+        rows=fixture()
+        modified=[]
+        for r in rows:
+            if r[0]=="ASSET00" and r[1]=="training_tail_exclusion":
+                x=list(r);x[12]=-0.01
+                x[14]="REJECT_NEGATIVE_HOLDOUT_SKILL"
+                r=tuple(x)
+            modified.append(r)
+        report=q.score(modified)
+        self.assertEqual(report["joint_screen_pass"],0)
+        self.assertEqual(
+            {r[-1] for r in report["rows"] if r[0]=="ASSET00"},
+            {"REJECT_CROSS_VARIANT_HOLDOUT_SKILL"})
+
+    def test_false_parent_screen_claim_is_rejected_not_inherited(self):
+        for idx,value in ((12,0.0),(13,False),(10,0.5)):
+            rows=fixture()
+            x=list(rows[0]);x[idx]=value;rows[0]=tuple(x)
+            with self.subTest(index=idx),self.assertRaisesRegex(
+                ValueError,"Parent research screen contradicts fitted diagnostics"):
+                q.score(rows)
+
     def test_failed_base_research_screen_never_upgraded_by_small_p(self):
         rows=fixture()
         x=list(rows[0]);x[14]="REJECT_NEGATIVE_HOLDOUT_SKILL";rows[0]=tuple(x)
