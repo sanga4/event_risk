@@ -1,0 +1,65 @@
+name: Factor Lab checkpointed research validation
+on:
+  workflow_dispatch:
+    inputs:
+      batch_id:
+        description: "Optional 32 lowercase hex batch ID; leave blank to derive stable ID from this Actions run"
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: eventrisk-factor-lab-checkpointed-research
+  cancel-in-progress: false
+jobs:
+  source-pinned-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_RUNNER_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned research dependencies
+        run: pip install -r lab/requirements.txt
+      - name: Require scoped warehouse secret and stable batch key
+        shell: bash
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          REQUESTED_BATCH_ID: ${{ inputs.batch_id }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MOTHERDUCK_TOKEN" ]]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN Actions secret is required; no remote writes attempted."
+            exit 1
+          fi
+          if [[ -z "$REQUESTED_BATCH_ID" ]]; then
+            printf 'LAB_BATCH_ID=%032x\n' "$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+          elif [[ "$REQUESTED_BATCH_ID" =~ ^[0-9a-f]{32}$ ]]; then
+            printf 'LAB_BATCH_ID=%s\n' "$REQUESTED_BATCH_ID" >> "$GITHUB_ENV"
+          else
+            echo "::error::Batch ID must be exactly 32 lowercase hex characters."
+            exit 1
+          fi
+      - name: Execute bounded checkpointed research validation
+        shell: bash
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: |
+          set -euo pipefail
+          python lab/phase1_research_checkpoint_runner.py | tee batch-summary.log
+      - name: Record research-only execution summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### EventRisk Factor research-only checkpointed QA' >> "$GITHUB_STEP_SUMMARY"
+          echo "Runner source: `$LAB_RUNNER_COMMIT`" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Institutional release: **NOT AUTHORIZED**' >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f batch-summary.log ]]; then
+            cat batch-summary.log >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No validated producer stage summary exists for this attempt.' >> "$GITHUB_STEP_SUMMARY"
+          fi
