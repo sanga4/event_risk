@@ -13,3 +13,17 @@ Acceptance enforces 18 factor families and two venues (36 research comparisons),
 Append-only outputs are `lab_historical_placebo_holdout_builds_v1` and `lab_historical_placebo_holdout_models_v1`, with source-code SHA and input historic build identity, fixed train/test dates and counts, heldout baseline skill, placebo skill and explicit FALSE PIT / causal mapping / institutional risk flags. The exact 36 cases are preserved; no model selection after the holdout, no optimization on future placebo, no backtest certification, and no independent original source publication clocks.
 
 **Remaining P0 production requirements:** external original provider publication vintages and revision histories; rights for market quote histories and factor levels; issuer corporate action / security identifiers; economically prespecified event-channel mapping and surprise instruments; independent model-risk committee review, confounder sensitivity, longer true prospective calendar date coverage and suitable clustered/serial-dependence-aware inference.
+
+## First executed MotherDuck study — October 25, 2026 UTC
+
+The research Flight `eventrisk-lab-chronological-placebo-holdout`, id `a46b6a3c-c670-49ee-8a3c-f5e77d2941cf`, **version 2 run 2 succeeded** with build `phase1-retro-placebo-holdout-v1.0.0-20261025T050231354131Z` pinned to producer SHA `fe43f0c097b3356721bf7f654118fee767997ae2`. Original source build `phase1-history-v1.0.0-20261023T154707088377Z`. An initial prototype run failed a **Python output tuple-index error** after the SQL fitting step; the error was corrected, seven adversarial tests and complete CI passed, then run 2 successfully committed the audit outputs. Do not cite the failed first run as validated evidence.
+
+| Venue | Factor comparisons | Complete paired sessions/model | Train | Held-out | Positive same-day out-of-time skill | Positive *future-feature placebo* out-of-time skill | Mean same-day test skill | Mean future-feature placebo skill |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Kalshi | 18 | 491 | 343 | 148 | 9 | 9 | −0.00007 | +0.00001 |
+| Polymarket | 18 | 639 | 447 | 192 | 2 | 3 | −0.00067 | −0.00213 |
+| **Total** | **36** | — | — | — | **11** | **12** | — | — |
+
+The highest same-day held-out model skill was **+0.0044** (approximately +0.44% relative squared-error reduction versus the fixed training mean); highest future-feature placebo skill was **+0.00505** (approximately +0.505%). The common evaluation period's first heldout date is 2026-01-16, ending 2026-10-21. 0 official original-market-data publication-time certifications, 0 independent event-channel relationship approvals and 0 licensed risk-model production flags were granted. Positive skills are tiny, and the future-market-value placebo (unavailable at the prediction date) performing comparably is a negative finding for causal inference, not evidence of future predictive trading returns.
+
+**Do not interpret positive-counts across the 36 models as independent significance tests**: factor returns are correlated, shared venue predictors are identical within date, both training/holdout samples overlap across models, and these have retrospective source revisions. This experiment has **no calibrated p-values** or new institutional model signoff. Follow up with independently as-published data and prespecified release-time event innovation instruments before any attribution model.
