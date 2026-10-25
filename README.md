@@ -246,3 +246,6 @@ and entities are connected by Wikidata statements and by normalized co-occurrenc
 
 
 **New methodology milestone:** [Rolling six-factor beta stability and original evidence-review requirements](lab/ROLLING_SECURITY_BETA_AND_EVIDENCE_METHODOLOGY.md) · 958 security-window fits, 448 mandatory original-source evidence requests. Current automatic institutional gates **19/39 PASS**, release blocked. This is research-only, not investment advice or approved portfolio risk.
+
+
+**Latest verified research audit:** [Corporate-action source reconciliation and covariance sensitivity](lab/SECURITY_ADJUSTMENTS_AND_COVARIANCE_STRESS.md). 107,149 price records reconciled, six covariance variants rejected by the holdout stability screen. Institutional automatic gates **21/43**, 4 manual approvals outstanding. Actual source vintages and vendor rights not approved.
