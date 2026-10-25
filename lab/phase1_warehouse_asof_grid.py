@@ -98,7 +98,33 @@ def setup(con):
     )""")
 
 
-def stage(con):
+def capture_scope_sql(prefix=None):
+    """Replay safety: select by complete immutable capture-market identity.
+
+    Incremental mode drops only keys already represented by at least one
+    existing as-of factor row. The original producer transaction is atomic.
+    Use explicit full replay for historic source-method revisions.
+    """
+    if prefix is None:
+        prefix = P
+    return f"""
+    CREATE OR REPLACE TEMP TABLE p1_capture_scope AS
+    SELECT e.* FROM {prefix}lab_live_event_features_v1 e
+    WHERE ?::BOOLEAN OR NOT EXISTS (
+       SELECT 1 FROM {prefix}lab_prospective_event_factor_grid_v1 g
+       WHERE g.event_run_id=e.run_id
+         AND g.venue=e.venue AND g.market_id=e.market_id
+    )"""
+
+
+def stage(con,full_replay=False):
+    # A completed source event×factor cohort is immutable and was materialized
+    # transactionally. Normal refreshes must NOT recompute the complete multi-year
+    # event grid; only new capture-market identities enter the candidate join.
+    # A controlled explicit full replay is available if source eligibility,
+    # factor catalog or as-of mapping rules change. Both modes still preserve
+    # original rows and deduplicate by event×factor identity.
+    con.execute(capture_scope_sql(),[full_replay])
     # Never import restricted_ice_bofa or unreviewed sources like T10YIE:
     # source licensing is an explicit allowlist.
     labels = ", ".join("'" + x + "'" for x in ALLOWED_LICENSE_CLASSES)
@@ -162,7 +188,7 @@ def stage(con):
                    f.source_ingested_at DESC,
                    f.source_record_sha256 DESC
         ) AS rn
-      FROM {P}lab_live_event_features_v1 AS e
+      FROM p1_capture_scope AS e
       JOIN p1_factor_source AS f
         ON f.factor_observed_date <= CAST(e.known_at AS DATE)
        AND date_diff('day',f.factor_observed_date,CAST(e.known_at AS DATE))
@@ -190,7 +216,11 @@ def main():
     con.execute("SET TimeZone='UTC'")
     try:
         setup(con)
-        stage(con)
+        full_replay = os.getenv("LAB_GRID_FULL_REPLAY", "false").lower() == "true"
+        if os.getenv("LAB_GRID_FULL_REPLAY", "false").lower() not in ("true","false"):
+            raise RuntimeError("LAB_GRID_FULL_REPLAY must be explicitly true or false")
+        stage(con,full_replay=full_replay)
+        staged_events = con.execute("SELECT count(*) FROM p1_capture_scope").fetchone()[0]
         source_vintages = con.execute("SELECT count(*) FROM p1_factor_source").fetchone()[0]
         observed_events = con.execute(f"SELECT count(*) FROM {P}lab_live_event_features_v1").fetchone()[0]
         candidates, future = con.execute("""
@@ -246,6 +276,8 @@ def main():
             con.execute("ROLLBACK")
             raise
         print("BUILD_ID="+build_id)
+        print("CAPTURE_GRID_REFRESH_MODE="+("EXPLICIT_FULL_REPLAY" if full_replay else "NEW_CAPTURE_MARKETS_ONLY"))
+        print("STAGED_CAPTURE_MARKETS="+str(staged_events))
         print("SOURCE_FACTOR_VINTAGES="+str(source_vintages))
         print("EVENT_CAPTURES="+str(observed_events))
         print("ELIGIBLE_WAREHOUSE_ASOF_GRID_ROWS="+str(candidates))
