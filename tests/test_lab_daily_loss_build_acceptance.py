@@ -90,6 +90,18 @@ class DailyLossAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,pattern):
             self.review(bundle)
 
+    def test_native_and_numpy_numeric_scalars_pass_but_boolean_and_nan_do_not(self):
+        for scalar in (0.0,12.0,np.float64(2.5),np.int64(7)):
+            with self.subTest(scalar=scalar):
+                self.assertTrue(a.finite_number(scalar))
+        for invalid in (True,False,np.bool_(True),"123",
+                        float("nan"),np.float64("inf"),None):
+            with self.subTest(invalid=str(invalid)):
+                self.assertFalse(a.finite_number(invalid))
+        a.approx(np.float64(1.25),1.25,"numpy f64 equality")
+        with self.assertRaisesRegex(ValueError,"metric drift"):
+            a.approx(np.float64("nan"),0.0,"finite guard")
+
     def test_wrong_git_source_code_or_parent_provenance_rejected(self):
         self.assert_bad(lambda b:b.__setitem__(5,"e"*40),"producer identity")
         self.assert_bad(lambda b:b.__setitem__(6,"0"*64),"producer identity")
