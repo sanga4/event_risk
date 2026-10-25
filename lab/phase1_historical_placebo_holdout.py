@@ -234,7 +234,7 @@ def main():
                VALUES (?,?,?,?,current_timestamp,?,?,?,FALSE,FALSE,
                'BACKFILLED_OBSERVATIONS_EX_POST_NO_EVENT_CAUSAL_RELEASE')""",
                 [build,source[0],sha,digest,len(models),
-                 sum(r[16] for r in models),sum(r[17] for r in models)])
+                 sum(r[15] for r in models),sum(r[16] for r in models)])
             con.executemany(f"""INSERT INTO {P}lab_historical_placebo_holdout_models_v1
                VALUES ({','.join('?' for _ in range(21))})""",
                [(build,*r,False,False) for r in models])
@@ -243,7 +243,7 @@ def main():
             con.execute("ROLLBACK")
             raise
     print(f"BUILD_ID={build} PAIRS={len(models)} SOURCE_HISTORY={source[0]}")
-    print(f"OUT_OF_TIME_POSITIVE_MODEL_R2={sum(r[16] for r in models)} FUTURE_MARKET_FEATURE_PLACEBO_POSITIVE_R2={sum(r[17] for r in models)}")
+    print(f"OUT_OF_TIME_POSITIVE_MODEL_R2={sum(r[15] for r in models)} FUTURE_MARKET_FEATURE_PLACEBO_POSITIVE_R2={sum(r[16] for r in models)}")
     print(f"HELDOUT_DATE_FIRST={min(r[8] for r in models)} LAST={max(r[9] for r in models)}")
     print("PROVIDER_AS_KNOWN=FALSE NEGATIVE_CONTROL_NOT_TRADEABLE=TRUE EVENT_CAUSAL_APPROVAL=FALSE")
 
