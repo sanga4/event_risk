@@ -67,7 +67,7 @@ def assess(family_build, families, venue, nyfed, grid, panel):
         (domain,exists,n,first,last,retrieved,pit,rights,approved,freq,evidence)=f
         if not domain or not freq or not evidence or n<0 or (n>0 and not exists):
             raise ValueError("Malformed source family domain or record count")
-        if n and (first is None or last is None or first>last):
+        if n and first is not None and last is not None and first>last:
             raise ValueError("Malformed family first/last observation dates")
         if (pit or rights or approved):
             # An asserted TRUE flag requires a wholly different independent
@@ -75,6 +75,8 @@ def assess(family_build, families, venue, nyfed, grid, panel):
             state="UPSTREAM_RIGHTS_OR_PIT_ASSERTION_NEEDS_HUMAN_EVIDENCE_REVIEW"
         elif n==0:
             state="MISSING_SOURCE_OR_CREDENTIAL_OR_ORIGINAL_EVIDENCE"
+        elif first is None or last is None:
+            state="POPULATED_BUT_FIRST_LAST_OBSERVATION_DATES_MISSING"
         elif domain=="nyfed_sofr_effr_reference" and any(
             r[2]<MIN_NYFED_RATE_DAYS_RESEARCH or r[3].isoformat()>"2018-12-31"
             for r in nyfed
