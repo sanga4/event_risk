@@ -105,6 +105,35 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         proposed,_=example(existing=inventory)
         self.assertEqual(proposed,[])
 
+    def test_legacy_retrospective_equal_rates_do_not_suppress_first_xml_receipt(self):
+        # Data value identity is not source-packet evidence identity.
+        # The old archive may hold numerically identical Treasury CSV curves,
+        # but the FIRST real original XML receipt must still be versioned.
+        values,_=example()
+        old=m.P
+        m.P="main."
+        try:
+            with duckdb.connect(":memory:") as con:
+                con.execute("""CREATE TABLE main.lab_factor_observations (
+                  factor_id VARCHAR,observed_date DATE,value DOUBLE,
+                  unit VARCHAR,ingested_at TIMESTAMPTZ,
+                  availability_at TIMESTAMPTZ,availability_basis VARCHAR,
+                  provider VARCHAR,source_url VARCHAR,
+                  record_sha256 VARCHAR,run_id VARCHAR)""")
+                con.executemany("""INSERT INTO main.lab_factor_observations
+                  VALUES (?,?,?,'percent',?,?,?,?,?,?,?)""",
+                  [(v["factor_id"],v["date"],v["value"],RECEIPT,RECEIPT,
+                    "retrospective_archive_retrieval_only","US_TREASURY_CSV",
+                    "https://home.treasury.gov/","a"*64,"old-archive")
+                   for v in values])
+                before=m.existing_inventory(con,RECEIPT)
+                self.assertEqual(before,[])
+                proposed,_=m.prepare(packets([date(2026,10,23)]),
+                                     before,"first-xml",now=RECEIPT)
+                self.assertEqual(len(proposed),18)
+        finally:
+            m.P=old
+
     def test_revised_real_source_value_appends_exactly_one_and_derived_rates(self):
         rows,_=example()
         existing=[(x["factor_id"],x["date"],x["value"]) for x in rows]
@@ -186,6 +215,14 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
                        != 'official_xml_http_receipt_not_original_publication')
                     FROM main.lab_factor_observations""").fetchone()
                 self.assertEqual(v,(18,0,2,0))
+                clocks=con.execute("""SELECT min(ingested_at),
+                    max(availability_at) FROM main.lab_factor_observations
+                """).fetchone()
+                self.assertGreater(clocks[0],RECEIPT)
+                self.assertEqual(clocks[0],clocks[1])
+                finished=con.execute("""SELECT finished_at
+                   FROM main.lab_treasury_current_xml_runs_v1""").fetchone()[0]
+                self.assertLessEqual(clocks[1],finished)
                 raw=con.execute("""SELECT original_payload_bytes,
                    original_payload_sha256,original_publisher_first_release_verified,
                    licensed_institutional_risk_use_approved
