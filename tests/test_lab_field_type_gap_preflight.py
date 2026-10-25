@@ -123,9 +123,11 @@ class SourceFieldEvidenceTests(unittest.TestCase):
         self.assertEqual(report["disposition"], "BLOCKED_NOT_INSTITUTIONALLY_APPROVED")
         self.assertFalse(report["institutional_release_approved"])
         self.assertFalse(report["provider_publication_time_certified_by_this_report"])
-        self.assertEqual(report["datasets"][0]["dataset_id"], "event_quote_receipt")
-        self.assertEqual(report["datasets"][0]["empty_required"][0]["field"],
+        by_dataset = {d["dataset_id"]: d for d in report["datasets"]}
+        self.assertEqual(by_dataset["event_quote_receipt"]["empty_required"][0]["field"],
                          "provider_quote_at")
+        self.assertEqual(by_dataset["security_price"]["missing_required"][0]["field"],
+                         "permanent_security_id")
 
     def assert_invalid(self, mutate, reason):
         b, f, d = fixture()
