@@ -249,3 +249,6 @@ and entities are connected by Wikidata statements and by normalized co-occurrenc
 
 
 **Latest verified research audit:** [Corporate-action source reconciliation and covariance sensitivity](lab/SECURITY_ADJUSTMENTS_AND_COVARIANCE_STRESS.md). 107,149 price records reconciled, six covariance variants rejected by the holdout stability screen. Institutional automatic gates **21/43**, 4 manual approvals outstanding. Actual source vintages and vendor rights not approved.
+
+
+**Newest research methodology:** [Cross-asset one-day walkforward covariance and six-factor flagged-price sensitivity](lab/WALKFORWARD_COVARIANCE_AND_BETA_SENSITIVITY.md). 656 day-ahead research covariance evaluations, 48 security beta robustness comparisons; no production model approval. Formal gates **23/47 auto pass, 24 blocked, four independent manual requirements**.
