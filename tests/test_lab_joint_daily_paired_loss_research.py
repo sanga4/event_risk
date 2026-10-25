@@ -78,14 +78,66 @@ class PairedDailyForecastLossReconstruction(unittest.TestCase):
         rows,fits,evidence=synthetic_parent()
         fit=fits[0]
         correct=list(evidence[0])
-        for change,expected in (({10:fit["funding_beta"]+.10},"coefficient"),
-                                ({11:-1},"coefficient"),
-                                ({6:date(2020,1,1)},"chronology"),
-                                ({15:1},"release")):
+        for change,expected in (
+            ({q.PARENT_METRICS.index("funding_beta"):fit["funding_beta"]+.10},
+             "coefficient"),
+            ({q.PARENT_METRICS.index("funding_hac_se"):-1}, "coefficient"),
+            ({q.PARENT_METRICS.index("market_beta"):fit["market_beta"]+.25},
+             "coefficient"),
+            ({q.PARENT_METRICS.index("dgs2_beta"):fit["dgs2_beta"]+.25},
+             "coefficient"),
+            ({q.PARENT_METRICS.index("dgs10_beta"):fit["dgs10_beta"]+.25},
+             "coefficient"),
+            ({q.PARENT_METRICS.index("first_half_beta"):
+                 fit["first_half_beta"]+.25}, "coefficient"),
+            ({q.PARENT_METRICS.index("second_half_beta"):
+                 fit["second_half_beta"]+.25}, "coefficient"),
+            ({q.PARENT_METRICS.index("sign_stable"):
+                 not fit["sign_stable"]}, "coefficient"),
+            ({q.PARENT_METRICS.index("condition"):
+                 fit["condition"]+.25}, "coefficient"),
+            ({q.PARENT_METRICS.index("ci_low"):
+                 fit["ci_low"]+.25}, "coefficient"),
+            ({q.PARENT_METRICS.index("excluded_train"):
+                 fit["excluded_train"]+1}, "chronology"),
+            ({q.PARENT_METRICS.index("research_status"):"APPROVED"},
+             "chronology"),
+            ({q.PARENT_METRICS.index("first"):date(2020,1,1)},
+             "chronology"),
+            ({len(q.PARENT_METRICS):1},"release"),
+        ):
             test=correct.copy()
             for k,v in change.items():test[k]=v
             with self.subTest(change=change),self.assertRaisesRegex(ValueError,expected):
                 q.check_parent_record(tuple(test),fit)
+
+    def test_original_parent_source_code_bytes_sha_must_match_exactly(self):
+        class ReplayRow:
+            def __init__(self, sha):
+                self.sha=sha
+            def fetchone(self):
+                return (self.sha,)
+        class FakeSource:
+            def __init__(self, sha):
+                self.sha=sha
+                self.queries=[]
+            def execute(self,sql,params):
+                self.queries.append((sql,params))
+                return ReplayRow(self.sha)
+        path=Path(q.parent_method.__file__)
+        correct=hashlib.sha256(path.read_bytes()).hexdigest()
+        source=FakeSource(correct)
+        self.assertEqual(q.check_original_method_hash(source,"parent-build"),correct)
+        self.assertEqual(source.queries[0][1],["parent-build"])
+        with self.assertRaisesRegex(ValueError,"implementation SHA256 changed"):
+            q.check_original_method_hash(FakeSource("0"*64),"parent-build")
+
+    def test_every_original_model_metric_including_rate_betas_is_reconciled(self):
+        rows,fits,evidence=synthetic_parent()
+        self.assertEqual(len(q.PARENT_METRICS),27)
+        self.assertEqual(len(evidence[0]),28)
+        self.assertTrue(all(q.check_parent_record(src,fit) is None
+                            for src,fit in zip(evidence,fits)))
 
     def test_parent_identity_missing_or_colliding_fails(self):
         rows,_,evidence=synthetic_parent()
@@ -156,6 +208,7 @@ class PairedDailyForecastLossReconstruction(unittest.TestCase):
         code=(LAB/"phase1_joint_daily_paired_loss_research.py").read_text()
         for s in ("--append-research","LAB_RESEARCH_WRITE_ACK",
                   "source_rows_sha256","source_sha!=parent_build[2]",
+                  "check_original_method_hash(con,parent_build[0])",
                   "parent_method.sql_inputs(con)","check_parent_record",
                   "shared_date.assess","RETROSPECTIVE_PAIRED_PREDICTION"):
             self.assertIn(s,code)
