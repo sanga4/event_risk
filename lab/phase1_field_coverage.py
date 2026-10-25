@@ -23,7 +23,7 @@ VERSION="phase1-field-contracts-v1.0.0"
 def expected_type_class(field):
     """Target class; not a claim the source actually has this type."""
     f=field.lower()
-    if f in {
+    if f=="licensed_redistribution" or f.endswith("_approved") or f in {
         "evidence_approved","historical_point_in_time_released",
         "provider_quote_freshness_verified","capture_time_verified",
         "source_availability_pit_verified","corporate_action_vintage_verified",
@@ -55,10 +55,17 @@ def expected_type_class(field):
              "return_bps","shock_bps","yield_level_pct",
              "previous_yield_level_pct","residual_risk","confidence_interval",
              "large_return_observations","factor_direction_convention",
-             "independent_market_beta"}:
+             "independent_market_beta","calendar_cluster_robust_se",
+             "n_effective"}:
         return "NUMERIC_OR_DEFINED"
     if f in {"contract_json","ontology_relation_ids"}:
         return "JSON"
+    # Source evidence digests must not pass merely because *some* value exists.
+    # A numerical hash or non-text evidence pointer is a schema contract defect,
+    # not an acceptable substitute for the original immutable bytes/digest.
+    if f.endswith(("_sha256","_hash")) or f in {
+        "source_digest","permanent_security_id"}:
+        return "STRING"
     return "STRING_OR_DEFINED"
 
 
@@ -82,6 +89,7 @@ def satisfies_type(expected, actual):
     if expected=="DATE_OR_TIMESTAMP":return actual in {"DATE","TIMESTAMPTZ"}
     if expected=="NUMERIC_OR_DEFINED":return actual=="NUMERIC"
     if expected=="JSON":return actual=="JSON"
+    if expected=="STRING":return actual=="STRING"
     return True
 
 
