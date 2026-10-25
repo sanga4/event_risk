@@ -111,7 +111,7 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         changed=packets([date(2026,10,23)])
         new_real=xml_feed([date(2026,10,23)],"real").replace(
             b'<d:TC_5YEAR>4.1</d:TC_5YEAR>',
-            b'<d:BC_5YEAR>4.25</d:BC_5YEAR>')
+            b'<d:TC_5YEAR>4.25</d:TC_5YEAR>')
         changed[1]["bytes"]=new_real
         changed[1]["sha256"]=hashlib.sha256(new_real).hexdigest()
         self.assertNotEqual(new_real,packets([date(2026,10,23)])[1]["bytes"])
@@ -133,7 +133,7 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"Incomplete"):
             example(packets([date(2026,10,23)],missing_nominal="BC_2YEAR"))
         with self.assertRaisesRegex(ValueError,"Incomplete"):
-            example(packets([date(2026,10,23)],missing_real="BC_5YEAR"))
+            example(packets([date(2026,10,23)],missing_real="TC_5YEAR"))
 
     def test_malformed_xml_html_invalid_numbers_and_nan_fail(self):
         for raw in (b"<html></html>",b"<feed/>",b"junk",
