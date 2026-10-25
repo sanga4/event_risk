@@ -1,0 +1,185 @@
+name: Factor Lab source QA batch
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+# Serialize batches against the same warehouse. Each completed job is a resume boundary.
+concurrency:
+  group: factor-lab-source-qa
+  cancel-in-progress: false
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt httpx==0.27.2
+      - run: python -m unittest discover -s tests -p 'test_lab_*.py' -v
+  price-exceptions:
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt
+      - name: Execute research stage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN repository secret is required."
+            exit 1
+          fi
+          python lab/phase1_price_exception_audit.py | tee stage.log
+      - name: Retain non-sensitive stage summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### price-exceptions (execution status, not institutional approval)' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $LAB_PIPELINE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f stage.log ]; then
+            cat stage.log >> "$GITHUB_STEP_SUMMARY"
+          fi
+  adjustment-lineage:
+    needs: price-exceptions
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt
+      - name: Execute research stage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN repository secret is required."
+            exit 1
+          fi
+          python lab/phase1_adjusted_price_reconciliation.py | tee stage.log
+      - name: Retain non-sensitive stage summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### adjustment-lineage (execution status, not institutional approval)' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $LAB_PIPELINE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f stage.log ]; then
+            cat stage.log >> "$GITHUB_STEP_SUMMARY"
+          fi
+  evidence-worklist:
+    needs: adjustment-lineage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt
+      - name: Execute research stage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN repository secret is required."
+            exit 1
+          fi
+          python lab/phase1_independent_evidence_requirements.py | tee stage.log
+      - name: Retain non-sensitive stage summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### evidence-worklist (execution status, not institutional approval)' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $LAB_PIPELINE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f stage.log ]; then
+            cat stage.log >> "$GITHUB_STEP_SUMMARY"
+          fi
+  release-assessment:
+    needs: evidence-worklist
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt
+      - name: Execute research stage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN repository secret is required."
+            exit 1
+          fi
+          python lab/phase1_release_gates.py | tee stage.log
+      - name: Retain non-sensitive stage summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### release-assessment (execution status, not institutional approval)' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $LAB_PIPELINE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f stage.log ]; then
+            cat stage.log >> "$GITHUB_STEP_SUMMARY"
+          fi
+  blocker-register:
+    needs: release-assessment
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r lab/requirements.txt
+      - name: Execute research stage
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::Scoped MOTHERDUCK_TOKEN repository secret is required."
+            exit 1
+          fi
+          python lab/phase1_release_unblock_register.py | tee stage.log
+      - name: Retain non-sensitive stage summary
+        if: always()
+        shell: bash
+        run: |
+          echo '### blocker-register (execution status, not institutional approval)' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $LAB_PIPELINE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f stage.log ]; then
+            cat stage.log >> "$GITHUB_STEP_SUMMARY"
+          fi
