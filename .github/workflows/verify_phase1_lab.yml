@@ -2,7 +2,7 @@ name: Verify EventRisk Phase I laboratory API
 on:
   push:
     branches:
-      - feat/phase1-rolling-factor-risk-nyfed-20261024
+      - feat/phase1-security-beta-stability-corporate-actions-20261025
       - main
   pull_request:
 permissions:
@@ -18,6 +18,6 @@ jobs:
       - name: Install pinned laboratory runtime and offline-test dependencies
         run: pip install -r lab/requirements.txt httpx==0.27.2
       - name: Compile all laboratory scripts without database or secrets
-        run: python -m py_compile lab/api.py lab/phase1_build_v3.py lab/phase1_historical_regressions.py lab/phase1_robust_regressions.py lab/phase1_release_gates.py lab/phase1_live_capture.py lab/phase1_prospective_features.py lab/phase1_warehouse_asof_grid.py lab/phase1_forward_mapping_review.py lab/phase1_methodology_coverage.py lab/phase1_security_rate_beta_backfill.py lab/institutional_data_contracts.py lab/phase1_field_coverage.py lab/phase1_factor_risk_diagnostics.py lab/phase1_release_unblock_register.py lab/phase1_security_rate_beta_backfill.py lab/phase1_price_exception_audit.py lab/phase1_curve_factor_research.py lab/phase1_french_style_factor_backfill.py lab/phase1_ff6_security_research.py lab/phase1_ecb_fx_references.py lab/phase1_fred_macro_research.py lab/phase1_cross_asset_covariance_research.py lab/phase1_cross_asset_rolling_stability.py lab/phase1_nyfed_funding_rates.py lab/phase1_source_family_evidence.py lab/phase1_cross_asset_rolling_stability.py lab/phase1_nyfed_funding_rates.py
+        run: python -m py_compile lab/api.py lab/phase1_build_v3.py lab/phase1_historical_regressions.py lab/phase1_robust_regressions.py lab/phase1_release_gates.py lab/phase1_live_capture.py lab/phase1_prospective_features.py lab/phase1_warehouse_asof_grid.py lab/phase1_forward_mapping_review.py lab/phase1_methodology_coverage.py lab/phase1_security_rate_beta_backfill.py lab/institutional_data_contracts.py lab/phase1_field_coverage.py lab/phase1_factor_risk_diagnostics.py lab/phase1_release_unblock_register.py lab/phase1_security_rate_beta_backfill.py lab/phase1_price_exception_audit.py lab/phase1_curve_factor_research.py lab/phase1_french_style_factor_backfill.py lab/phase1_ff6_security_research.py lab/phase1_ecb_fx_references.py lab/phase1_fred_macro_research.py lab/phase1_cross_asset_covariance_research.py lab/phase1_cross_asset_rolling_stability.py lab/phase1_nyfed_funding_rates.py lab/phase1_source_family_evidence.py lab/phase1_ff6_beta_rolling_stability.py lab/phase1_independent_evidence_requirements.py lab/phase1_cross_asset_rolling_stability.py lab/phase1_nyfed_funding_rates.py
       - name: Validate API, robust regression math, data rights and research-mode gates
         run: python -m unittest discover -s tests -p 'test_lab_*.py' -v

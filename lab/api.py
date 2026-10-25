@@ -1043,3 +1043,73 @@ def source_family_evidence_coverage() -> dict[str,Any]:
             "institutional_source_family_release_authorized":False,
             "production_portfolio_risk_approved":False,
             "research_only":True}
+
+
+@app.get("/v1/research/risk/security-beta-rolling-quality", dependencies=[Depends(require_api_key)])
+def rolling_security_beta_quality() -> dict[str, Any]:
+    """Only aggregate rolling beta diagnostics; no vendor source or coefficients."""
+    rows=_query(
+        "SELECT build_id,built_at,security_count,model_windows,coefficients,"
+        "adjacent_beta_shift_review_windows,poor_holdout_fit_review_windows,"
+        "windows_with_flagged_price_days,median_adjacent_beta_l2_shift,"
+        "median_holdout_r2_vs_market,source_pit_certified_models,"
+        "institutional_release_approved,risk_release_state "
+        "FROM eventrisk_factor_lab.main.lab_ff6_rolling_beta_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Rolling security beta research not built")
+    return {"build":rows[0],
+            "train_days":378,"holdout_days":63,"step_days":63,
+            "factor_family":"US_FF5_PLUS_MOM_RETROSPECTIVE",
+            "source_original_published_times_verified":False,
+            "historical_corporate_actions_verified":False,
+            "source_data_redistribution_approved":False,
+            "independent_beta_model_approval":False,
+            "released_security_beta_coefficients":False,
+            "research_only":True}
+
+
+@app.get("/v1/research/governance/original-evidence/summary", dependencies=[Depends(require_api_key)])
+def independent_evidence_summary() -> dict[str,Any]:
+    """Missing evidence is a requirement, not fabricated proof or signoff."""
+    rows=_query(
+        "SELECT build_id,built_at,abnormal_security_price_cases,"
+        "duplicate_fx_quote_groups,mapping_hypotheses_pending_review,"
+        "evidence_requirements,original_source_records_verified,"
+        "independently_approved_decisions,"
+        "institutionally_approved_risk_links,release_state "
+        "FROM eventrisk_factor_lab.main.lab_independent_evidence_builds_v1 "
+        "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Original source review requirements not built")
+    return {"build":rows[0],"documentation_not_verified_source":True,
+            "dual_review_required":True,"production_event_impacts_approved":False}
+
+
+@app.get("/v1/research/governance/original-evidence/requirements", dependencies=[Depends(require_api_key)])
+def independent_evidence_requirement_queue(
+    subject_class: str | None=Query(None,pattern="^(ADJUSTED_PRICE_EXCURSION|DUPLICATE_FX_SOURCE_QUOTE|EVENT_ECONOMIC_CHANNEL_MAPPING)$"),
+    limit: int=Query(50,ge=1,le=MAX_PAGE),
+    offset: int=Query(0,ge=0,le=100000),
+) -> dict[str,Any]:
+    """Authenticated worklist, no original copyrighted source objects."""
+    rows=_query(
+       "SELECT requirement_id,subject_class,subject_key,ticker_or_venue,"
+       "original_observed_date,required_evidence_type,"
+       "acceptable_original_source_class,evidence_description,"
+       "factual_evidence_verified,independent_review_complete,"
+       "institutional_risk_use_approved,requirement_state "
+       "FROM eventrisk_factor_lab.main.lab_independent_evidence_requirements_v1 "
+       "WHERE build_id=(SELECT build_id FROM "
+       "eventrisk_factor_lab.main.lab_independent_evidence_builds_v1 "
+       "ORDER BY built_at DESC LIMIT 1) "
+       "AND (? IS NULL OR subject_class=?) "
+       "ORDER BY subject_class,subject_key,required_evidence_type LIMIT ? OFFSET ?",
+       (subject_class,subject_class,limit,offset)
+    )
+    return {"items":rows,"limit":limit,"offset":offset,
+            "missing_evidence_is_not_approval":True,
+            "original_source_pit_certification":False,
+            "production_release":False}

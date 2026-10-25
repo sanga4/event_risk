@@ -459,5 +459,29 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(result["production_portfolio_risk_approved"])
 
 
+    def test_security_beta_rollup_never_independently_released(self):
+        lab.app.state.query_fn=lambda sql,args:[{"security_count":48,"model_windows":958,
+            "coefficients":5748,"institutional_release_approved":False}]
+        x=lab.rolling_security_beta_quality()
+        self.assertFalse(x["released_security_beta_coefficients"])
+        self.assertEqual(x["build"]["model_windows"],958)
+
+    def test_source_evidence_summary_requires_real_dual_review(self):
+        lab.app.state.query_fn=lambda sql,args:[{"evidence_requirements":448,
+            "independently_approved_decisions":0}]
+        x=lab.independent_evidence_summary()
+        self.assertEqual(x["build"]["evidence_requirements"],448)
+        self.assertFalse(x["production_event_impacts_approved"])
+
+    def test_source_evidence_queue_filters_parameters(self):
+        calls=[]
+        lab.app.state.query_fn=lambda sql,args:calls.append(args) or []
+        x=lab.independent_evidence_requirement_queue(
+            subject_class="ADJUSTED_PRICE_EXCURSION",limit=4,offset=3)
+        self.assertEqual(calls[0],("ADJUSTED_PRICE_EXCURSION",
+            "ADJUSTED_PRICE_EXCURSION",4,3))
+        self.assertFalse(x["production_release"])
+
+
 if __name__ == "__main__":
     unittest.main()

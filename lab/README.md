@@ -275,3 +275,12 @@ Institutional release gate v1.7: **14/29 automatic PASS, 15 BLOCKED, four manual
 - Latest formal release gate v1.9: **17/35 automatic PASS, 18 BLOCKED, plus 4 manual approvals**; action register **39** requirements across 9 workstreams. See [Live project status snapshot](PROJECT_STATUS.md) and [estimated Phase I closeout work packages](PHASE1_CLOSEOUT_ROADMAP.md).
 
 One-page coverage and model-drift views are authenticated and restricted to aggregates while vendor source rights are unverified. The older public FRED graph CSV importer still has zero new source observations due to two observed network timeouts. The independent official NY Fed rates provide only partial daily overnight funding coverage, not the six-series FRED macro requirement.
+
+
+## Full rolling equity-factor beta stability and original evidence worklist (2026-10-25 UTC)
+
+The new [rolling six-factor beta and original evidence methodology](ROLLING_SECURITY_BETA_AND_EVIDENCE_METHODOLOGY.md) source code and Flights have successfully materialized **958** rolling 378-day training/63-day holdout security models across 48 USD securities, **5,748** new coefficients, **59** relative adjacent beta instability flags and **36** weaker-than-market-only holdout comparisons; **65** windows include historical adjusted-price outliers. This is a contemporaneous **retrospective six-factor association**, not a publication-PIT or independently licensed institutional risk beta.
+
+The `phase1_independent_evidence_requirements.py` worklist creates **448** explicit missing original source/corporate-action/FX/event-mapping review requirements over **113** underlying cases. Required vendor URI, original source SHA, original publish and revision dates, commercial license, analyst reviewer and independent second decision are **NULL/FALSE**—not fabricated. No source price corrected and no mappings approved.
+
+Gate release v2.0: **19/39 automatic PASS, 20 BLOCKED, four manual requirements remain**, production FALSE. Remediation register: **43** requirements, nine workstreams. Authenticated API endpoints provide summary-only beta stability and evidence triage, without external source values, private original documents or coefficients approved for production.

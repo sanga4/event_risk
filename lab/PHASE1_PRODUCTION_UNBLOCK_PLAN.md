@@ -57,3 +57,12 @@ Run on-demand prospective capture, forward feature views, warehouse-as-of grid, 
 - **Source-family gaps (measured):** 7/16 source families have data; nine named domains remain unavailable including corporate actions, executable FX, credit, commodities, volatility, portfolio, macro-surprise consensus, original evidence archive and the FRED multi-frequency feed. Every source original PIT/right approval remains FALSE. *Unblock:* actual vendor/publisher originals, authorization, versioning and second reviewer; no synthetic publication dates.
 - **Required data-source operations:** renewed manual public collector brought prospective receipts to **20,334** and restored venue capture within the freshness threshold at audit time, but this does not prove scheduled collection or independent exchange quote freshness.
 - **Formal acceptance:** new release-gate v1.9 has **17/35 automatic passes, 18 failures**, 4 independent manual controls open, zero production approvals. All 39 tracked automatic+manual requirements have an evidence-defined remedy. Details: [Phase I closeout request estimate](PHASE1_CLOSEOUT_ROADMAP.md).
+
+
+## Rolling factor beta and original source evidence requirements — 2026-10-25
+
+**Executed new rolling model:** 958 FF5/Mom six-factor security windows (378 train/63 held out, 63-step), 5,748 HAC5 coefficient diagnostics; 59 relative coefficient drifts, 36 poor relative heldout comparisons and 65 flagged price outlier-exposed windows. All inputs are retrospective, original corporate-action/revision history is unverified. Independent model risk must sign off on stability/regime and security selection. A user prompt cannot approve risk betas or infer causal event impacts.
+
+**Original evidence: 448 formal requests:** 12 adjusted-price anomaly cases (48 requirements), 4 original FX quote conflicts (12), and 97 proposed event-channel review cases (388). Each requires source URI/archived content SHA, as-of published time, compatible rights, analyst rationale and second-review signoff. 0 verified and approved. Missing evidence is now queryable, not solved.
+
+**Current release evaluation:** gate v2.0 **19/39 automatic passed**, 20 blocked, four independent/manual controls outstanding. Owner roles and required proof retained in 43-case, nine-workstream `lab_release_unblock_register_v1`. Do not change approval flags without real first-published sources, signed owner evidence and source rights.

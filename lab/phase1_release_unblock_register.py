@@ -12,10 +12,23 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.4.0"
+VERSION="phase1-release-unblock-register-v1.5.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"rolling_security_six_factor_beta_stability_research":("Statistical model validation","P1","Quantitative equity risk methodology",
+ "Fit joint FF5-plus-momentum excess-simple-return loadings on fixed 378-day rolling train, 63-day holdout steps; record uncertainty, outlier exposure and train-only conditioning.",
+ "At least 900 source-linked ex-post security-beta windows and precommitted stability/holdout diagnostics"),
+"rolling_security_six_factor_beta_stability_certification":("Statistical model validation","P0","Independent quantitative model-risk reviewer",
+ "Resolve coefficient instability, poor forward holdout and structural breaks using source-reviewed prices, regime-aware calibration and independently repeated validation.",
+ "Zero unresolved flagged rolling beta models under independently accepted stability criteria and signed model-risk evidence"),
+"independent_security_mapping_evidence_worklist":("Event mapping and evidence","P1","Data steward + event methodology",
+ "Version original price corporate-action, FX quote conflict and event economic mapping source requirements without inventing split events or original quotes.",
+ "At least 400 fully enumerated evidence requirements across original security, FX and mapping case samples"),
+"original_source_evidence_and_second_signoffs":("Event mapping and evidence","P0","Primary source analyst + independent second approver",
+ "Secure original source payload+checksum, publication/revision timestamps, usage rights, original corporate action data, reviewer identity and a second attributed signoff.",
+ "At least 10 complete immutable source evidence records that satisfy original-time, licensing and dual-review controls, without auto-approving an event link"),
+
 "institutional_source_family_evidence_inventory":("Schema and cross-asset factors","P0","Institutional source data architect",
  "Run consistent source-family snapshot after source ingestion and release-gate rebuild. Track actual loaded row counts and gaps without synthetic rows.",
  "16 source-family observations with table-present, row count, native grain, first/last observation and actionable evidence gaps"),

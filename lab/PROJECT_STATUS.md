@@ -1,8 +1,27 @@
 # EventRisk Factor — Institutional Phase I Status
 
-**As-of:** October 24, 2026 (checked against MotherDuck/GitHub/Railway). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
+**As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
-## Current Phase I release snapshot — October 24, 2026 (Los Angeles)
+## Most recent institutional gate assessment — October 25, 2026 UTC
+
+**19/39 automatic checks PASS (48.7%), 20 BLOCKED, plus four independently required manual approvals. Institutional production release remains FALSE.** Prior readiness snapshots in the historical milestones below are superseded.
+
+**Newest quantitative and original-evidence methodology:** [Rolling Security Beta and Original Evidence Report](ROLLING_SECURITY_BETA_AND_EVIDENCE_METHODOLOGY.md).
+
+| Newly executed evidence | Latest verified result |
+|---|---|
+| Full rolling FF5-plus-Momentum security beta windows | **958** windows across **48** USD securities |
+| Research beta coefficients | **5,748** (six per window), no duplicate keys, zero released betas |
+| Material adjacent beta shift screens | **59** rolling windows flagged, unreviewed |
+| Weak full-vs-market-only holdout diagnostics | **36** windows flagged, unreviewed |
+| Windows containing flagged adjusted-price movements | **65**, which are not automatically erroneous or excluded |
+| Original-source evidence worklist | **448** distinct requirements for **113** cases (12 price, four duplicate FX, 97 event/mapping); **zero** independently verified or dual-approved |
+| Source rights, release times and independent model risk | **0** approvals |
+| Formal action register | **43** requirements across nine workstreams, **0** institutional approvals |
+
+All retrospective factor and security inputs remain original publication-time uncertified. Do not call these trading betas, true event impacts, or approved portfolio risk parameters. The 8–15 substantive continuation request closeout estimate remains a planning range for engineering and research acceptance work, not institutional signoff.
+
+## Prior Phase I release snapshot — October 24, 2026 (Los Angeles)
 
 **Measured institutional automatic controls:** **17/35 passing (48.6%)**, 18 blocked, **four additional manual signoffs outstanding**; **production authorization remains FALSE**. The total number of controls grew as real new source and stability requirements were added. This is a gate pass fraction, not a business-completion percentage.
 
