@@ -507,5 +507,34 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(x["underlying_vendor_covariance_served"])
 
 
+    def test_regime_walkforward_summary_never_serves_source_data(self):
+        calls=[]
+        def query(sql,args):
+            calls.append((sql,args))
+            if "lab_regime_cov_research_builds_v1" in sql:
+                return [{"build_id":"walk-v1","holdout_days":164,
+                         "daily_model_scores":656,"portfolio_risk_model_released":False}]
+            return [{"model_id":"eq252_shrink10","mean_twice_neg_logscore":6.6076,
+                     "risk_model_independently_validated":False}]
+        lab.app.state.query_fn=query
+        v=lab.regime_walkforward_research_coverage()
+        self.assertEqual(v["build"]["daily_model_scores"],656)
+        self.assertFalse(v["raw_vendor_covariance_or_factor_data_returned"])
+        self.assertFalse(v["independently_approved_portfolio_covariance"])
+        self.assertEqual(calls[1][1],("walk-v1",))
+
+    def test_training_outlier_beta_counterfactual_not_source_correction(self):
+        lab.app.state.query_fn=lambda sql,args:[
+            {"eligible_security_models":48,
+             "securities_exceeding_10pct_relative_beta_change":2,
+             "source_price_corrections_made":0,"risk_betas_approved":0}
+        ]
+        v=lab.flagged_security_return_sensitivity_summary()
+        self.assertEqual(v["build"]["eligible_security_models"],48)
+        self.assertFalse(v["original_historical_price_observations_changed"])
+        self.assertFalse(v["institutional_risk_beta_released"])
+        self.assertFalse(v["raw_beta_coefficients_returned"])
+
+
 if __name__ == "__main__":
     unittest.main()

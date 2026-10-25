@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v2.1.0"
+VERSION="phase1-gates-v2.2.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -138,6 +138,18 @@ def main():
         ("cross_asset_covariance_stress_robustness_certification",
          f"SELECT COUNT(*) FROM {P}lab_factor_covariance_shrinkage_tests_v1 WHERE build_id=(SELECT build_id FROM {P}lab_factor_covariance_shrinkage_builds_v1 ORDER BY built_at DESC LIMIT 1) AND relative_holdout_covariance_distance>0.50",
          0,"MAX_COUNT","No prespecified shrinkage candidate breaches 50% covariance holdout drift, source PIT/rights and independent model-risk review remain distinct"),
+        ("walkforward_regime_covariance_scores_research",
+         f"SELECT COUNT(*) FROM {P}lab_regime_cov_daily_scores_v1 WHERE build_id=(SELECT build_id FROM {P}lab_regime_cov_research_builds_v1 ORDER BY created_at DESC LIMIT 1) AND training_only_factor_standardization AND NOT approved_institutional_risk_model",
+         600,"MIN_COUNT","Compare four predeclared daily one-step fixed and EWMA covariance estimators on a strictly chronological last-25-percent research holdout without selecting a hindsight winner"),
+        ("walkforward_regime_covariance_source_rights_and_model_validation",
+         f"SELECT COUNT(*) FROM {P}lab_regime_cov_model_comparisons_v1 WHERE source_historic_publication_asof_verified AND risk_model_independently_validated AND licensed_risk_use_approved AND NOT posthoc_winner_selection_for_production",
+         1,"MIN_COUNT","Original provider revisions, approved distribution rights, independent model committee and prospective untouched test are required regardless of statistical scores"),
+        ("security_extreme_return_beta_sensitivity_research",
+         f"SELECT COUNT(*) FROM {P}lab_ff6_price_extreme_sensitivity_v1 WHERE build_id=(SELECT build_id FROM {P}lab_ff6_price_extreme_builds_v1 ORDER BY built_at DESC LIMIT 1) AND NOT licensed_institutional_beta_approved",
+         45,"MIN_COUNT","Research-only, same-holdout FF6 beta sensitivity tests that remove flagged source observations from the fitting TRAIN only and never delete source prices"),
+        ("security_extreme_return_beta_source_robustness_certification",
+         f"SELECT COUNT(*) FROM {P}lab_ff6_price_extreme_sensitivity_v1 WHERE build_id=(SELECT build_id FROM {P}lab_ff6_price_extreme_builds_v1 ORDER BY built_at DESC LIMIT 1) AND beta_shift_review_threshold_exceeded",
+         0,"MAX_COUNT","No unresolved relative beta shifts over 10% when extreme vendor adjusted returns are excluded from training; original corporate action evidence and rights separately required"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),

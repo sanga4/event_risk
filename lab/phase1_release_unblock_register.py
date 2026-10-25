@@ -12,10 +12,23 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.6.0"
+VERSION="phase1-release-unblock-register-v1.7.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"walkforward_regime_covariance_scores_research":("Statistical model validation","P1","Quantitative cross-asset risk research",
+ "Keep source-pinned, four fixed walk-forward covariance variants with 252-day training and 164 genuinely heldout one-day score dates, training-only scaling and block-resampled paired model loss.",
+ "At least 600 fixed-method daily walkforward scores with dated training cutoff and no hindsight optimization or source/right approval"),
+"walkforward_regime_covariance_source_rights_and_model_validation":("Statistical model validation","P0","Independent portfolio model-risk validation + licensed vendor provenance",
+ "Obtain actual original source first-published and revisions, permitted portfolio risk rights, independently approved factor risk model and additional postselection untouched validation.",
+ "At least one method cleared by independent source time, data rights, non-hindsight model acceptance and signed model-risk committee"),
+"security_extreme_return_beta_sensitivity_research":("Security source QA","P1","Quant security price controls",
+ "Keep fixed original chronological holdout and quantify training-only dropping of preidentified flagged adjusted-price days; make no source-price replacements.",
+ "At least 45 USD securities with original/flag-exclusion six-factor betas, holdout loss, source revision metadata and zero producer-signoffs"),
+"security_extreme_return_beta_source_robustness_certification":("Security source QA","P0","Licensed corporate-action data owner + independent beta risk reviewer",
+ "Resolve all material FF6 beta differences from price outlier sensitivity using original exchange/issuer adjustment histories, issuer identifiers and legal permitted data.",
+ "Zero unresolved >=10% beta instability cases under predeclared criteria; original source and model review separately signed"),
+
 "security_vendor_adjustment_ratio_reconciliation":("Security source QA","P1","Security source data engineering",
  "Replay provider original versus adjusted close prices and locate material ratio steps while excluding conflicting duplicate price dates and preserving unchanged source data.",
  "At least 250 observed price-adjustment ratio step candidates, exact return identity and independently auditable original source records"),

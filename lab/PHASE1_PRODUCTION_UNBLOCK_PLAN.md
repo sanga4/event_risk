@@ -75,3 +75,12 @@ The new vendor-adjustment source audit processed **107,149 distinct close/adjust
 The new 7-factor covariance stress sweep tested six predeclared training diagonal shrinkage values: none meets a 50% holdout covariance drift criterion. Condition improves with stronger shrinkage but unseen covariance fit does not. *P0 unblock:* independently specified regime-aware covariance and tail test evaluated on untouched PIT validation, true exposure/positions and signed model-risk review.
 
 New source & model acceptance gates are deliberately split into **two research PASS and two production BLOCK**. Gate v2.1: **21/43 PASS, 22 BLOCKED**, four manual. Unblock owner register v1.6: **47 requirements**, nine workstreams.
+
+
+## Walk-forward risk and training-price uncertainty (2026-10-25 UTC)
+
+**Executed separate models:** 656 genuinely chronological one-day seven-factor covariance score evaluations (4 fixed methods × 164 dates, strictly preceding 252-date training each); no EWMA/extra shrinkage method outperformed baseline mean loss. 500 deterministic ten-date block-bootstrap resamples remain exploratory. **P0 source/method review:** as-published factor/FX source vintages, legal source access, outlier-aware tail factor returns, regime/volatility validation on genuinely untapped known-at data, approved portfolio exposure/position source and signed model risk. Do not select model from the same heldout test.
+
+**Security beta price-quality sensitivity:** 48 US six-factor model comparisons using identical original chronological holdout, removing historically flagged >25% adjusted price daily returns from TRAIN only for counterfactual. 8 exposed training ticker samples, **2** beta changes ≥10%, and 6 models with better same holdout fit; **zero price corrections**, issuer split/dividend as-published proof or rights approvals. P0 price-owner QA needs independently sourced permanent security identifiers, original exchange price, and first-known corporate-action adjustment versions. This analysis does NOT establish price errors or justify removing flagged days for production.
+
+**Measured release gate v2.2:** 23/47 auto PASS, 24 BLOCKED; 4 manual controls. 51 independently accountable evidence requirements across 9 workstreams. Corporate-action source evidence and source rights remain blocking.
