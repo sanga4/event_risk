@@ -12,10 +12,23 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.5.0"
+VERSION="phase1-release-unblock-register-v1.6.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"security_vendor_adjustment_ratio_reconciliation":("Security source QA","P1","Security source data engineering",
+ "Replay provider original versus adjusted close prices and locate material ratio steps while excluding conflicting duplicate price dates and preserving unchanged source data.",
+ "At least 250 observed price-adjustment ratio step candidates, exact return identity and independently auditable original source records"),
+"verified_security_corporate_action_vintages":("Security source QA","P0","Licensed corporate-action vendor + independent security master reviewer",
+ "Match material adjustment changes to original issuer IDs, split/dividend ex- and record dates, provider first-publication/adjustment revisions, independent exchanges and legal source-use rights.",
+ "At least 10 original issuer actions source verified, as-of dated and reviewed without self-certification"),
+"cross_asset_covariance_shrinkage_stress_research":("Statistical model validation","P1","Institutional quantitative methodology",
+ "Compare all six prespecified covariance diagonal-shrinkage settings with training-constant normalization and the same retrospective holdout; document parameter sensitivity and prohibit hindsight model selection.",
+ "All six candidate models persist training eigen/condition and holdout covariance drifts, research-only"),
+"cross_asset_covariance_stress_robustness_certification":("Statistical model validation","P0","Independent quantitative risk validation committee",
+ "Develop an independently specified regime-robust covariance model using valid as-known source histories, separate development/validation samples, calibrated tail risk, and signed model-risk acceptance.",
+ "Zero unresolved candidates breached their precommitted holdout drift screen plus separate first-published rights/model approval requirements"),
+
 "rolling_security_six_factor_beta_stability_research":("Statistical model validation","P1","Quantitative equity risk methodology",
  "Fit joint FF5-plus-momentum excess-simple-return loadings on fixed 378-day rolling train, 63-day holdout steps; record uncertainty, outlier exposure and train-only conditioning.",
  "At least 900 source-linked ex-post security-beta windows and precommitted stability/holdout diagnostics"),
