@@ -1,0 +1,46 @@
+name: Factor Lab joint security funding familywise audit
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: factor-lab-joint-funding-familywise
+  cancel-in-progress: false
+jobs:
+  familywise-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install source-controlled research dependencies
+        run: pip install -r lab/requirements.txt
+      - name: Execute offline independent joint beta method tests
+        run: python -m unittest discover -s tests -p 'test_lab_joint_funding_familywise_audit.py' -v
+      - name: Require scoped MotherDuck source-audit credential
+        shell: bash
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo "::error::A scoped MotherDuck Actions secret is required; no external writes attempted."
+            exit 1
+          fi
+      - name: Write append-only familywide HAC-Holm validation audit
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python lab/phase1_joint_funding_familywise_audit.py
+      - name: Show immutable research-only disposition
+        if: always()
+        shell: bash
+        run: |
+          echo '### Joint security funding beta: 96-cell Holm and cross-variant robustness' >> "$GITHUB_STEP_SUMMARY"
+          echo "Source commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Institutional risk beta release: **NOT AUTHORIZED**' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Statistical methodology screening is not verified original publication time, commercial data rights or model-risk signoff.' >> "$GITHUB_STEP_SUMMARY"
