@@ -2,6 +2,14 @@
 
 **As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
+## New Phase I milestone — original source-linked event–factor semantics (October 25, 2026 UTC)
+
+The **v2/v3 point-in-time and factor-alignment semantic firewall** was executed on 233,442 historical event–factor rows in each of v2 and v3 plus 630,018 warehouse-as-of prospective coobservations. Both historic panels contain **233,442/233,442 later-available factor rows** and remain unapproved retrospective research, not historical as-known event impacts. Prospective warehouse-as-of future-factor violations remain **zero**, but original quote and factor publication times remain uncertified.
+
+The cross-version audit identified **76,662** v3 source-factor observation dates and carried-forward labels inconsistent with v2 and exact source factor SHA/run lineage. Root cause: v3's temporary join reused an ambiguous `observed_date` field for the event day instead of the factor source's date. A further **2,806** material or missing-vs-valued aligned factor changes were inconsistent. A separately versioned `lab_event_factor_panel_v3_1` was materialized without modifying v2, v3 or source records; all **233,442** rows now exactly reconcile to the source-aligned v2 factor date/carry/change/previous-level values. `lab_event_factor_panel_v3_1_latest` prevents accidental pooling of replay builds.
+
+See [Temporal Semantic Firewall](EVENT_PANEL_TEMPORAL_SEMANTICS.md) and [Source-Reconciled Panel v3.1](SOURCE_RECONCILED_EVENT_PANEL_V31.md). All corrected rows remain **internal retrospective research** with FALSE original public timestamp certifications, licensing signoffs and institutional risk-model approvals. No causal event-to-Treasury response is inferred or approved. Most recent formal release gate remains **23/47 automatic PASS (48.9%) plus four external signoffs**; methodology QA improvements alone do not constitute release.
+
 ## Latest Phase I milestone — real forward-scored covariance and flagged-price beta sensitivity
 
 **October 25, 2026 UTC / October 24 Los Angeles.** Latest institutional gate **v2.2.0: 23/47 automatic PASS (48.9%), 24 BLOCKED, plus four manual signoffs required. Production institutional release FALSE.** Latest production blocker register **v1.7.0: 51 owner-linked requirements across nine workstreams**, none falsely approved.
