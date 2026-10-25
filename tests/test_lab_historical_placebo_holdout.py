@@ -25,9 +25,9 @@ class TemporalPlaceboTests(unittest.TestCase):
     def test_independent_test_split_and_no_model_approval(self):
         models=p.assess(*fixture())
         self.assertEqual(len(models),36)
+        self.assertEqual(sum(x[15] for x in models),0)
         self.assertEqual(sum(x[16] for x in models),0)
-        self.assertEqual(sum(x[17] for x in models),0)
-        self.assertTrue(all("RETROSPECTIVE" in x[18] for x in models))
+        self.assertTrue(all("RETROSPECTIVE" in x[17] for x in models))
 
     def test_negative_r2_valid_and_future_control_not_live_feature(self):
         src=SCRIPT.read_text()
@@ -75,8 +75,8 @@ class TemporalPlaceboTests(unittest.TestCase):
             x=list(row);x[11]=.02;x[12]=.01
             updated.append(tuple(x))
         res=p.assess(src,updated)
+        self.assertEqual(sum(x[15] for x in res),36)
         self.assertEqual(sum(x[16] for x in res),36)
-        self.assertEqual(sum(x[17] for x in res),36)
         self.assertTrue(all("NOT_TRADEABLE" not in x[18] or "RETROSPECTIVE" in x[18]
                             for x in res))
 
