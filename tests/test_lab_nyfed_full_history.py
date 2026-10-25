@@ -23,8 +23,9 @@ class FakeResponse:
     def raise_for_status(self):pass
 
 
-def payload(sid="SOFR",n=2600):
-    start=date(2018,4,2)
+def payload(sid="SOFR",n=2600,start=date(2018,4,2)):
+    # The short-history fixture uses a modern date to exercise completeness
+    # independently of the separate stale-response guard.
     return json.dumps({"refRates":[
         {"effectiveDate":(start+timedelta(days=i)).isoformat(),
          "type":sid,"percentRate":3.75,
@@ -65,7 +66,7 @@ class NYFedFullHistoryTests(unittest.TestCase):
         self.assertEqual(client.call_args.kwargs["params"]["startDate"],"2018-04-02")
 
     def test_short_success_response_fails_coverage(self):
-        with patch.object(ny.requests,"get",return_value=FakeResponse(payload("SOFR",260))):
+        with patch.object(ny.requests,"get",return_value=FakeResponse(payload("SOFR",260,start=date(2025,1,1)))):
             with self.assertRaisesRegex(RuntimeError,"COVERAGE_INCOMPLETE"):
                 ny.download("SOFR","secured/sofr")
 
