@@ -36,6 +36,7 @@ jobs:
       - name: Validate offline XML source and temporal regression tests
         run: |
           python -m unittest discover -s tests -p 'test_lab_treasury_current_xml_refresh.py' -v
+          python -m unittest discover -s tests -p 'test_lab_treasury_receipt_acceptance.py' -v
           python -m unittest discover -s tests -p 'test_lab_prospective_effective_information.py' -v
           python -m unittest discover -s tests -p 'test_lab_prospective_lineage_reconciliation.py' -v
       - name: Require an authorized scoped MotherDuck token
@@ -59,6 +60,15 @@ jobs:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           LAB_SOURCE_REFRESH_WRITE_ACK: confirmed
         run: python lab/phase1_treasury_current_xml_refresh.py --append-research
+      - name: Independently attest original packets, receipt clocks and stored factor vintages
+        if: ${{ inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python lab/phase1_treasury_receipt_acceptance.py --source-commit "$LAB_PIPELINE_COMMIT"
+
       - name: Preserve explicit data-rights and event-beta release boundary
         if: always()
         shell: bash
