@@ -153,8 +153,8 @@ def inspect(con, prefix=PREFIX) -> dict:
 
 
 def main():
-    # Unconditionally read-only: no CREATE TABLE, UPDATE, DELETE or INSERT.
-    con = duckdb.connect(f"md:{DB}?attach_mode=single", read_only=True)
+    # Unconditionally SELECT-only SQL; use a genuinely read-only scoped MotherDuck token.
+    con = duckdb.connect(f"md:{DB}?attach_mode=single")
     try:
         result = inspect(con)
     finally:
