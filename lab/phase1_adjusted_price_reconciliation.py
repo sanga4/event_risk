@@ -16,7 +16,7 @@ import hashlib,os
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-security-adjustment-source-audit-v1.0.0"
+VERSION="phase1-security-adjustment-source-audit-v1.1.0"
 RATIO_STEP_BPS=50.
 MATERIAL_STEP_BPS=200.
 
@@ -32,17 +32,22 @@ def stage(con):
          MIN(close) min_close,MAX(close) max_close,
          MIN(adj_close) min_adj,MAX(adj_close) max_adj
        FROM {P}security_prices GROUP BY ticker,date
+      ), source_calendar AS (
+       SELECT ticker,date,
+         LAG(date) OVER(PARTITION BY ticker ORDER BY date) previous_source_date
+       FROM grouped
       ), originals AS (
-       SELECT p.*,ROW_NUMBER() OVER(PARTITION BY p.ticker,p.date
+       SELECT p.*,c.previous_source_date,ROW_NUMBER() OVER(PARTITION BY p.ticker,p.date
           ORDER BY p.fetched_at DESC,p.run_id DESC) rn
        FROM {P}security_prices p
        JOIN grouped g ON g.ticker=p.ticker AND g.date=p.date
+       JOIN source_calendar c ON c.ticker=p.ticker AND c.date=p.date
        WHERE g.n_key=1
          AND p.close>0 AND p.adj_close>0
          AND isfinite(p.close) AND isfinite(p.adj_close)
       )
       SELECT ticker,date,close,adj_close,volume,currency,source,
-        fetched_at,run_id,ln(adj_close/close)*10000 AS adjustment_log_bps
+        fetched_at,run_id,previous_source_date,ln(adj_close/close)*10000 AS adjustment_log_bps
       FROM originals WHERE rn=1
     """)
     con.execute("""
@@ -62,8 +67,46 @@ def stage(con):
         CAST(date_diff('day',prev_date,date) AS INT) calendar_gap_days
       FROM prev
       WHERE prev_close>0 AND prev_adj_close>0
+        AND prev_date=previous_source_date
         AND date_diff('day',prev_date,date) BETWEEN 1 AND 14
     """)
+
+
+def link_cases(con,build):
+    """Require exact flagged interval and source lineage, not just algebra."""
+    con.execute(f"""
+        CREATE OR REPLACE TEMP TABLE p1_cases_linked AS
+        SELECT ? AS build_id,e.ticker,e.observed_date,e.log_return_bps AS outlier_adjusted_log_return_bps,
+          e.source_unadjusted_close AS vendor_unadjusted_day_close,
+          e.source_adjusted_close AS vendor_adjusted_day_close,
+          p.ratio_step_bps AS same_day_adjustment_step_bps,
+          p.raw_close_return_bps AS same_day_unadjusted_return_bps,
+          CASE WHEN p.ratio_step_bps IS NOT NULL
+             AND p.prev_date=e.previous_observed_date
+             AND p.adj_close=e.adjusted_close
+             AND p.prev_adj_close=e.previous_adjusted_close
+             AND p.close=e.source_unadjusted_close
+             AND p.adj_close=e.source_adjusted_close
+             AND p.source IS NOT DISTINCT FROM e.source_vendor
+             AND p.currency IS NOT DISTINCT FROM e.source_currency
+             AND p.run_id IS NOT DISTINCT FROM e.source_run_id
+             AND p.fetched_at IS NOT DISTINCT FROM e.source_retrieved_at
+             AND ABS(p.adjusted_close_return_bps-e.log_return_bps)<0.000001
+             AND
+             ABS((p.adjusted_close_return_bps-p.raw_close_return_bps)-
+                  p.ratio_step_bps)<0.000001
+          THEN TRUE ELSE FALSE END AS mathematically_adjustment_step_explains_return_difference,
+          FALSE AS original_vendor_quote_time_verified,
+          FALSE AS issuer_corporate_action_original_evidence_verified,
+          FALSE AS problem_cause_unambiguously_identified,
+          NULL::VARCHAR AS reviewer_or_approver_decision
+        FROM {P}lab_security_price_exception_cases_v1 e
+        LEFT JOIN p1_adj_diffs p
+          ON p.ticker=e.ticker AND p.date=e.observed_date
+        WHERE e.build_id=(SELECT build_id FROM
+          {P}lab_security_price_exception_builds_v1
+          ORDER BY built_at DESC LIMIT 1)
+        """,[build])
 
 
 def main():
@@ -174,30 +217,10 @@ def main():
             raise RuntimeError("Source price history unexpectedly small")
         if residual>1e-6:
             raise RuntimeError("Close/adjusted-close identity did not reconcile")
-        con.execute(f"""
-        CREATE OR REPLACE TEMP TABLE p1_cases_linked AS
-        SELECT ? AS build_id,e.ticker,e.observed_date,e.log_return_bps AS outlier_adjusted_log_return_bps,
-          e.source_unadjusted_close AS vendor_unadjusted_day_close,
-          e.source_adjusted_close AS vendor_adjusted_day_close,
-          p.ratio_step_bps AS same_day_adjustment_step_bps,
-          p.raw_close_return_bps AS same_day_unadjusted_return_bps,
-          CASE WHEN p.ratio_step_bps IS NOT NULL AND
-             ABS((p.adjusted_close_return_bps-p.raw_close_return_bps)-
-                  p.ratio_step_bps)<0.000001
-          THEN TRUE ELSE FALSE END AS mathematically_adjustment_step_explains_return_difference,
-          FALSE AS original_vendor_quote_time_verified,
-          FALSE AS issuer_corporate_action_original_evidence_verified,
-          FALSE AS problem_cause_unambiguously_identified,
-          NULL::VARCHAR AS reviewer_or_approver_decision
-        FROM {P}lab_security_price_exception_cases_v1 e
-        LEFT JOIN p1_adj_diffs p
-          ON p.ticker=e.ticker AND p.date=e.observed_date
-        WHERE e.build_id=(SELECT build_id FROM
-          {P}lab_security_price_exception_builds_v1
-          ORDER BY built_at DESC LIMIT 1)
-        """,[build])
-        ncases,material_in_cases=con.execute("""
-           SELECT COUNT(*),COUNT(*) FILTER(WHERE ABS(same_day_adjustment_step_bps)>=?)
+        link_cases(con,build)
+        ncases,material_in_cases,nmatched=con.execute("""
+           SELECT COUNT(*),COUNT(*) FILTER(WHERE ABS(same_day_adjustment_step_bps)>=?),
+             COUNT(*) FILTER(WHERE mathematically_adjustment_step_explains_return_difference)
            FROM p1_cases_linked
         """,[MATERIAL_STEP_BPS]).fetchone()
         if ncases!=12:
@@ -219,7 +242,7 @@ def main():
         print(f"BUILD_ID={build} UNIQUE_SOURCE_PRICES={ninputs} SYMBOLS={ntickers}")
         print(f"DUPLICATE_SOURCE_DATE_GROUPS_EXCLUDED={ndups}")
         print(f"RATIO_STEP_CANDIDATES_GE_50BP={candidates} MATERIAL_GE_200BP={material}")
-        print(f"LARGE_RETURN_CASES_RECONCILED={ncases} SAME_DAY_MATERIAL_STEPS={material_in_cases}")
+        print(f"LARGE_RETURN_CASES_JOINED={ncases} SOURCE_INTERVAL_RECONCILED={nmatched} SAME_DAY_MATERIAL_STEPS={material_in_cases}")
         print(f"MAX_LOG_RETURN_ADJUSTMENT_IDENTITY_ERROR_BPS={residual:.10f}")
         print("CORPORATE_ACTION_SOURCE_VERIFIED=0 INSTITUTIONAL_RELEASE=FALSE")
     finally:
