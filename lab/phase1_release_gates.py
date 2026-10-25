@@ -8,7 +8,51 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v2.2.0"
+VERSION="phase1-gates-v2.3.0"
+
+# These are minimum empirical RESEARCH sample-diversity screens, not original
+# publisher PIT, independent economics, commercial rights or institutional
+# model approvals. Do not turn valid warehouse receipts into 806,004 iid shocks.
+PROSPECTIVE_MIN_CAPTURE_DAYS=60
+PROSPECTIVE_MIN_CAPTURE_RUNS=60
+PROSPECTIVE_MIN_FACTOR_DAYS=30
+PROSPECTIVE_MIN_NONCONSTANT_FACTORS=18
+
+
+def prospective_empirical_support_gate_specs(prefix=P):
+    """Release-side model-readiness gates; never block lawful data ingestion."""
+    return [
+        ("prospective_capture_calendar_diversity",
+         f"SELECT COUNT(DISTINCT CAST(event_capture_at AS DATE)) "
+         f"FROM {prefix}lab_prospective_event_factor_grid_v1",
+         PROSPECTIVE_MIN_CAPTURE_DAYS,"MIN_COUNT",
+         "At least 60 distinct prospective source capture calendar days, "
+         "not multiplied by contracts or factor labels"),
+        ("prospective_capture_run_diversity",
+         f"SELECT COUNT(DISTINCT event_run_id) "
+         f"FROM {prefix}lab_prospective_event_factor_grid_v1",
+         PROSPECTIVE_MIN_CAPTURE_RUNS,"MIN_COUNT",
+         "At least 60 distinct independently recorded collection runs; "
+         "repeated factor rows in one capture never count as new events"),
+        ("prospective_per_factor_original_observation_day_depth",
+         f"SELECT COALESCE(MIN(n_days),0) FROM "
+         f"(SELECT factor_id,COUNT(DISTINCT factor_observed_date) AS n_days "
+         f"FROM {prefix}lab_prospective_event_factor_grid_v1 GROUP BY 1) t",
+         PROSPECTIVE_MIN_FACTOR_DAYS,"MIN_COUNT",
+         "Every active prospective factor must have at least 30 genuinely "
+         "distinct observed source dates; historical archive alone does "
+         "not substitute for timestamped prospective captures"),
+        ("prospective_nonconstant_rate_factor_support",
+         f"SELECT COUNT(*) FROM (SELECT factor_id "
+         f"FROM {prefix}lab_prospective_event_factor_grid_v1 "
+         f"GROUP BY 1 HAVING COUNT(DISTINCT factor_value)>=2 "
+         f"AND COUNT(DISTINCT factor_observed_date)>=30) t",
+         PROSPECTIVE_MIN_NONCONSTANT_FACTORS,"MIN_COUNT",
+         "At least 18 prospective rate factors must each have real level "
+         "variation over 30+ observed factor dates before exploratory "
+         "event-factor impact model screening")
+    ]
+
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -51,6 +95,10 @@ def main():
         ("warehouse_asof_temporal_leakage",
          f"SELECT COUNT(*) FROM {P}lab_prospective_event_factor_grid_v1 WHERE factor_ingested_at>event_capture_at OR factor_available_at>event_capture_at",
          0,"MAX_COUNT","Strictly zero factor observations with warehouse ingest or availability after event capture cutoff"),
+        # Distinguish materialized repeated rate levels from empirically
+        # identifiable event-driven rate changes. Source rights and causal
+        # identification gates below are independent and may still fail.
+        *prospective_empirical_support_gate_specs(P),
         ("prospective_mapping_review_queue_prepared",
          f"SELECT COUNT(*) FROM {P}lab_forward_mapping_review_queue_v1 WHERE review_state='pending_human_review' AND NOT released_for_signal_use",
          50,"MIN_COUNT","At least 50 forward-mapping hypotheses in traceable pending-review queue; no analyst decision implied"),
