@@ -160,6 +160,31 @@ def tables(con):
       familywise_research_state VARCHAR NOT NULL,
       institutional_beta_released BOOLEAN NOT NULL)""")
 
+def append_validated_audit(con,run,sha,digest,original_hash,parent,report):
+    """Append only after independent source check; rollback all writes on error."""
+    if report["models"]!=FAMILY or report["assets"]!=ASSETS or len(report["rows"])!=FAMILY:
+        raise ValueError("Incomplete source models cannot persist")
+    tables(con)
+    con.execute("BEGIN TRANSACTION")
+    try:
+        con.execute(f"""INSERT INTO {P}lab_joint_funding_familywise_builds_v1
+           VALUES (?,?,?,?,?,current_timestamp,?,?,?,?,?,?,?,?,?,?,?,FALSE,FALSE,FALSE,FALSE,
+             'HAC_MULTIPLE_TESTING_AND_VARIANT_DRIFT_RESEARCH_ONLY')""",
+          [run,sha,digest,original_hash,parent[0],report["models"],
+           report["assets"],report["nominal_hac_p_below_05"],
+           report["holm_p_below_05"],report["original_research_screen_pass"],
+           report["joint_screen_pass"],report["sign_flip_assets"],
+           report["relative_shift_gt25_assets"],
+           report["positive_oos_both_variants"],
+           report["min_nominal_p"],report["min_holm_adjusted_p"]])
+        con.executemany(f"""INSERT INTO {P}lab_joint_funding_familywise_models_v1
+          VALUES ({','.join('?' for _ in range(18))})""",
+          [(run,*entry,False) for entry in report["rows"]])
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
+
 def main():
     sha=os.getenv("LAB_PIPELINE_COMMIT","")
     if (os.getenv("LAB_RESEARCH_SCOPE")!="internal-only" or len(sha)!=40
@@ -173,26 +198,7 @@ def main():
         parent,original=read_parent(con)
         report=score(original)
         original_hash=hashlib.sha256(repr(original).encode()).hexdigest()
-        tables(con)
-        con.execute("BEGIN TRANSACTION")
-        try:
-            con.execute(f"""INSERT INTO {P}lab_joint_funding_familywise_builds_v1
-               VALUES (?,?,?,?,?,current_timestamp,?,?,?,?,?,?,?,?,?,?,?,FALSE,FALSE,FALSE,FALSE,
-                 'HAC_MULTIPLE_TESTING_AND_VARIANT_DRIFT_RESEARCH_ONLY')""",
-              [run,sha,digest,original_hash,parent[0],report["models"],
-               report["assets"],report["nominal_hac_p_below_05"],
-               report["holm_p_below_05"],report["original_research_screen_pass"],
-               report["joint_screen_pass"],report["sign_flip_assets"],
-               report["relative_shift_gt25_assets"],
-               report["positive_oos_both_variants"],
-               report["min_nominal_p"],report["min_holm_adjusted_p"]])
-            con.executemany(f"""INSERT INTO {P}lab_joint_funding_familywise_models_v1
-              VALUES ({','.join('?' for _ in range(18))})""",
-              [(run,*entry,False) for entry in report["rows"]])
-            con.execute("COMMIT")
-        except Exception:
-            con.execute("ROLLBACK")
-            raise
+        append_validated_audit(con,run,sha,digest,original_hash,parent,report)
     print(f"BUILD={run} PARENT={parent[0]} MODELS={report['models']}")
     print(f"NOMINAL_HAC_P_LT_05={report['nominal_hac_p_below_05']} HOLM_P_LT_05={report['holm_p_below_05']}")
     print(f"BASE_SCREEN_PASS={report['original_research_screen_pass']} JOINT_SCREEN_PASS={report['joint_screen_pass']}")
