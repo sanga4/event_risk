@@ -9,3 +9,11 @@ Output is append-only `lab_ff6_metric_integrity_builds_v1` and one per-ticker au
 Previously verified source manifest: 48 tickers, 958 windows, 5748 six-factor coefficients, 59 adjacent drift reviews, 36 poor-holdout reviews and 65 flagged-return-exposed windows. All source release and independent publication-time flags remain FALSE. Acceptance of the new integrity audit must confirm those exact counts and 0 unreviewed algorithm mismatches, WITHOUT claiming production beta approval.
 
 The audit is on-demand and restricted to `eventrisk_factor_lab` with `LAB_RESEARCH_SCOPE=internal-only` and pinned 40-character source commit. Independent source-clock and licensing evidence must be collected before product release.
+
+## Verified warehouse execution, October 25, 2026 UTC
+
+MotherDuck Flight `eventrisk-lab-ff6-beta-independent-metric-audit` (`fd569b99-2d5c-4a5e-94b9-03fdbf7311fb`) version 1 run 1 SUCCEEDED (exit code 0) with producer source SHA `a36c339b0652f6bb8bb39243a0a863dd0d88abef`, pinned `duckdb==1.5.6` and `pytz==2025.2`. Audit build `phase1-ff6-independent-metric-audit-v1.0.0-20261025T033840948306Z` joins source build `phase1-style-beta-rolling-audit-v1.0.0-20261025T001255125906Z`.
+
+The independent audit reconciled all **48** source security ticker series, **958** rolling training/holdout windows, **5,748** non-missing six-factor beta estimates/HAC uncertainty fields, **59** adjacent vector-shift review windows, **36** poor relative holdout-fit windows, and **65** windows containing flagged source-price movements. Recomputed adjacent-vector shift and squared relative RMSE diagnostics matched the original flags; **zero** duplicate ticker subjects and **zero** falsely approved institutional beta/issuer-corporate-action flags. Largest adjacent beta vector shift was 1.22371317 (relative previous six-beta norm), requiring independent source and model review. The branch's Phase I GitHub CI passed **170 offline tests**, including eight new adversarial FF6 integrity tests.
+
+This is independently executed *software and data-field integrity reconciliation* using the same versioned ex-post source warehouse, **not** independent market-data attestation, source revision reconstruction, external rights approval, original issuer actions or independent beta model-risk approval.
