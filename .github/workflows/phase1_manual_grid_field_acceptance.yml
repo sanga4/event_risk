@@ -85,12 +85,17 @@ jobs:
         run: |
           set -euo pipefail
           python lab/phase1_grid_preflight.py > "$RUNNER_TEMP/grid_before.json"
+          python lab/phase1_prospective_lineage_reconciliation.py > "$RUNNER_TEMP/lineage_before.json"
           python lab/phase1_source_field_gap_preflight.py > "$RUNNER_TEMP/fields_before.json"
           python - <<'PY'
           import json,os,pathlib
           p=pathlib.Path(os.environ["RUNNER_TEMP"])
           a=json.loads((p/"grid_before.json").read_text())
           b=json.loads((p/"fields_before.json").read_text())
+          lineage=json.loads((p/"lineage_before.json").read_text())
+          if lineage["status"] != "PASS_RESEARCH_WAREHOUSE_LINEAGE_ONLY":
+              raise SystemExit("Source lineage preflight was not clean")
+          print("PRE_SOURCE_LINEAGE="+lineage["status"])
           print("PRE_GRID_STATE="+a["status"])
           print("PRE_GRID_ROWS="+str(a["persisted_grid_rows"]))
           print("PRE_PENDING_CAPTURE_IDENTITIES="+str(a["incremental_candidate_capture_rows"]))
@@ -129,6 +134,7 @@ jobs:
         run: |
           set -euo pipefail
           python lab/phase1_grid_preflight.py > "$RUNNER_TEMP/grid_after.json"
+          python lab/phase1_prospective_lineage_reconciliation.py > "$RUNNER_TEMP/lineage_after.json"
           python lab/phase1_source_field_gap_preflight.py > "$RUNNER_TEMP/fields_after.json"
           python - <<'PY'
           import json,os,pathlib
@@ -136,6 +142,10 @@ jobs:
           before=json.loads((p/"grid_before.json").read_text())
           after=json.loads((p/"grid_after.json").read_text())
           fields=json.loads((p/"fields_after.json").read_text())
+          lineage=json.loads((p/"lineage_after.json").read_text())
+          if lineage["status"] != "PASS_RESEARCH_WAREHOUSE_LINEAGE_ONLY":
+              raise SystemExit("Stored event capture/factor-vintage lineage does not reconcile")
+          print("POST_SOURCE_LINEAGE="+lineage["status"])
           if after["persisted_grid_rows"] < before["persisted_grid_rows"]:
               raise SystemExit("Append-only grid row count decreased")
           if after["incremental_candidate_capture_rows"] > before["incremental_candidate_capture_rows"]:
