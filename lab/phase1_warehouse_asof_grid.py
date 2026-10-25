@@ -98,13 +98,15 @@ def setup(con):
     )""")
 
 
-def capture_scope_sql(prefix=P):
+def capture_scope_sql(prefix=None):
     """Replay safety: select by complete immutable capture-market identity.
 
     Incremental mode drops only keys already represented by at least one
     existing as-of factor row. The original producer transaction is atomic.
     Use explicit full replay for historic source-method revisions.
     """
+    if prefix is None:
+        prefix = P
     return f"""
     CREATE OR REPLACE TEMP TABLE p1_capture_scope AS
     SELECT e.* FROM {prefix}lab_live_event_features_v1 e
