@@ -19,3 +19,18 @@ Even for a numerically estimable model, `RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL`
 The immutable source-data join and source-code SHA hashes are persisted with the build in versioned `lab_joint_security_funding_builds_v1` and per-asset variant `lab_joint_security_funding_models_v1`. Every provider publication-time, adjusted-price corporate-action, vendor commercial rights and institutional-beta-release flag remains FALSE.
 
 **Next actual release unblocks:** verified source publication/revision clock and rights; audited equity corporate actions and live as-of investable universes; independent event innovation/surprise identification; portfolio and cross-asset factors; HAC model-risk challenge; and independent production operating-control signoff.
+## First executed MotherDuck evidence — October 25, 2026
+
+MotherDuck Flight `eventrisk-lab-joint-security-funding-treasury-hac`, UUID `be01c535-f272-48e0-94ac-8b50aa2a064e`, version 2 run 2 **SUCCEEDED** (exit 0). It used source SHA `e094d73a454821358eddaa7b2d92af230879942b` and append-only build `phase1-joint-security-funding-v1.0.0-20261025T171439407079Z`. An initial draft failed an ambiguous DuckDB observed-date reference before any data write; correcting the join produced this successful warehouse run. All four GitHub workflows passed, including **273 Phase I Lab contract and adversarial tests**.
+
+The audit reconciled **33,312 source-matched ticker/calendar-day rows**, **48** non-SPY USD securities, **96** individually versioned fits, at least **694** independent matching days per asset, and **209** heldout days per fit. No source original-publication/right/adjusted-price/release-approval flag is TRUE.
+
+| Research predeclared variant | Model cells | Positive incremental holdout against market+Treasury controls | Full exploratory acceptance screen passes | Training-half sign stable | Unadjusted HAC CI excludes zero | Mean incremental test skill | Best incremental skill | Worst scaled condition |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| All training observations | 48 | 25 | 5 | 38 | 12 | −0.00076 | +0.01045 | 3.128 |
+| Exclude only flagged original training price and ≥10bp funding days | 48 | 14 | 1 | 25 | 10 | −0.00363 | +0.00547 | 3.137 |
+| **Total** | **96** | **39** | **6** | **63** | **22** | — | — | — |
+
+Detailed fail-closed research dispositions across both variants: 57 `REJECT_NEGATIVE_HOLDOUT_SKILL`; 16 `REJECT_TRAINING_HALVES_SIGN_UNSTABLE`; 17 `REJECT_HAC_INTERVAL_INCLUDES_ZERO`; 6 `RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL`. The last label is an **internal exploratory consistency screen** only; it is neither corrected for 96 multiple tests nor confirmation of historically as-published source vintages, macroeconomic causation, commercial rights or institutional suitability. Treat cross-security outcomes as dependent due to the same market/rate shocks, and never count model cells as independent economic days.
+
+The overall negative mean incremental heldout test skill and material loss of apparent success after training-tail trimming argue **against relying on these joint funding loadings as an institutionally dependable value-at-risk factor**. Unlike a beta marketing table, these rejection results must be preserved unchanged as model-risk evidence.
