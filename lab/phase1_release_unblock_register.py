@@ -12,10 +12,17 @@ from pathlib import Path
 import duckdb
 
 P="eventrisk_factor_lab.main."
-VERSION="phase1-release-unblock-register-v1.3.0"
+VERSION="phase1-release-unblock-register-v1.4.0"
 
 # id: (workstream, priority, accountable_role, action, evidence_to_clear)
 REMEDIATIONS={
+"institutional_source_family_evidence_inventory":("Schema and cross-asset factors","P0","Institutional source data architect",
+ "Run consistent source-family snapshot after source ingestion and release-gate rebuild. Track actual loaded row counts and gaps without synthetic rows.",
+ "16 source-family observations with table-present, row count, native grain, first/last observation and actionable evidence gaps"),
+"institutional_source_family_rights_and_pit_certification":("Point-in-time provenance","P0","Independent source licensor/data QA/model-risk committee",
+ "Obtain and review original source publication/vintage evidence, vendor data rights and independent approval across each product-required domain.",
+ "All applicable source families independently certified and signed off, with missing domains explicitly unavailable rather than approved"),
+
 "nyfed_sofr_effr_reference_research_loaded":("Schema and cross-asset factors","P1","Rates data engineering",
  "Keep two official NY Fed source observations separately versioned with original response SHA and percentage units; verify replay and deduplication.",
  "500 or more exact response-hashed reference observations; labels must remain research-only, no source publication clock approval"),
