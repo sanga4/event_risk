@@ -50,6 +50,13 @@ def score(rows):
             or not all(isinstance(x,(int,float)) and math.isfinite(x)
                        for x in (beta,se,skill)) or se<=0):
             raise ValueError("Invalid key, chronology, standard error or source approval")
+        # A parent fit's claimed pass must be supported by its originally
+        # prespecified holdout, training-half sign and HAC interval. Reporting
+        # a contradictory parent state is an input-integrity failure, not a
+        # reason to silently upgrade the fit at this later audit stage.
+        if (prior=="RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL"
+            and (skill<=0 or not stable or abs(beta/se)<=1.96)):
+            raise ValueError("Parent research screen contradicts fitted diagnostics")
         p=math.erfc(abs(beta/se)/math.sqrt(2.0))
         if not 0<=p<=1:
             raise ValueError("Invalid nominal two-sided Gaussian/HAC tail probability")
@@ -79,10 +86,21 @@ def score(rows):
         r=parsed[ticker,variant]["row"]
         s=parsed[ticker,variant]
         sign_flip,shift,excluded=variation[ticker]
+        full_skill=parsed[ticker,"full_training"]["row"][12]
+        trim_skill=parsed[ticker,"training_tail_exclusion"]["row"][12]
         nominal=s["p"]<=ALPHA
         adjusted=s["holm_p"]<=ALPHA
-        # Never elevate a failed base model or missing source rights.
-        status=("REJECT_EXISTING_HOLDOUT_OR_STABILITY_SCREEN"
+        # Variant sensitivity is a *joint asset-level* reject gate, not merely
+        # a report column. Both versions of an unstable asset are rejected
+        # before any multiplicity-screened candidate can be described as
+        # passing. Do not choose a favourable variant using holdout results.
+        status=("REJECT_CROSS_VARIANT_FUNDING_BETA_SIGN_REVERSAL"
+                if sign_flip else
+                "REJECT_CROSS_VARIANT_FUNDING_BETA_SHIFT_GT25PCT"
+                if shift>RELATIVE_SHIFT_THRESHOLD else
+                "REJECT_CROSS_VARIANT_HOLDOUT_SKILL"
+                if full_skill<=0 or trim_skill<=0 else
+                "REJECT_EXISTING_HOLDOUT_OR_STABILITY_SCREEN"
                 if r[14]!="RESEARCH_SCREEN_PASS_NOT_INSTITUTIONAL" else
                 "REJECT_FAMILYWISE_HOLM_MULTIPLE_TESTING"
                 if not adjusted else
