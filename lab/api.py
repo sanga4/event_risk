@@ -1113,3 +1113,54 @@ def independent_evidence_requirement_queue(
             "missing_evidence_is_not_approval":True,
             "original_source_pit_certification":False,
             "production_release":False}
+
+
+@app.get("/v1/research/governance/security-adjustments/summary", dependencies=[Depends(require_api_key)])
+def security_adjustment_research_summary() -> dict[str,Any]:
+    """Aggregate reconciled adjustment-ratio discontinuities, not verified CA."""
+    rows=_query(
+      "SELECT build_id,created_at,valid_unique_source_price_rows,"
+      "duplicate_security_date_groups_excluded,ticker_series_covered,"
+      "price_ratio_step_candidates,material_adjustment_ratio_candidates,"
+      "flagged_price_exception_joined,"
+      "exception_cases_with_material_adjustment_step,"
+      "max_abs_return_identity_residual_bps,"
+      "independently_verified_issuer_actions,approved_security_adjustment_vintages,"
+      "model_release_authorized,release_state "
+      "FROM eventrisk_factor_lab.main.lab_security_adjustment_audit_builds_v1 "
+      "ORDER BY created_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Adjustment reconciliation not built")
+    return {"build":rows[0],
+            "reconciliation_is_not_verified_corporate_actions":True,
+            "provider_original_publication_time_verified":False,
+            "commercial_source_rights_approved":False,
+            "institutional_security_betas_approved":False,
+            "raw_vendor_prices_served":False}
+
+
+@app.get("/v1/research/risk/covariance-shrinkage-stress", dependencies=[Depends(require_api_key)])
+def covariance_shrinkage_research_summary() -> dict[str,Any]:
+    """Methodology-only covariance stress. No vendor observations/matrix cells."""
+    rows=_query(
+      "SELECT build_id,built_at,prespecified_candidate_models,"
+      "source_factor_dimensions,source_joint_observations,"
+      "training_observations,holdout_observations,"
+      "candidates_with_covariance_distance_over_50pct,"
+      "worst_relative_holdout_distance,"
+      "lowest_heldout_pseudoscore_fraction_exploratory,"
+      "retrospectively_selected_for_production,"
+      "institutional_factor_risk_released,status "
+      "FROM eventrisk_factor_lab.main.lab_factor_covariance_shrinkage_builds_v1 "
+      "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Covariance shrinkage stress not built")
+    return {"build":rows[0],
+            "fixed_tested_diagonal_shrinkages":[0.0,0.1,0.25,0.5,0.75,1.0],
+            "holdout_selection_for_production_permitted":False,
+            "independent_model_risk_approved":False,
+            "licensed_portfolio_risk_cleared":False,
+            "underlying_vendor_covariance_served":False,
+            "research_only":True}
