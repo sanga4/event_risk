@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Official FRED observation-date level snapshots across funding/macro/conditions.
 
-Provider graph CSV is a current/revised observation snapshot and DOES NOT
-establish original macro announcement first-publication clocks or ALFRED
-historical revisions. Not market-event surprises or tradable factor returns.
+An authenticated official FRED API response is a current/revised observation
+snapshot and DOES NOT establish first-publication clocks, original ALFRED
+revision timing or identified announcement surprises. No institutional release.
 """
 from __future__ import annotations
 import csv
+import json
 from datetime import date,datetime,timezone
 import hashlib
 import io
@@ -19,8 +20,8 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=f"{DB}.main."
-VERSION="phase1-fred-cross-domain-raw-v1.0.0"
-BASE="https://fred.stlouisfed.org/graph/fredgraph.csv"
+VERSION="phase1-fred-cross-domain-raw-v1.1.0"
+BASE="https://api.stlouisfed.org/fred/series/observations"
 # (series_id,frequency,source_native_unit,descriptive_transform)
 SERIES=(
  ("DFF","daily","annualized_percent_rate","rate_level_change_basis_points"),
@@ -66,14 +67,66 @@ def read_fred(blob:bytes,series_id:str,frequency:str):
     return points
 
 
+def fred_api_key():
+    """Require a legitimate user-provisioned secret; never log or persist it."""
+    value=os.getenv("api_secret_FRED_API_KEY") or os.getenv("FRED_API_KEY","")
+    if len(value)!=32 or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789" for c in value):
+        raise RuntimeError("FRED_API_KEY_REQUIRED_FROM_SECRET_STORE")
+    return value
+
+
+def read_fred_api(blob:bytes,series_id:str,frequency:str):
+    """Convert bounded official JSON to the existing strictly validated units."""
+    if not 50<len(blob)<MAX_BYTES:
+        raise ValueError("Unexpected FRED API response size")
+    try:
+        document=json.loads(blob)
+    except (ValueError,UnicodeError):
+        raise ValueError("Invalid FRED API response JSON") from None
+    observations=document.get("observations") if isinstance(document,dict) else None
+    if not isinstance(observations,list) or len(observations)>20000:
+        raise ValueError("Invalid FRED response observation collection")
+    buffer=io.StringIO()
+    writer=csv.writer(buffer)
+    writer.writerow(("observation_date",series_id))
+    for item in observations:
+        if not isinstance(item,dict):
+            raise ValueError("Malformed FRED observation")
+        start,end=item.get("realtime_start"),item.get("realtime_end")
+        if not isinstance(start,str) or not isinstance(end,str):
+            raise ValueError("FRED realtime vintage metadata absent")
+        try:
+            if date.fromisoformat(start)>date.fromisoformat(end):
+                raise ValueError("Reversed FRED realtime metadata")
+        except (TypeError,ValueError):
+            raise ValueError("Invalid FRED realtime metadata") from None
+        # Realtime *dates* are NOT original publication clock timestamps.
+        writer.writerow((item.get("date"),item.get("value")))
+    return read_fred(buffer.getvalue().encode("utf-8"),series_id,frequency)
+
+
 def download(series_id,frequency,unit,transform):
-    params={"id":series_id,"cosd":"2018-01-01"}
-    response=requests.get(BASE,params=params,timeout=(10,25),
-        headers={"User-Agent":"Mozilla/5.0 (EventRiskFactor Internal Research)","Accept":"text/csv"})
-    response.raise_for_status()
-    points=read_fred(response.content,series_id,frequency)
+    secret=fred_api_key()
+    # The legacy schema's source_csv_* names are historic field names; this
+    # provider payload is JSON and its SHA covers the original response bytes.
+    params={"series_id":series_id,"api_key":secret,"file_type":"json",
+            "observation_start":"1990-01-01"}
+    try:
+        response=requests.get(BASE,params=params,timeout=(10,25),
+            headers={"User-Agent":"EventRiskFactor-InternalResearch/1.1",
+                     "Accept":"application/json"})
+    except requests.RequestException as exc:
+        # Exception messages and response URLs may contain the API key.
+        raise RuntimeError("FRED_PROVIDER_REQUEST_FAILED:"+type(exc).__name__) from None
+    if response.status_code!=200:
+        raise RuntimeError("FRED_PROVIDER_HTTP_"+str(response.status_code))
+    points=read_fred_api(response.content,series_id,frequency)
     sha=hashlib.sha256(response.content).hexdigest()
-    return series_id,frequency,unit,transform,response.url,sha,response.headers.get("Last-Modified"),len(response.content),points
+    # Never store/log response.url or requests' URL with api_key.
+    redacted_url=(BASE+"?series_id="+series_id+
+                  "&file_type=json&observation_start=1990-01-01")
+    return (series_id,frequency,unit,transform,redacted_url,sha,
+            response.headers.get("Last-Modified"),len(response.content),points)
 
 
 def derived(series_id:str,points:list[tuple[str,float]],method:str):
@@ -172,6 +225,7 @@ def main():
         or os.getenv("LAB_ALLOW_FRED_RESEARCH")!="true"
         or len(commit)!=40 or any(ch not in "0123456789abcdef" for ch in commit)):
         raise RuntimeError("Internal research opt-in + pinned 40-char Git SHA required")
+    fred_api_key()  # Fail before external requests or any warehouse changes.
     build=VERSION+"-"+datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     scriptsha=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     source=[download(*spec) for spec in SERIES]
