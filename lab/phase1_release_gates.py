@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v1.9.0"
+VERSION="phase1-gates-v2.0.0"
 
 def main():
     if os.getenv("LAB_RESEARCH_SCOPE")!="internal-only":
@@ -114,6 +114,18 @@ def main():
         ("institutional_source_family_rights_and_pit_certification",
          f"SELECT COUNT(DISTINCT domain) FROM {P}lab_source_family_evidence_v1 WHERE build_id=(SELECT build_id FROM {P}lab_source_family_evidence_builds_v1 ORDER BY created_at DESC LIMIT 1) AND provider_original_publication_verified AND commercial_reuse_approved AND institutional_factor_model_approved",
          16,"MIN_COUNT","All 16 source families require real original source time, permitted-use evidence and independent model-risk signoff; scripts cannot self-certify"),
+        ("rolling_security_six_factor_beta_stability_research",
+         f"SELECT COUNT(*) FROM {P}lab_ff6_rolling_beta_windows_v1 WHERE build_id=(SELECT build_id FROM {P}lab_ff6_rolling_beta_builds_v1 ORDER BY built_at DESC LIMIT 1)",
+         900,"MIN_COUNT","Require 378 train/63 holdout/63 step rolling six-factor security beta diagnostics before any stability review"),
+        ("rolling_security_six_factor_beta_stability_certification",
+         f"SELECT COUNT(*) FROM {P}lab_ff6_rolling_beta_windows_v1 WHERE build_id=(SELECT build_id FROM {P}lab_ff6_rolling_beta_builds_v1 ORDER BY built_at DESC LIMIT 1) AND (adjacent_beta_change_requires_review OR poor_holdout_relative_error_requires_review)",
+         0,"MAX_COUNT","No unresolved rolling beta coefficient instability or weak holdout windows under frozen accepted thresholds; independent model risk still required"),
+        ("independent_security_mapping_evidence_worklist",
+         f"SELECT COUNT(*) FROM {P}lab_independent_evidence_requirements_v1 WHERE build_id=(SELECT build_id FROM {P}lab_independent_evidence_builds_v1 ORDER BY built_at DESC LIMIT 1) AND NOT factual_evidence_verified",
+         400,"MIN_COUNT","Every flagged price/FX/mapping case has original source and second-review request ledger; not independent approval"),
+        ("original_source_evidence_and_second_signoffs",
+         f"SELECT COUNT(*) FROM {P}lab_independent_evidence_requirements_v1 WHERE build_id=(SELECT build_id FROM {P}lab_independent_evidence_builds_v1 ORDER BY built_at DESC LIMIT 1) AND factual_evidence_verified AND independent_review_complete AND institutional_risk_use_approved AND original_source_uri IS NOT NULL AND source_archived_sha256 IS NOT NULL AND reviewer_id IS NOT NULL AND independent_second_reviewer_id IS NOT NULL",
+         10,"MIN_COUNT","Require at least 10 complete original-source archived evidence records with attributable dual reviews; no automated approval"),
         ("historical_quote_pit_fraction",
          f"SELECT 100.0 * COALESCE(AVG(CASE WHEN point_in_time_verified THEN 1.0 ELSE 0.0 END),0) FROM {P}lab_market_daily_historical_v1",
          80,"MIN_PERCENT","At least 80% of eligible history must have independently verified capture provenance"),
