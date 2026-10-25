@@ -54,6 +54,15 @@ jobs:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           LAB_RESEARCH_WRITE_ACK: confirmed
         run: python lab/phase1_joint_daily_paired_loss_research.py --append-research
+      - name: Independently reconcile materialized parent, daily losses and bootstrap
+        if: ${{ inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python lab/phase1_daily_loss_build_acceptance.py --source-commit "$LAB_PIPELINE_COMMIT"
+
       - name: Record immutable production boundary
         if: always()
         shell: bash
