@@ -42,9 +42,9 @@ class CorporateAdjustmentQA(unittest.TestCase):
     def test_reconciliation_does_not_fake_corporate_action_history(self):
         src=(LAB/"phase1_adjusted_price_reconciliation.py").read_text()
         for token in ("original_issuer_action_verified","original_vendor_revision_asof_verified",
-                      "APPROVED","CORPORATE_ACTION_SOURCE_VERIFIED=0",
+                      "approved_for_institutional_beta","CORPORATE_ACTION_SOURCE_VERIFIED=0",
                       "return_difference_identity_residual_bps"):
-            self.assertIn(token.upper() if token=="APPROVED" else token,src)
+            self.assertIn(token,src)
 
 
 class CovarianceRobustnessTests(unittest.TestCase):
