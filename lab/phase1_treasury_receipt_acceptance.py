@@ -27,7 +27,8 @@ STATUS="OFFICIAL_XML_RECEIVED_RESEARCH_ONLY_NO_PROVIDER_PIT_OR_RIGHTS"
 VERIFIED="TREASURY_INTERNAL_SOURCE_RECEIPT_RESEARCH_LINEAGE_ONLY"
 GIT_SHA=re.compile(r"^[0-9a-f]{40}$")
 
-def audit(manifest, packets, values,expected_git,expected_code_sha):
+def audit(manifest, packets, values,expected_git,expected_code_sha,
+          prior_source_inventory=()):
     """Validate persisted source packets, derived values and exact research state.
 
     manifest = run,source git,script SHA,finished,nominal SHA,real SHA,
@@ -84,10 +85,12 @@ def audit(manifest, packets, values,expected_git,expected_code_sha):
     psha={x["category"]:x["sha256"] for x in raw}
     if psha["nominal"]!=nom_hash or psha["real"]!=real_hash:
         raise ValueError("Manifest response SHA256 not backed by original XML")
-    proposed,coverage=source.prepare(raw,[],run,now=max(
-        p["received"] for p in raw))
+    proposed,coverage=source.prepare(raw,prior_source_inventory,run,
+                                     now=max(p["received"] for p in raw))
     if len(coverage)!=n_days:
         raise ValueError("Manifest research factor observed-date coverage wrong")
+    if len(proposed)!=new_rows:
+        raise ValueError("Source manifest does not match actual new/revised rate values")
     lookup={(p["factor_id"],p["date"]):p for p in proposed}
     found=set()
     for row in values:
@@ -109,8 +112,11 @@ def audit(manifest, packets, values,expected_git,expected_code_sha):
             digest!=sample["digest"]):
             raise ValueError("Treasury rate value, source digest, or availability drift")
         found.add(key)
-    # A manifest is authoritative for the number of stored *new or revised*
-    # records, not for all values visible in the current provider XML.
+    if found!=set(lookup):
+        raise ValueError("Missing original Treasury new/revised source factor rows")
+    # Source manifest must match the *exact* delta against earlier as-received
+    # history, including legitimate no-op runs. A forged zero-row build without
+    # corresponding prior rate levels is never accepted.
     return {
         "status":VERIFIED,"build_run_id":run,
         "source_git_sha":commit,"source_script_sha256":source_hash,
@@ -146,7 +152,28 @@ def inspect(con,expected_git,producer_code_sha,prefix=P):
        record_sha256,run_id
        FROM {prefix}lab_factor_observations
        WHERE run_id=? ORDER BY factor_id,observed_date""",[manifest[0]]).fetchall()
-    return audit(manifest,packets,rows,expected_git,producer_code_sha)
+    received_max=max(x[3] for x in packets) if packets else None
+    if received_max is None:
+        raise ValueError("No original Treasury source packets")
+    cutoff=(received_max-source.timedelta(
+        days=source.MAX_RECENT_SOURCE_DAYS)).date()
+    # Reconstruct the exact historical warehouse inventory seen *before*
+    # this append, not source values that the new run itself inserted.
+    factor_sql=",".join("'"+x+"'" for x in sorted(source.ALL_FACTORS))
+    inventory=con.execute(f"""
+       SELECT factor_id,observed_date,value FROM (
+         SELECT factor_id,observed_date,value,
+           row_number() OVER (
+             PARTITION BY factor_id,observed_date
+             ORDER BY ingested_at DESC,record_sha256 DESC) AS n
+         FROM {prefix}lab_factor_observations
+         WHERE run_id != ? AND ingested_at <= ?
+           AND observed_date >= ?
+           AND factor_id IN ({factor_sql})
+       ) q WHERE n=1
+    """,[manifest[0],received_max,cutoff]).fetchall()
+    return audit(manifest,packets,rows,expected_git,producer_code_sha,
+                 prior_source_inventory=inventory)
 
 def main():
     parser=argparse.ArgumentParser()
