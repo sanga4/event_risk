@@ -483,5 +483,29 @@ class AuthAndResearchGates(unittest.TestCase):
         self.assertFalse(x["production_release"])
 
 
+    def test_adjustment_audit_is_not_corporate_action_cleared(self):
+        lab.app.state.query_fn=lambda sql,args: [
+            {"valid_unique_source_price_rows":107149,
+             "price_ratio_step_candidates":369,
+             "independently_verified_issuer_actions":0}
+        ]
+        x=lab.security_adjustment_research_summary()
+        self.assertEqual(x["build"]["price_ratio_step_candidates"],369)
+        self.assertFalse(x["institutional_security_betas_approved"])
+        self.assertFalse(x["raw_vendor_prices_served"])
+
+    def test_covariance_stress_is_not_holdout_optimized_production(self):
+        lab.app.state.query_fn=lambda sql,args: [
+            {"prespecified_candidate_models":6,
+             "candidates_with_covariance_distance_over_50pct":6,
+             "retrospectively_selected_for_production":False}
+        ]
+        x=lab.covariance_shrinkage_research_summary()
+        self.assertEqual(x["build"]["prespecified_candidate_models"],6)
+        self.assertFalse(x["holdout_selection_for_production_permitted"])
+        self.assertFalse(x["independent_model_risk_approved"])
+        self.assertFalse(x["underlying_vendor_covariance_served"])
+
+
 if __name__ == "__main__":
     unittest.main()
