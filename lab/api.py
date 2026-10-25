@@ -1164,3 +1164,65 @@ def covariance_shrinkage_research_summary() -> dict[str,Any]:
             "licensed_portfolio_risk_cleared":False,
             "underlying_vendor_covariance_served":False,
             "research_only":True}
+
+
+@app.get("/v1/research/risk/regime-walkforward-coverage", dependencies=[Depends(require_api_key)])
+def regime_walkforward_research_coverage() -> dict[str,Any]:
+    """Strictly aggregate model-comparison scores; no factor values or approved VaR."""
+    builds=_query(
+      "SELECT build_id,created_at,strict_source_joint_dates,holdout_days,"
+      "holdout_first,holdout_last,factor_count,prespecified_model_count,"
+      "daily_model_scores,effective_train_days,"
+      "methods_with_better_mean_logscore_than_baseline,"
+      "methods_with_block_bootstrap_upper95_below_zero,"
+      "original_publication_vintages_verified,"
+      "external_source_rights_cleared,portfolio_risk_model_released,release_status "
+      "FROM eventrisk_factor_lab.main.lab_regime_cov_research_builds_v1 "
+      "ORDER BY created_at DESC LIMIT 1"
+    )
+    if not builds:
+        raise HTTPException(503,detail="Walk-forward risk research is not materialized")
+    models=_query(
+      "SELECT model_id,evaluated_days,mean_twice_neg_logscore,"
+      "mean_paired_loss_difference_vs_fixed_baseline,"
+      "pairwise_block_bootstrap_lower95,pairwise_block_bootstrap_upper95,"
+      "fraction_test_days_better_than_baseline,"
+      "posthoc_winner_selection_for_production,source_historic_publication_asof_verified,"
+      "risk_model_independently_validated,licensed_risk_use_approved "
+      "FROM eventrisk_factor_lab.main.lab_regime_cov_model_comparisons_v1 "
+      "WHERE build_id=? ORDER BY model_id",(builds[0]["build_id"],)
+    )
+    return {"build":builds[0],"candidate_models":models,
+      "chronological_previous_day_training_only":True,
+      "model_choice_is_not_holdout_optimized":True,
+      "source_original_publication_asof_verified":False,
+      "independently_approved_portfolio_covariance":False,
+      "raw_vendor_covariance_or_factor_data_returned":False,
+      "research_only":True}
+
+
+@app.get("/v1/research/security/flagged-return-beta-sensitivity", dependencies=[Depends(require_api_key)])
+def flagged_security_return_sensitivity_summary() -> dict[str,Any]:
+    """Never publish adjusted vendor quotes, estimated beta values or approved cleanups."""
+    rows=_query(
+      "SELECT build_id,built_at,eligible_security_models,matched_factor_coefficients,"
+      "securities_with_training_outliers,securities_with_heldout_outliers,"
+      "securities_exceeding_10pct_relative_beta_change,"
+      "securities_exclusion_reduced_same_holdout_sse,"
+      "largest_relative_beta_change,source_price_corrections_made,"
+      "original_corporate_actions_independently_verified,risk_betas_approved,"
+      "release_state "
+      "FROM eventrisk_factor_lab.main.lab_ff6_price_extreme_builds_v1 "
+      "ORDER BY built_at DESC LIMIT 1"
+    )
+    if not rows:
+        raise HTTPException(503,detail="Flagged-return beta research not built")
+    return {"build":rows[0],
+      "flagged_training_days_removed_for_sensitivity_only":True,
+      "original_historical_price_observations_changed":False,
+      "all_heldout_dates_retained_identically_between_models":True,
+      "independent_original_corporate_action_verified":False,
+      "data_rights_for_beta_redistribution_approved":False,
+      "institutional_risk_beta_released":False,
+      "raw_beta_coefficients_returned":False,
+      "research_only":True}
