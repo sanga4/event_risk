@@ -27,6 +27,20 @@ One stored rate quote source vintage was paired with every one of the 44,778 mar
 
 The broader archived warehouse contains 702 factor observation dates, but cannot be replayed backward as if original prospectively captured event quotes, pre-event expectations, and independently verified first-published factor values had existed at those times. This is the key distinction between available retrospective reference history and an as-received event-factor training sample.
 
+## Institutional release-gate integration (v2.3; code only until rebuild)
+
+PR #58 extends the formal 47-gate producer source with **four additional automatic RESEARCH-SAMPLE support gates**, bringing the *next producer version's planned definition* to 51 automatic gates. It does not alter the 47-gate result that was last actually materialized on October 25.
+
+The gates measure:
+- `prospective_capture_calendar_diversity` — at least 60 actual calendar days with prospective capture (current read-only value 3).
+- `prospective_capture_run_diversity` — at least 60 distinct capture run identities (current 11).
+- `prospective_per_factor_original_observation_day_depth` — at least 30 factor observed dates for **every** research factor (current minimum 1).
+- `prospective_nonconstant_rate_factor_support` — at least 18 factors each with two genuinely different values over at least 30 factor-observed dates (current count 0).
+
+These are four separate automatic reasons to block statistical impact estimation even if a simple materialized-grid row-count gate passes. They are **not** original-source PIT, identified causal treatment effects or licenses; original publisher/quote time, signed rights and model committee gates remain separate. Their sample-day thresholds are minimum **research eligibility** diagnostics, not approved statistical power.
+
+To reflect them in MotherDuck, an authorized operator must separately rerun the `phase1_release_gates.py` producer from an exact reviewed Git SHA and verify the append-only new 51-gate manifest. **The existing stored release summary remains 22 passing / 25 blocked among 47 automatic gates, plus four external manual approvals.** Do not report new counts until a completed v2.3 execution is observed.
+
 ## New audit gate
 
 Run:

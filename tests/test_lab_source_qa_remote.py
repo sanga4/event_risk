@@ -1,9 +1,11 @@
 """Failure isolation, source integrity and durable producer checks."""
 import importlib.util
 from pathlib import Path
+import hashlib
 import subprocess
 import tempfile
 from types import SimpleNamespace
+from unittest.mock import patch
 import unittest
 import duckdb
 
@@ -14,9 +16,33 @@ spec.loader.exec_module(qa)
 
 class BatchTests(unittest.TestCase):
     def test_pinned_hashes_match_repo_sources(self):
+        # phase1_source_qa_remote.py is a FROZEN historical batch runner:
+        # SOURCE_COMMIT intentionally resolves immutable older source bytes.
+        # Do not rewrite its pinned source digest merely because current
+        # main's institutional gates were upgraded to v2.3.
+        self.assertEqual(
+            qa.SOURCE_COMMIT,"c1f17147c0fe6042721c9caafbf91c3f507d458e")
+        self.assertEqual(
+            qa.SOURCE_HASHES["phase1_release_gates.py"],
+            "91b00c04d67f7e061c56fec8703bc6566479fda5594f053defa3b38a69577c2b")
+        current_sha=hashlib.sha256(
+            (LAB/"phase1_release_gates.py").read_bytes()).hexdigest()
+        self.assertNotEqual(current_sha,
+                            qa.SOURCE_HASHES["phase1_release_gates.py"])
+        # The other five immutable pinned batch scripts have not changed,
+        # so test those local matching digests directly. The frozen gates
+        # source is fetched and verified against its historical Git SHA at
+        # actual batch runtime; it must not be replaced with current main.
+        other={
+            name:digest for name,digest in qa.SOURCE_HASHES.items()
+            if name!="phase1_release_gates.py"
+        }
         with tempfile.TemporaryDirectory() as tmp:
-            qa.fetch_sources(Path(tmp), lambda name: (LAB / name).read_bytes())
-            self.assertEqual(len(list(Path(tmp).iterdir())), 6)
+            with patch.object(qa,"SOURCE_HASHES",other):
+                qa.fetch_sources(Path(tmp),
+                    lambda name: (LAB/name).read_bytes())
+            self.assertEqual(
+                {p.name for p in Path(tmp).iterdir()},set(other))
 
     def test_changed_source_rejected_before_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
