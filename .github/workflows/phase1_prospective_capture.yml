@@ -13,7 +13,7 @@ concurrency:
 jobs:
   prospective-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,3 +47,42 @@ jobs:
           LAB_RESEARCH_SCOPE: internal-only
           LAB_PIPELINE_COMMIT: ${{ github.sha }}
         run: python lab/phase1_warehouse_asof_grid.py
+
+      - name: Verify latest two-venue captures reached current as-of factor grid
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_capture_grid_handoff.py
+      - name: Refresh source-family warehouse inventory
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_source_family_evidence.py
+      - name: Audit original provider quote publication clocks (no auto-certification)
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_source_clock_gap_audit.py
+      - name: Evaluate institutional release gates (never self-approve)
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_release_gates.py
+      - name: Append current accountable release blockers
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_SCOPE: internal-only
+          LAB_PIPELINE_COMMIT: ${{ github.sha }}
+        run: python lab/phase1_release_unblock_register.py
+      - name: Publish research-only workflow status
+        if: always()
+        shell: bash
+        run: |
+          echo '### Prospective capture → as-of grid → release QA' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Institutional production risk release: **NOT AUTHORIZED**' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Collector success is NOT verified original-quote publication time or data rights.' >> "$GITHUB_STEP_SUMMARY"
