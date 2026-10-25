@@ -1,0 +1,67 @@
+name: Phase I source-locked joint funding daily holdout losses (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      append_research_records:
+        description: 'Append versioned RETROSPECTIVE research-only loss rows (off by default)'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: factor-lab-joint-funding-familywise
+  cancel-in-progress: false
+jobs:
+  research-paired-loss-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      LAB_RESEARCH_SCOPE: internal-only
+      LAB_PIPELINE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install controlled research dependencies
+        run: pip install -r lab/requirements.txt
+      - name: Run original parent and shared-date bootstrap negative controls
+        run: |
+          python -m unittest discover -s tests -p 'test_lab_joint_daily_paired_loss_research.py' -v
+          python -m unittest discover -s tests -p 'test_lab_shared_date_holdout_bootstrap.py' -v
+          python -m unittest discover -s tests -p 'test_lab_joint_security_funding_beta.py' -v
+      - name: Require scoped warehouse token
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$MOTHERDUCK_TOKEN" ]; then
+            echo '::error::Missing authorized scoped MOTHERDUCK_TOKEN; refusing database access'
+            exit 1
+          fi
+      - name: Source-locked read-only parent coefficient and daily loss replay
+        if: ${{ !inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python lab/phase1_joint_daily_paired_loss_research.py
+      - name: Explicit append-only retrospective research daily loss materialization
+        if: ${{ inputs.append_research_records }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LAB_RESEARCH_WRITE_ACK: confirmed
+        run: python lab/phase1_joint_daily_paired_loss_research.py --append-research
+      - name: Record immutable production boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Joint funding heldout daily paired loss research'
+            echo "Source commit: $GITHUB_SHA"
+            echo 'A completed run is not evidence of original issuer/funding first-publication PIT.'
+            echo 'Data license and institutional beta release: **NOT AUTHORIZED**'
+            echo 'Bootstrap-t assumes temporal dependence structure and cannot certify economic causality.'
+          } >> "$GITHUB_STEP_SUMMARY"
