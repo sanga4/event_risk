@@ -19,6 +19,7 @@ jobs:
         run: |
           python -m py_compile preview/app.py
           python -m unittest discover -s preview/tests -p 'test_*.py' -v
+          python preview/scripts/verify_graph_source.py
       - name: Check browser and Excel JavaScript syntax
         run: |
           node --check preview/assets/app.js
