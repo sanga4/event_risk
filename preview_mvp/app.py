@@ -6,7 +6,7 @@ transmission graph. Authenticated+licensed: live, scoped MotherDuck SELECTs.
 No direct DB calls from browsers. No institution/PIT/beta approval implied.
 """
 from __future__ import annotations
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,6 +25,10 @@ MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
 SESSION_LOCK = threading.RLock()
 DB_CONNECTION = {"conn": None, "last_success_utc": None}
+RATE_LOCK = threading.Lock()
+RATE_BY_SESSION = defaultdict(deque)
+RATE_WINDOW_SECONDS = 60
+RATE_MAX_REQUESTS_PER_WINDOW = 90
 JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
                 "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY"}
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
@@ -86,6 +90,21 @@ TICKER_PATTERN = re.compile(r"^[A-Za-z0-9.=_-]{1,25}$")
 FACTOR_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,100}$")
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+def within_analyst_budget(session_key: str) -> bool:
+    """Per-process beta rate budget; not a substitute for distributed rate limits."""
+    now=time.monotonic()
+    with RATE_LOCK:
+        # All beta callers currently use one shared issued key. Replace with
+        # per-user SSO subject identity before a multi-user public release.
+        timestamps=RATE_BY_SESSION[session_key]
+        while timestamps and now-timestamps[0] > RATE_WINDOW_SECONDS:
+            timestamps.popleft()
+        if len(timestamps) >= RATE_MAX_REQUESTS_PER_WINDOW:
+            return False
+        timestamps.append(now)
+        return True
+
 
 def bool_flag(name):
     return os.getenv(name, "").strip().lower() == "true"
@@ -439,6 +458,10 @@ class Server(BaseHTTPRequestHandler):
             provided=self.headers.get("X-Analyst-Key","")
             if not provided or not hmac.compare_digest(provided,key):
                 return self.send(401,{"error":"ANALYST_AUTHENTICATION_REQUIRED"},method=method)
+            # Rate limit the expensive MotherDuck SELECT endpoints. This is
+            # intentionally conservative while no per-user SSO exists.
+            if not within_analyst_budget(key):
+                return self.send(429,{"error":"RESEARCH_QUERY_RATE_LIMITED"},method=method)
             try:
                 return self.send(200,research(route,parse_qs(path.query,keep_blank_values=True)),method=method)
             except PermissionError as e:
