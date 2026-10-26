@@ -232,3 +232,12 @@ body.view-explore main{display:grid}
   header nav{flex-wrap:wrap}
   header nav a,header nav button{font-size:11px}
 }
+
+/* Compact navigation */
+header{gap:9px;padding:10px 14px;min-height:55px;flex-wrap:nowrap}
+header h1{font-size:15px;white-space:nowrap}
+header nav{display:flex;gap:2px;align-items:center;flex-wrap:nowrap}
+header nav button,header nav a{font-size:12px;padding:7px 9px;white-space:nowrap}
+.nav-more{position:relative}.nav-more>summary{cursor:pointer;font-size:12px;color:var(--ink-2);padding:7px 9px}
+.nav-more-content{position:absolute;right:0;top:34px;z-index:100;background:var(--surface);border:1px solid var(--hairline);border-radius:8px;display:grid;min-width:180px;padding:7px}
+.nav-more-content button{text-align:left}
