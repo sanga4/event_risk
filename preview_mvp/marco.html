@@ -45,14 +45,21 @@
     <div id="graph"></div>
     <div class="caption" id="caption" hidden></div>
     <div class="empty" id="empty">Select an event, company, or factor to inspect research relationships.</div>
-    <div class="legend">
-      <span><i class="swatch event"></i>Event scenario</span>
-      <span><i class="swatch entity"></i>Entity</span>
-      <span><i class="swatch security"></i>Security</span>
-      <span><i class="swatch channel"></i>Economic channel</span>
-      <span><i class="swatch question"></i>Source question*</span>
-      <span><i class="swatch factor"></i>Factor (qualitative)</span>
-      <span><i class="dash"></i>Research relation</span>
+    <details class="legend compact-legend"><summary>Legend · research links</summary>
+      <div class="legend-items">
+        <span><i class="swatch event"></i>Scenario</span>
+        <span><i class="swatch entity"></i>Entity</span>
+        <span><i class="swatch security"></i>Security</span>
+        <span><i class="swatch channel"></i>Economic channel</span>
+        <span><i class="swatch factor"></i>Factor</span>
+        <span><i class="dash"></i>Hypothesis</span>
+      </div>
+    </details>
+    <div class="graph-actions"><button type="button" id="graph-toggle" aria-pressed="false">More connections</button>
+      <details class="graph-options"><summary>Graph options</summary>
+        <label>Depth <select id="depth"><option>1</option><option selected>2</option><option>3</option></select></label>
+        <label><input type="checkbox" id="show-factors" checked> Show factors</label>
+      </details>
     </div>
   </section>
   <div class="split" data-side="right" role="separator" aria-orientation="vertical" aria-label="Resize details panel" tabindex="0"></div>
