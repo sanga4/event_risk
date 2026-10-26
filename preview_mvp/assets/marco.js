@@ -126,13 +126,18 @@
     }
     const nodes=[...distances].map(([key,d])=>{
       const n=state.byId.get(key),typ=n.type;
-      const label=(d<=1||key===id)?((n.ticker?n.ticker+" · ":"")+n.name).slice(0,42):undefined;
-      return {id:key,label,shape:SHAPES[typ]||"dot",
-        size:key===id?19:(d>=2?7:11),color:{
-          background:css(COLORS[typ]||"--muted"),border:key===id?css("--ink"):css("--surface"),
-          highlight:{background:css(COLORS[typ]||"--muted"),border:css("--ink")}
-        },
-        font:{color:css("--ink"),strokeColor:css("--surface"),strokeWidth:3},
+      const display=typ==="security"?(n.ticker||n.name):n.name;
+      const label=display.length>26?display.slice(0,25)+"…":display;
+      const tinted=typ==="channel"||typ==="factor";
+      const color=css(COLORS[typ]||"--muted");
+      return {id:key,label,level:d,shape:tinted?"box":(SHAPES[typ]||"dot"),
+        size:key===id?19:typ==="security"?12:9,
+        margin:tinted?8:4,
+        color:{background:tinted?css("--surface"):color,
+          border:key===id?css("--ink"):color},
+        borderWidth:key===id?2:1.4,
+        font:{size:typ==="security"?13:11,color:css("--ink"),
+              strokeWidth:tinted?0:3,strokeColor:css("--surface")},
         title:n.name+"\n"+viewNodeType(n)+"\n"+(n.review_status||"")};
     });
     const links=state.graph.edges.filter(e=>distances.has(e.src)&&distances.has(e.dst)).map((e,i)=>({
@@ -142,7 +147,10 @@
       title:e.type+(e.weight!==undefined?" · "+fmt.format(e.weight)+" analyst-prior relevance":"")+
         "\n"+(e.summary||"Unreviewed connection")
     }));
-    network.setOptions({physics:{enabled:true,stabilization:{iterations:125}}});
+    network.setOptions({physics:false,layout:{hierarchical:{
+      enabled:true,direction:"LR",sortMethod:"directed",levelSeparation:170,
+      nodeSpacing:82,treeSpacing:90,blockShifting:true,edgeMinimization:true}},
+      edges:{smooth:{enabled:true,type:"cubicBezier",forceDirection:"horizontal",roundness:.4}}});
     network.setData({nodes,edges:links});
     $("#empty").hidden=true;
     $("#caption").hidden=false;
