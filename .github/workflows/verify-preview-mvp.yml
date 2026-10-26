@@ -41,3 +41,26 @@ jobs:
           assert 'subprocess.' not in code
           print('ANALYST_MVP_STATIC_SOURCE_CONTRACT=PASS')
           PY
+
+  browser-analyst:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Actual original Marco browser and manual holdings acceptance
+        run: node preview_mvp/tests/browser_smoke.cjs
+      - name: Publish visual acceptance snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-mvp-marco-browser-screenshots
+          path: preview_mvp/artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
