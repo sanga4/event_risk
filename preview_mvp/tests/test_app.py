@@ -60,6 +60,50 @@ class PreviewMVPAcceptance(TestCase):
             self.assertEqual(out["mode"],"LIVE_DATABASE_COUNT_ONLY")
             self.assertEqual(out["coverage"][0]["value"],4907)
 
+    def test_analyst_diagnostics_requires_independent_rights(self):
+        with mock.patch.dict(os.environ,{"PREVIEW_MVP_DERIVED_RESEARCH_APPROVED":"false"}):
+            with self.assertRaisesRegex(PermissionError,"DERIVED_RESEARCH"):
+                app.research("/api/v1/research/funding-diagnostics",{"ticker":["TSM"]})
+
+    def test_diagnostics_join_real_model_and_holm_source_versions(self):
+        first=[{"ticker":"TSM","variant":"full","funding_basis_beta":0.22,
+                "funding_hac_nw5_se":0.08,"issuer_pit_verified":False,
+                "institutional_beta_released":False,"build_id":"model-run-A"}]
+        second=[{"variant":"full","holm_familywise_p":0.97,"holm_p_below_05":False,
+                 "familywise_research_state":"RESEARCH_ONLY","build_id":"holm-run-B"}]
+        with mock.patch.dict(os.environ,{"PREVIEW_MVP_DERIVED_RESEARCH_APPROVED":"true"}):
+            with mock.patch.object(app,"_db_query",side_effect=[first,second]) as q:
+                result=app.research("/api/v1/research/funding-diagnostics",{"ticker":["TSM"]})
+        self.assertEqual(result["mode"],"NONCAUSAL_FUNDING_REGRESSION_DIAGNOSTICS")
+        self.assertFalse(result["approved_event_impact"])
+        self.assertFalse(result["fits"][0]["familywise"]["holm_p_below_05"])
+        self.assertEqual(result["fits"][0]["familywise"]["holm_familywise_p"],0.97)
+        self.assertEqual(q.call_count,2)
+        for call in q.call_args_list:
+            self.assertEqual(call.args[1],("TSM",))
+        self.assertNotIn("expected_event_return",str(result))
+
+    def test_invalid_model_symbols_fail_before_sql(self):
+        with mock.patch.dict(os.environ,{"PREVIEW_MVP_DERIVED_RESEARCH_APPROVED":"true"}):
+            with mock.patch.object(app,"_db_query") as q:
+                with self.assertRaisesRegex(ValueError,"INVALID_TICKER"):
+                    app.research("/api/v1/research/funding-diagnostics",{"ticker":["AAPL';DROP"]})
+                q.assert_not_called()
+
+    def test_new_research_desk_static_assets(self):
+        lab=(ROOT/"lab.html").read_text()
+        js=(ROOT/"assets"/"lab.js").read_text()
+        for term in ('id="case"','id="ticker"','id="factor"','id="model-body"',
+                     'id="factor-chart"','id="export"'):
+            self.assertIn(term,lab)
+        for fn in ("function renderModels","function renderSeries",
+                   "function renderCase","function exportLoaded"):
+            self.assertIn(fn,js)
+        self.assertNotIn("Math.random",js)
+        self.assertIn("/lab",app.FILES)
+        self.assertIn("/assets/lab.js",app.FILES)
+        self.assertIn("/assets/lab.css",app.FILES)
+
     def test_original_style_assets_present(self):
         text=(ROOT/"index.html").read_text()
         self.assertIn('id="network"',text)
