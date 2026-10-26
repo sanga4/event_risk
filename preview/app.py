@@ -23,6 +23,7 @@ STATIC = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/assets/app.js": ("assets/app.js", "text/javascript; charset=utf-8"),
     "/assets/styles.css": ("assets/styles.css", "text/css; charset=utf-8"),
+    "/assets/icon-80.png": ("assets/icon-80.png", "image/png"),
     "/excel/taskpane.html": ("excel/taskpane.html", "text/html; charset=utf-8"),
     "/excel/taskpane.js": ("excel/taskpane.js", "text/javascript; charset=utf-8"),
     "/excel/manifest.xml": ("excel/manifest.xml", "application/xml; charset=utf-8"),
@@ -140,7 +141,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("Referrer-Policy", "no-referrer")
-        self.send_header("Access-Control-Allow-Origin", "null") if False else None
         self.send_header("Content-Security-Policy",
             "default-src 'self'; script-src 'self' https://appsforoffice.microsoft.com; "
             "style-src 'self'; connect-src 'self'; img-src 'self' data:; "
