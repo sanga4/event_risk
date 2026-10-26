@@ -1,0 +1,229 @@
+{
+  "schema_version": "1.0",
+  "snapshot_id": "eventrisk-research-audit-2026-10-26T03:30Z",
+  "as_of_utc": "2026-10-26T03:30:30Z",
+  "mode": "FROZEN_RESEARCH_AGGREGATES",
+  "source_git_sha": "d84868621741ba7e6cfdaa19ef6440487f31fec8",
+  "summary": "Institutional-grade research infrastructure is being built. This demonstration serves audited aggregate progress, not live vendor feeds, tradable pricing, or approved risk predictions.",
+  "warnings": [
+    "FROZEN evidence snapshot; HTTP API is live but warehouse refresh is NOT live.",
+    "Original quote publication time, PIT revisions, event surprises and commercial redistribution are not independently approved.",
+    "The 54-gate result predates the original BEA source receipt; this view does not assert that newest receipt passed the older institutional gates.",
+    "Beta estimates are exploratory and not investment or portfolio guidance."
+  ],
+  "release": {
+    "gate_build_id": "phase1-gates-v2.4.0-20261026T021002390238Z",
+    "gate_as_of_utc": "2026-10-26T02:10:05.444059Z",
+    "automatic_total": 54,
+    "automatic_passed": 25,
+    "automatic_blocked": 29,
+    "manual_blocked": 4,
+    "institutional_release_approved": false,
+    "gate_predates_bea_ingestion": true,
+    "status": "BLOCKED_NOT_INSTITUTIONALLY_APPROVED"
+  },
+  "metrics": [
+    {
+      "key": "venue_receipts",
+      "label": "Captured venue records",
+      "value": 49666,
+      "unit": "records",
+      "source": "eventrisk_factor_lab.main.lab_live_market_captures_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "12 runs / 4 independent UTC capture dates"
+    },
+    {
+      "key": "asof_grid",
+      "label": "Event–factor co-observations",
+      "value": 893988,
+      "unit": "rows",
+      "source": "eventrisk_factor_lab.main.lab_prospective_event_factor_grid_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "Cross-product rows; NOT independent macro observations"
+    },
+    {
+      "key": "panel_v2",
+      "label": "Panel v2 records",
+      "value": 233442,
+      "unit": "rows",
+      "source": "eventrisk_factor_lab.main.lab_event_factor_panel_v2",
+      "source_kind": "audited_aggregate",
+      "detail": "Research panel, retrospective"
+    },
+    {
+      "key": "panel_v4",
+      "label": "Source-native panel v4",
+      "value": 466884,
+      "unit": "rows",
+      "source": "eventrisk_factor_lab.main.lab_event_factor_panel_v4",
+      "source_kind": "audited_aggregate",
+      "detail": "Not a published causal effect"
+    },
+    {
+      "key": "paired_losses",
+      "label": "Paired security holdout losses",
+      "value": 20064,
+      "unit": "rows",
+      "source": "eventrisk_factor_lab.main.lab_joint_funding_daily_paired_losses_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "48 securities × 2 variants × 209 common dates"
+    },
+    {
+      "key": "security_models",
+      "label": "Funding beta model variants",
+      "value": 96,
+      "unit": "fits",
+      "source": "eventrisk_factor_lab.main.lab_joint_funding_familywise_models_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "48 securities; zero global Holm survivors"
+    },
+    {
+      "key": "required_fields",
+      "label": "Mandatory data contract fields",
+      "value": 255,
+      "unit": "fields",
+      "source": "eventrisk_factor_lab.main.lab_institutional_data_contract_builds_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "135 missing, all 255 still uncertified"
+    },
+    {
+      "key": "missing_fields",
+      "label": "Missing mandatory source fields",
+      "value": 135,
+      "unit": "fields",
+      "source": "eventrisk_factor_lab.main.lab_institutional_data_contract_builds_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "Not allowed to synthesize original timestamps or licenses"
+    },
+    {
+      "key": "bea_values",
+      "label": "Verified official BEA reported values",
+      "value": 10,
+      "unit": "actual values",
+      "source": "eventrisk_factor_lab.main.lab_bea_original_reported_values_v1",
+      "source_kind": "audited_aggregate",
+      "detail": "2 immutable HTML packets; zero first-release verified surprises"
+    }
+  ],
+  "factors": {
+    "taxonomy_definitions": 108,
+    "measured_rate_labels": 18,
+    "source_factor_dates_prospective": 2,
+    "source_capture_dates_prospective": 4,
+    "required_capture_dates_research": 60,
+    "required_factor_dates_research": 30,
+    "approved_event_factor_mappings": 0,
+    "validated_event_response_betas": 0,
+    "examples": [
+      {
+        "event": "Monetary policy surprise",
+        "channel": "Discount rates and funding costs",
+        "market": "Treasury curve / funding basis",
+        "tag": "Illustrative methodology — no measured event beta"
+      },
+      {
+        "event": "Trade restrictions",
+        "channel": "Import costs and supply chains",
+        "market": "Inflation expectations / FX",
+        "tag": "Illustrative methodology — not a reviewed causal mapping"
+      },
+      {
+        "event": "Corporate earnings shock",
+        "channel": "Expected cash flow revisions",
+        "market": "Equity style / sector factors",
+        "tag": "Illustrative methodology — no approved signal"
+      }
+    ]
+  },
+  "evidence": {
+    "contracts": 16,
+    "field_rules": 274,
+    "mandatory_fields": 255,
+    "missing_fields": 135,
+    "uncertified_required_fields": 255,
+    "bea_packets": 2,
+    "bea_actual_values": 10,
+    "original_pub_clocks_verified": 0,
+    "pre_event_consensus_verified": 0,
+    "licensed_source_approvals": 0,
+    "holm_surviving_models": 0,
+    "nominal_hac_p_below_005": 22,
+    "global_holm_min_adjusted_p": 0.13537,
+    "model_scope": "Exploratory ex-post exposure; no independent risk-model approval",
+    "status": "BLOCKED"
+  },
+  "blockers": [
+    {
+      "id": "source-clock",
+      "priority": "P0",
+      "name": "Original point-in-time source publication",
+      "owner": "Source vendors + data engineering",
+      "proof": "Archived first-published quote and release revisions, timestamps and SHA lineage",
+      "status": "blocked"
+    },
+    {
+      "id": "prospective",
+      "priority": "P0",
+      "name": "Prospective event/factor sample depth",
+      "owner": "Collector operations + data engineering",
+      "proof": "At least 60 independent capture calendar days and 30 distinct factor source dates with real variation",
+      "status": "blocked"
+    },
+    {
+      "id": "missing-fields",
+      "priority": "P0",
+      "name": "135 required original-source field gaps",
+      "owner": "Data engineering + primary providers",
+      "proof": "New independent field audit after real source backfills with immutable provenance",
+      "status": "blocked"
+    },
+    {
+      "id": "surprises",
+      "priority": "P0",
+      "name": "Announcement surprise and pre-event consensus",
+      "owner": "Macro data + economist reviewer",
+      "proof": "Independently timestamped original first print and truly pre-announcement expectations",
+      "status": "blocked"
+    },
+    {
+      "id": "reviewers",
+      "priority": "P0",
+      "name": "Economic mechanisms and mapping review",
+      "owner": "Independent economics reviewers",
+      "proof": "Dated source excerpts with two-person signoff and valid cutoff",
+      "status": "blocked"
+    },
+    {
+      "id": "issuer",
+      "priority": "P0",
+      "name": "Security identifiers / corporate actions",
+      "owner": "Security data provider + quant QA",
+      "proof": "Original splits/dividends/delistings and audited total-return source vintages",
+      "status": "blocked"
+    },
+    {
+      "id": "beta",
+      "priority": "P0",
+      "name": "Institutionally defensible factor beta",
+      "owner": "Model-risk committee + quant research",
+      "proof": "Predeclared PIT shocks, stable independent holdout support, full multiplicity and covariance checks",
+      "status": "blocked"
+    },
+    {
+      "id": "rights",
+      "priority": "P0",
+      "name": "Source licensing and access controls",
+      "owner": "Legal + security owners",
+      "proof": "Authorized downstream rights, authentication tests, signed release approval",
+      "status": "blocked"
+    },
+    {
+      "id": "operations",
+      "priority": "P1",
+      "name": "Scheduled ingestion and safe rollout",
+      "owner": "DevOps",
+      "proof": "Authorized recurring collector, alerts, private research API auth, backup and rollback",
+      "status": "blocked"
+    }
+  ]
+}
