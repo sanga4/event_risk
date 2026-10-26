@@ -2,7 +2,9 @@
 
 **Site:** https://eventrisk-preview-web-production.up.railway.app/
 
-This separate engineering preview reproduces the original EventRisk project's **three-panel knowledge graph interaction** while expanding its conceptual path from *events → involved reference entities → securities* to *economic transmission channels → financial risk factors*. The original repository \`main\`, the \`eventrisk-factor-lab\` production API and \`event-risk-mvp\` are not modified. Preview source is on \`feat/engineering-preview-isolated\`, built from \`/preview\` and deployed to a **different Railway project**.
+**Capability comparison report:** https://eventrisk-preview-web-production.up.railway.app/report
+
+This separate engineering preview **reuses the original `web/index.html` stylesheet as the visual base** (light palette, original Event Risk Graph header, tab/split-pane/legend patterns) and reproduces the original EventRisk project's **three-panel knowledge graph interaction** while expanding its conceptual path from *events → involved reference entities → securities* to *economic transmission channels → financial risk factors*. The original repository \`main\`, the \`eventrisk-factor-lab\` production API and \`event-risk-mvp\` are not modified. Preview source is on \`feat/engineering-preview-isolated\`, built from \`/preview\` and deployed to a **different Railway project**.
 
 ## What is on the website
 
@@ -10,7 +12,8 @@ This separate engineering preview reproduces the original EventRisk project's **
 - **Center** is a fully interactive force-assisted canvas network. Click nodes to explore; drag nodes, drag the whitespace to pan, use scroll to zoom, **Fit view**, neighborhood hops **1/2/3**, **All nodes**, hide prior-exposure edges or show their names. Node shapes and colors distinguish semantic types.
 - **Right detail panel** shows selected node type, company ticker/sector/country where available, reported economic actuals only for authentic official source receipts, important independent evidence limitations, full relationship list including original qualitative analyst-prior *weight*, source paths and publisher/Wikidata links. Clicking a relationship navigates to that neighbor.
 - **Methodology** page explains what is observed, what is illustrative and why the model cannot be treated as institutionally accepted.
-- **API and Excel** remain accessible as separate pages. The graph API supplies a frozen, public-seed-derived relationship sample; the old aggregate API and Excel-ready CSV remain.
+- **Capability report** at `/report` is computed per HTTP request from the admitted, dated public graph and aggregate research snapshots. It contrasts the earlier explorer with newly available economic-channel paths, public-seed verification and original BEA evidence. It is NOT a realtime venue-data report.
+- **API and Excel** remain accessible. The Office taskpane now has an **Import graph + formulas** action, which builds dedicated `ER_Nodes`, `ER_Edges`, `ER_Metrics`, and `ER_Explorer` sheets. It does not overwrite the original research workbook sheets; the Office client sideload itself still requires user verification. The downloadable `.xlsx` workbook created for this project contains 84 nodes, 102 edges, dashboard calculations, a 7-formula research path explorer, a new-versus-earlier capability comparison and source-maturity caveats.
 
 ## Graph sources (critical distinction)
 
