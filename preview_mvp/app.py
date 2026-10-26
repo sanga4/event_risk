@@ -37,11 +37,13 @@ JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
                  ".js": "text/javascript; charset=utf-8", ".png": "image/png",
                  ".xml":"application/xml; charset=utf-8"}
-FILES = {"/": "marco.html", "/previous-explorer": "index.html",
+FILES = {"/": "viewer.html", "/previous-explorer": "marco.html",
          "/lab": "lab.html", "/data": "data.html",
          "/assets/styles.css": "assets/styles.css", "/assets/app.js": "assets/app.js",
          "/assets/mvp.css": "assets/mvp.css", "/assets/marco.css": "assets/marco.css",
          "/assets/marco.js": "assets/marco.js",
+         "/assets/viewer.css": "assets/viewer.css",
+         "/assets/viewer.js": "assets/viewer.js",
          "/assets/attribution-core.js":"assets/attribution-core.js",
          "/assets/lab.css": "assets/lab.css",
          "/assets/lab.js": "assets/lab.js",
@@ -416,12 +418,12 @@ def runtime_status():
             "database_credentials_present":bool(os.getenv("MOTHERDUCK_TOKEN")),
             "analyst_key_configured":bool(analyst_key()),
             "direct_database_queries_enabled":bool(os.getenv("MOTHERDUCK_TOKEN"))
-                and bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
+                and bool(analyst_key()),
             "market_source_redisplay_approved":bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
             "derived_research_distribution_approved":bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"),
             "connection_tested":bool(DB_CONNECTION.get("last_success_utc"))
                 and bool(os.getenv("MOTHERDUCK_TOKEN"))
-                and bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
+                and bool(analyst_key()),
             "last_successful_authenticated_query_at_utc":
                 DB_CONNECTION.get("last_success_utc"),
             "institutional_model_approved":False,
