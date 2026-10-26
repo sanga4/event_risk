@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6f7f6">
+<meta name="description" content="An interactive, research-only knowledge graph connecting event scenarios, real security reference entities, economic channels and financial risk-factor definitions.">
+<title>EventRisk — Knowledge Graph Research Explorer</title>
+<link rel="stylesheet" href="/assets/styles.css">
+<script defer src="/assets/app.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <h1>Event Risk Graph</h1>
+    <nav role="tablist" aria-label="Site sections">
+      <button type="button" class="active" id="explore-tab" role="tab" aria-selected="true">Explore</button>
+      <button type="button" id="about-tab" role="tab" aria-selected="false">How it works</button>
+      <a href="/report">Live report</a>
+      <a href="/excel/taskpane.html">Excel &amp; API</a>
+    </nav>
+    <div class="top-right"><span class="environment"><span class="live-dot"></span>RESEARCH PREVIEW</span></div>
+  </header>
+  <div class="notice" role="status"><strong>Research-only demo</strong><span>Event pathways are illustrative hypotheses; security edges are original repository analyst priors, <em>not</em> validated exposures or event betas. BEA figures are reported actuals retrieved later, not pre-release surprises.</span><button type="button" id="notice-close" aria-label="Dismiss notice">×</button></div>
+  <div class="layout" id="explore-layout">
+    <aside class="left-panel">
+      <div class="left-heading"><div><span class="overline">EXPLORE</span><h2>Events, securities &amp; factors</h2></div><span class="count-pill" id="total-nodes">—</span></div>
+      <div class="left-tabs" role="tablist" aria-label="Browse by node type">
+        <button class="active" role="tab" aria-selected="true" data-kind="event">Events</button>
+        <button role="tab" aria-selected="false" data-kind="security">Securities</button>
+        <button role="tab" aria-selected="false" data-kind="entity">Entities</button>
+        <button role="tab" aria-selected="false" data-kind="factor">Factors</button>
+        <button role="tab" aria-selected="false" data-kind="channel">Channels</button>
+      </div>
+      <div class="search-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path></svg><input id="search" type="search" placeholder="Search events, companies, factors…" aria-label="Search nodes"><span class="shortcut">⌘ K</span></div>
+      <div class="list-meta"><span id="list-title">EVENT SCENARIOS</span><span id="list-count"></span></div>
+      <div class="node-list" id="node-list" role="listbox" aria-label="Knowledge graph nodes"></div>
+      <div class="left-footer"><div class="source-dot"></div><div>Public seed exposures & official reported source receipts <small id="source-stamp">Source snapshot: October 26, 2026</small></div></div>
+    </aside>
+    <div class="divider-handle left-handle" data-panel="left" role="separator" aria-label="Resize left panel" tabindex="0"></div>
+    <main class="canvas-panel" id="canvas-panel">
+      <div class="canvas-topbar">
+        <div class="canvas-heading"><span class="overline">INTERACTIVE RELATIONSHIP MAP</span><div class="canvas-title" id="graph-caption">Exploring a research network</div></div>
+        <div class="graph-actions">
+          <button id="back-focus" title="Return to the previous selection" aria-label="Previous selection" disabled>←</button>
+          <button id="fit-graph" title="Fit the currently displayed graph">Fit view</button>
+          <button id="full-network" title="Show or hide entire graph">All nodes</button>
+          <div class="segment"><button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button><button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button></div>
+        </div>
+      </div>
+      <div class="graph-toolbar">
+        <span>HOPS FROM SELECTION</span>
+        <div class="segment depth-select" role="group" aria-label="Graph neighborhood depth"><button data-depth="1">1</button><button class="selected" data-depth="2">2</button><button data-depth="3">3</button></div>
+        <span class="toolbar-sep"></span>
+        <label><input id="edge-labels" type="checkbox"> Label connections</label>
+        <label><input id="hide-analyst" type="checkbox"> Hide analyst-prior edges</label>
+      </div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="network" tabindex="0" aria-label="Interactive network graph. Use the searchable node list to choose a vertex, drag the canvas to pan, scroll to zoom, or select nodes directly."></canvas>
+        <div class="canvas-hint" id="canvas-hint">Drag nodes · Scroll to zoom · Click to explore</div>
+        <div class="loading" id="graph-loading">Loading source-backed graph…</div>
+        <div class="graph-error" id="graph-error" hidden>Graph snapshot unavailable. No fabricated relationship data will be shown.</div>
+        <div class="graph-info"><span class="green-indicator"></span><strong id="visible-nodes">0</strong> nodes <span class="dot-sep">·</span><strong id="visible-edges">0</strong> connections <span class="dot-sep">·</span>Frozen research snapshot</div>
+      </div>
+      <div class="legend"><span class="legend-label">NETWORK LEGEND</span><span><i class="ball event"></i>Event</span><span><i class="ball entity"></i>Entity</span><span><i class="ball security"></i>Security</span><span><i class="ball channel"></i>Economic channel</span><span><i class="ball factor"></i>Risk factor</span><span class="legend-note">Dashed = not institutionally approved</span></div>
+    </main>
+    <div class="divider-handle right-handle" data-panel="right" role="separator" aria-label="Resize right details panel" tabindex="0"></div>
+    <aside class="detail-panel" id="detail-panel" aria-label="Selected node details">
+      <div class="detail-top"><span class="overline">NODE DETAILS</span><button id="clear-selection" title="Return to starting node" aria-label="Return to initial graph selection">↺</button></div>
+      <div id="detail"><div class="detail-welcome">Select a node in the network to inspect relationships, economic transmission, source provenance and confidence limitations.</div></div>
+    </aside>
+  </div>
+  <section id="methodology" class="methodology" hidden>
+    <div class="doc-head"><span class="overline">MODEL BOUNDARIES / METHODOLOGY</span><h2>What the EventRisk graph represents</h2><p>A research interface joining five qualitative node types. It is an architectural preview, not a model of the price change caused by an event.</p><button id="back-explore">← Return to the network</button></div>
+    <div class="doc-grid"><article><b>01</b><h3>Events and reported releases</h3><p>Most event nodes are openly labeled hypothetical scenarios. The two BEA nodes contain genuinely reported August 2026 macro actuals from public official pages retrieved later in October. They are not first-release surprises or live events.</p></article><article><b>02</b><h3>Entities and securities</h3><p>Entity-to-security links are derived from the repository's public <code>seeds/exposures.csv</code> and <code>securities.csv</code>. Weights are hand-written or rule-generated analyst-prior relevance weights, not statistically estimated betas or portfolio exposure coefficients.</p></article><article><b>03</b><h3>Economic transmission</h3><p>Event-to-channel and channel-to-factor relations are illustrative hypotheses, not certified mappings or signs of causality. The financial factor names and definitions come from the repository's qualitative <code>seeds/factors.json</code> catalogue.</p></article><article><b>04</b><h3>Statistical and production checks</h3><p>The last executed institutional release-gate snapshot passed 25/54 automatic checks and left four manual signoffs; full institutional release remains blocked. The lab reports 96 funding model fits with zero global Holm-surviving coefficients. This graph does not change those facts.</p></article></div>
+    <div class="doc-links"><a href="/api/v1/graph" target="_blank" rel="noopener">Inspect JSON graph API ↗</a><a href="/api/v1/overview" target="_blank" rel="noopener">View audited aggregate statistics ↗</a><a href="/api/v1/metrics.csv">Download Excel-ready metrics ↧</a><a href="/excel/taskpane.html">Open Excel integration ↗</a></div>
+  </section>
+</div>
+</body>
+</html>
