@@ -376,6 +376,15 @@ class Server(BaseHTTPRequestHandler):
             if not file.is_file() or ROOT not in file.parents:return self.send(404,{"error":"NOT_FOUND"},method=method)
             return self.send(200,file.read_bytes(),ctype=CONTENT_TYPES.get(file.suffix,"application/octet-stream"),method=method)
         if route=="/api/v1/runtime":return self.send(200,runtime_status(),method=method)
+        if route=="/api/v1/inventory":
+            try:
+                evidence=json.loads((DATA / "inventory.json").read_text(encoding="utf-8"))
+                if evidence.get("refresh_mode")!="DATED_READ_ONLY_AGGREGATE_AUDIT_NOT_LIVE_DATABASE_CONNECTION":
+                    raise ValueError("Unsupported source evidence class")
+                return self.send(200,evidence,method=method)
+            except (OSError,ValueError,KeyError):
+                return self.send(503,{"error":"DATED_SOURCE_INVENTORY_UNAVAILABLE"},method=method)
+
         if route=="/api/v1/catalog":
             try:return self.send(200,catalog(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"CATALOG_UNAVAILABLE"},method=method)
