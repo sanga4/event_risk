@@ -36,7 +36,7 @@ try:
     response,html=call("/excel/taskpane.html")
     assert response.headers.get("X-Frame-Options") is None
     assert "appsforoffice.microsoft.com" in response.headers.get("Content-Security-Policy","")
-    assert b"Office" in html
+    assert b"office.js" in html
     _,inv=call("/api/v1/inventory")
     evidence=json.loads(inv)
     assert evidence["counts"]["distinct_question_nodes"]==4907
