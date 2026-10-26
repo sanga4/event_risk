@@ -317,10 +317,10 @@
       setMessage("#portfolio-privacy","Calculate a valid portfolio before exporting.");return;
     }
     const heads=["Scenario","Ticker","PositionUSD","GrossPortfolioWeight","SeedPriorRelevance",
-      "GrossWeightedRelevance","MappingStatus","UserAssumedReturnPercent","UserAssumedPnLUSD","Methodology"];
+      "GrossWeightedRelevance","RuleBasedChannelWatchlist","MappingStatus","UserAssumedReturnPercent","UserAssumedPnLUSD","Methodology"];
     const rows=[heads,...state.lastAttribution.map(p=>[
       $("#event-choice").value,p.ticker,p.value,p.grossShare,p.relevance??"",
-      p.contribution??"",p.status,p.shock??"",p.pnl??"",
+      p.contribution??"",p.watchlistChannels.join(" | "),p.status,p.shock??"",p.pnl??"",
       "Research seed relevance and entirely user-input scenario return; NOT financial beta"
     ])];
     const text=rows.map(x=>x.map(localCsvCell).join(",")).join("\r\n")+"\r\n";
@@ -352,12 +352,12 @@
       scenarioId:$("#event-choice").value,
       graph:state.graph
     });
-    const {errors,rows,gross,score,coveredFraction,mapped,pnl,provided}=result;
+    const {errors,rows,gross,score,coveredFraction,mapped,watchlistCount,pnl,provided}=result;
     const root=$("#attribution-results");root.replaceChildren();
     if(errors.length){
       root.append(el("p",errors.slice(0,8).join(" "),"warning-note"));
       state.lastAttribution=[];
-      $("#relevance-score").textContent="—";$("#coverage-score").textContent="—";$("#pnl-score").textContent="—";
+      $("#relevance-score").textContent="—";$("#coverage-score").textContent="—";$("#pnl-score").textContent="—";$("#watchlist-score").textContent="—";
       drawBars([]);return;
     }
     if(!rows.length){
@@ -369,6 +369,7 @@
     $("#relevance-score").textContent=fmt.format(score*100)+" / 100";
     $("#coverage-score").textContent=fmt.format(coveredFraction*100)+"%";
     $("#pnl-score").textContent=provided?(usd.format(pnl)+(provided<rows.length?"*":"")):"Not entered";
+    $("#watchlist-score").textContent=watchlistCount+"/"+rows.length+" holdings";
     const caption=el("p","Gross positions: "+usd.format(gross)+
       " · "+mapped+"/"+rows.length+" holding lines have a source-prior relationship. "+
       (provided===rows.length?"Scenario P&L: all rows use YOUR return assumptions.":
@@ -376,7 +377,7 @@
         "What-if P&L requires manually entered per-security assumed return percentages."),"note");
     root.append(caption);
     const t=el("table"),thead=el("thead"),head=el("tr");
-    for(const v of ["Security","Position","Gross wt.","Seed prior","Relevance pts","Your what-if P&L"])head.append(el("th",v));
+    for(const v of ["Security","Position","Gross wt.","Seed prior","Relevance pts","Qualitative watchlist","Your what-if P&L"])head.append(el("th",v));
     thead.append(head);t.append(thead);
     const body=el("tbody");
     for(const p of rows){
@@ -384,11 +385,12 @@
       for(const v of [p.ticker,usd.format(p.value),fmt.format(p.grossShare*100)+"%",
         p.relevance===null?"Not mapped":fmt.format(p.relevance),
         p.contribution===null?"—":fmt.format(p.contribution*100),
+        p.watchlistChannels.length?p.watchlistChannels.join(", "):"—",
         p.pnl===null?"Not entered":usd.format(p.pnl)])tr.append(el("td",v));
       body.append(tr);
     }
     t.append(body);root.append(t);
-    const note=el("p","Method: relevance = Σ(|position|/gross × highest connected entity→security seed prior). "+
+    const note=el("p","Method: relevance = Σ(|position|/gross × highest connected entity→security seed prior). Sector/country watchlist uses disclosed matching rules and does NOT change this numerical score. "+
       "Mapping coverage = mapped gross / total gross. The model neither predicts return signs nor multiplies a prior by a shock.","note");
     root.append(note);
     state.lastAttribution=rows;
