@@ -58,8 +58,8 @@ class PreviewTests(unittest.TestCase):
         self.assertNotIn("MOTHERDUCK_TOKEN",str(data))
 
     def test_all_documented_routes(self):
-        for path in ("/","/assets/app.js","/assets/styles.css",
-          "/api/v1/overview","/api/v1/graph","/api/v1/release-gates","/api/v1/factors",
+        for path in ("/","/report","/assets/app.js","/assets/styles.css","/assets/report.js","/assets/report.css",
+          "/api/v1/overview","/api/v1/graph","/api/v1/capabilities","/api/v1/release-gates","/api/v1/factors",
           "/api/v1/evidence","/api/v1/blockers","/api/v1/meta",
           "/api/v1/metrics.csv","/excel/taskpane.html","/excel/taskpane.js","/excel/taskpane.css",
           "/excel/manifest.xml","/assets/icon-80.png","/health/live"):
@@ -74,6 +74,50 @@ class PreviewTests(unittest.TestCase):
         self.assertIn("officeapps.live.com",headers["Content-Security-Policy"])
         _,api_headers,_=self.request("/api/v1/overview")
         self.assertEqual(api_headers["X-Frame-Options"],"SAMEORIGIN")
+
+    def test_original_visual_design_is_preserved(self):
+        markup=self.request("/")[2].decode("utf-8")
+        style=self.request("/assets/styles.css")[2].decode("utf-8")
+        self.assertIn("<h1>Event Risk Graph</h1>",markup)
+        self.assertIn("How it works",markup)
+        self.assertIn("Excel &amp; API",markup)
+        self.assertIn("href=\"/report\"",markup)
+        self.assertIn("--question: #2a78d6",style)
+        self.assertIn("--entity: #eb6834",style)
+        self.assertIn("--security: #1baf7a",style)
+        self.assertIn("--left:300px",style)
+        self.assertIn("--right:360px",style)
+
+    def test_capability_report_is_request_time_from_frozen_sources(self):
+        from app import capabilities_report
+        g=capabilities_report(read_snapshot())
+        self.assertEqual(g["report_type"],"ENGINEERING_CAPABILITY_REPORT")
+        self.assertEqual(g["source_mode"],"REQUEST_TIME_READ_OF_FROZEN_AUDITED_SNAPSHOTS")
+        self.assertEqual(g["graph"]["nodes"],84)
+        self.assertEqual(g["graph"]["edges"],102)
+        self.assertEqual(g["graph"]["node_types"]["security"],52)
+        self.assertEqual(g["graph"]["edge_types"]["research_exposure_prior"],60)
+        self.assertFalse(g["institutional_release_approved"])
+        self.assertFalse(g["continuous_market_refresh_enabled"])
+        self.assertGreaterEqual(len(g["capabilities"]),6)
+        got=json.loads(self.request("/api/v1/capabilities")[2])
+        self.assertEqual(got["graph"]["nodes"],84)
+        self.assertIn("generated_at_utc",got)
+        self.assertIn("BEA",str(got))
+        html=self.request("/report")[2].decode()
+        self.assertIn("/assets/report.js",html)
+        self.assertIn("RESEARCH",html.upper())
+        self.assertNotIn("<style>",html)
+
+    def test_excel_import_contains_graph_and_real_formulas(self):
+        js=self.request("/excel/taskpane.js")[2].decode()
+        html=self.request("/excel/taskpane.html")[2].decode()
+        self.assertIn('id="import-graph"',html)
+        for token in ("ER_Nodes","ER_Edges","ER_Metrics","ER_Explorer",
+                      "COUNTIFS(","SUMIFS(","institutional_release_approved"):
+            self.assertIn(token,js)
+        self.assertIn("graph.edges",js)
+        self.assertNotIn("ER.BETA",js)
 
     def test_graph_api_and_source_types(self):
         from app import read_graph
