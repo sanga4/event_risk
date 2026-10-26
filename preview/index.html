@@ -12,14 +12,19 @@
 <body>
 <div class="app-shell">
   <header class="topbar">
-    <div class="identity"><div class="logo">ER<span class="logo-dot">.</span></div><span class="product-name">EventRisk <em>Factor</em></span><span class="product-tag">KNOWLEDGE GRAPH</span></div>
-    <div class="navigation"><button type="button" class="nav-button active" id="explore-tab">Explore</button><button type="button" class="nav-button" id="about-tab">Methodology</button><a class="nav-link" href="/api/v1/graph" target="_blank" rel="noopener">Graph API <span aria-hidden="true">↗</span></a></div>
-    <div class="top-right"><span class="environment"><span class="live-dot"></span>RESEARCH PREVIEW</span><a class="excel-link" href="/excel/taskpane.html">Excel add-in <span aria-hidden="true">↗</span></a></div>
+    <h1>Event Risk Graph</h1>
+    <nav role="tablist" aria-label="Site sections">
+      <button type="button" class="active" id="explore-tab" role="tab" aria-selected="true">Explore</button>
+      <button type="button" id="about-tab" role="tab" aria-selected="false">How it works</button>
+      <a href="/report">Live report</a>
+      <a href="/excel/taskpane.html">Excel &amp; API</a>
+    </nav>
+    <div class="top-right"><span class="environment"><span class="live-dot"></span>RESEARCH PREVIEW</span></div>
   </header>
   <div class="notice" role="status"><strong>Research-only demo</strong><span>Event pathways are illustrative hypotheses; security edges are original repository analyst priors, <em>not</em> validated exposures or event betas. BEA figures are reported actuals retrieved later, not pre-release surprises.</span><button type="button" id="notice-close" aria-label="Dismiss notice">×</button></div>
   <div class="layout" id="explore-layout">
     <aside class="left-panel">
-      <div class="left-heading"><div><span class="overline">DISCOVER</span><h1>Knowledge graph</h1></div><span class="count-pill" id="total-nodes">—</span></div>
+      <div class="left-heading"><div><span class="overline">EXPLORE</span><h2>Events, securities &amp; factors</h2></div><span class="count-pill" id="total-nodes">—</span></div>
       <div class="left-tabs" role="tablist" aria-label="Browse by node type">
         <button class="active" role="tab" aria-selected="true" data-kind="event">Events</button>
         <button role="tab" aria-selected="false" data-kind="security">Securities</button>
@@ -52,7 +57,7 @@
       </div>
       <div class="canvas-wrap" id="canvas-wrap">
         <canvas id="network" tabindex="0" aria-label="Interactive network graph. Use the searchable node list to choose a vertex, drag the canvas to pan, scroll to zoom, or select nodes directly."></canvas>
-        <div class="canvas-hint" id="canvas-hint"><span class="hint-symbol">⌘</span> Drag nodes · Scroll to zoom · Click to explore</div>
+        <div class="canvas-hint" id="canvas-hint">Drag nodes · Scroll to zoom · Click to explore</div>
         <div class="loading" id="graph-loading">Loading source-backed graph…</div>
         <div class="graph-error" id="graph-error" hidden>Graph snapshot unavailable. No fabricated relationship data will be shown.</div>
         <div class="graph-info"><span class="green-indicator"></span><strong id="visible-nodes">0</strong> nodes <span class="dot-sep">·</span><strong id="visible-edges">0</strong> connections <span class="dot-sep">·</span>Frozen research snapshot</div>
