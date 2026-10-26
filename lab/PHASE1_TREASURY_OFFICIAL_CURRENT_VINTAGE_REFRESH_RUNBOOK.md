@@ -20,6 +20,12 @@ https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
 - Two **derived rate gaps**, not tradeable breakeven proxies: `PAR_NOMINAL_REAL_GAP_5Y`, `PAR_NOMINAL_REAL_GAP_10Y`. These are source-native percent yield level differences, NOT identified market inflation shocks.
 - Explicitly EXCLUDED: FRED `T10YIE` and `NFCI` (different source/rights), Kalshi/Polymarket quote times, licensed credit spreads, futures, option vol and portfolio positions.
 
+## Live read-only acceptance incident — post-fetch UTC clock (October 26 UTC)
+
+The first REAL MotherDuck on-demand read-only Treasury XML Flight preview (run #1, Flight `6af12871-e9ef-4338-95ea-b3f49fd07309`) reached both official monthly XML HTTP GET requests, but failed **before parsing/append** with `ValueError: Unverifiable provider receipt chronology`. The original `main()` captured `now` BEFORE HTTP fetches and passed that stale start clock into the guard that checks actual source response receipt. Combined fetch latency exceeded 30 seconds; a legitimate later HTTP receipt was mistakenly considered future evidence. There were **no database writes** or provider-PIT approvals. PR #63 changes the validation timestamp to a fresh UTC clock taken AFTER both GETs, keeps the immutable start timestamp for the run identity, and explicitly fails closed if the request spans a UTC calendar-month boundary. Synthetic end-to-end main() tests mock the 30-minute separation between start and response and prove it does not reject actual later response clocks, without hitting network or touching MotherDuck.
+
+A new actual read-only Flight execution of the corrected exact reviewed source is required before claiming the source preview succeeds; CI green alone cannot establish live Treasury XML parsing or source ingestion. No release rights, event-to-factor identification, or warehouse write is inferred from this correction.
+
 ## Core original-source and chronological guarantees
 
 - Calls official `home.treasury.gov` monthly nominal and real XML feeds using fixed URLs (never a caller-supplied arbitrary endpoint). HTTPS request maximum 30 seconds, no redirects, bounded XML body (2MB each), limited 35 daily entries.
