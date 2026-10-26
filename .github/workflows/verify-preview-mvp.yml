@@ -1,0 +1,34 @@
+name: Preview MVP Analyst Beta Acceptance
+on:
+  push:
+    branches: [feat/preview-mvp-analyst-v1]
+  pull_request:
+    paths: [preview_mvp/**]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-mvp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python source contract tests
+        run: python -m unittest discover -s preview_mvp/tests -p 'test_*.py' -v
+      - name: JavaScript syntax validation
+        run: node --check preview_mvp/assets/app.js
+      - name: Python syntax validation
+        run: python -m py_compile preview_mvp/app.py
+      - name: Static source security and provenance boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          code=Path('preview_mvp/app.py').read_text()
+          for term in ('PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED',
+                       'PREVIEW_MVP_DERIVED_RESEARCH_APPROVED',
+                       'X-Analyst-Key','read-only','RESEARCH_ONLY_NOT_APPROVED'):
+              assert term.lower() in code.lower(),term
+          assert 'eval(' not in code
+          assert 'subprocess.' not in code
+          print('ANALYST_MVP_STATIC_SOURCE_CONTRACT=PASS')
+          PY
