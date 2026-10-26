@@ -39,10 +39,10 @@
   }
   function buildList(){
     const q=state.search.toLowerCase().trim();
-    const items=state.nodes.filter(n=>n.type===state.tab&&(
+    const items=state.nodes.filter(n=>(q || n.type===state.tab)&&(
       !q||[n.name,n.ticker,n.description,n.subtitle].some(s=>String(s||"").toLowerCase().includes(q))));
     const list=$("node-list");list.replaceChildren();
-    $("list-title").textContent=TYPES[state.tab].plural;
+    $("list-title").textContent=q?"SEARCH ACROSS ALL GRAPH TYPES":TYPES[state.tab].plural;
     $("list-count").textContent=items.length+" items";
     for(const n of items){
       const btn=el("button","node-item");btn.type="button";btn.setAttribute("role","option");
@@ -51,7 +51,7 @@
       const tag=el("small","",n.ticker|| (n.source_received_at?"BEA":n.type==="event"?"SCENARIO":""));
       append(btn,dot,middle,tag);btn.addEventListener("click",()=>selectNode(n.id,true));list.appendChild(btn);
     }
-    if(!items.length)list.appendChild(el("p","detail-welcome","No matching "+state.tab+" nodes."));
+    if(!items.length)list.appendChild(el("p","detail-welcome","No matching graph nodes."));
     $("total-nodes").textContent=nfmt.format(state.nodes.length);
   }
   function changeTab(type){
