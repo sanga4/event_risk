@@ -16,7 +16,7 @@
                 factor:"hexagon",channel:"box"};
   const state={catalog:null,graph:null,byId:new Map(),adj:new Map(),selected:null,
                tab:"questions",key:"",sourceQuestions:[],sourceOffset:0,
-               holdings:[],nextHoldingId:1,lastAttribution:[],network:null};
+               holdings:[],nextHoldingId:1,lastAttribution:[],network:null,expanded:false};
   const CASES={
     "event:inflation":"Potential interpretation of macro inflation data through inflation expectations and monetary policy. No original verified surprise or return-effect estimate.",
     "event:funding":"Funding basis, liquidity and credit channels. Funding coefficients in the separate lab are historical associations, not event-response magnitudes.",
@@ -95,27 +95,25 @@
   }
   function viewNodeType(n){return n.type==="question"?"Source question":n.type==="event"?"Scenario":n.type==="security"?"Security":n.type==="channel"?"Economic channel":n.type==="factor"?"Factor definition":"Reference entity";}
   function graphNeighborhood(root,depth){
-    const seen=new Map([[root,0]]);
-    let frontier=[root];
-    for(let step=1;step<=depth&&frontier.length;step++){
-      const next=[];
-      for(const id of frontier){
-        for(const item of neighbors(id)){
-          if(!seen.has(item.other)){
-            seen.set(item.other,step);next.push(item.other);
-          }
-        }
+    const seen=new Map([[root,0]]);let frontier=[root];
+    for(let d=1;d<=depth&&frontier.length;d++){
+      const following=[];
+      for(const id of frontier)for(const edge of neighbors(id)){
+        if(!seen.has(edge.other)){seen.set(edge.other,d);following.push(edge.other);}
       }
-      frontier=next;
+      frontier=following;
     }
-    const ids=[...seen.keys()];
-    // Graph can contain 543 securities with dense factor/channel mappings;
-    // preserve direct neighbors and cap deeper topology for visual clarity.
-    if(ids.length>135){
-      ids.sort((a,b)=>seen.get(a)-seen.get(b)||a.localeCompare(b));
-      return new Map(ids.slice(0,135).map(id=>[id,seen.get(id)]));
+    const limits=state.expanded?
+      {event:4,question:8,entity:7,security:22,channel:8,factor:18}:
+      {event:3,question:4,entity:3,security:6,channel:4,factor:5};
+    const strength=id=>Math.max(0,...neighbors(id).map(x=>Number(x.edge.weight)||0));
+    const selected=new Map([[root,0]]);
+    for(const [type,max] of Object.entries(limits)){
+      const candidates=[...seen].filter(([id])=>id!==root&&state.byId.get(id)?.type===type);
+      candidates.sort((a,b)=>a[1]-b[1]||strength(b[0])-strength(a[0])||a[0].localeCompare(b[0]));
+      for(const [id,d] of candidates.slice(0,max))selected.set(id,d);
     }
-    return seen;
+    return selected;
   }
   function renderNetwork(id){
     const network=state.network;
