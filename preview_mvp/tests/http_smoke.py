@@ -20,14 +20,17 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/previous-explorer","/lab","/data","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
+    for route in ("/","/previous-explorer","/lab","/api","/data","/assets/viewer.css","/assets/viewer.js","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
     response,home=call("/")
-    assert b"Event Attribution" in home and b"Original" not in home[:250]
+    assert b"Event Risk Graph" in home and b"data-tab=\"entities\"" in home and b"Event Attribution" not in home
     assert b"data-side=\"left\"" in home
     assert b"data-side=\"right\"" in home
+    _,lab=call("/lab")
+    assert b"EventRisk API" in lab and b"No claim" in lab
+    assert b"/api/v1/research/funding-diagnostics" in lab
     csp=response.headers.get("Content-Security-Policy","")
     assert "https://unpkg.com" in csp
     assert "frame-ancestors 'none'" in csp
