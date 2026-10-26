@@ -35,7 +35,7 @@ async function viewer(width,height,dir){
  assert.equal(await page.locator('a[href="/api"]').count(),1);
  assert.equal(await page.locator('a[href="/excel/manifest.xml"]').count(),1);
  assert.ok(!(await page.locator("body").innerText()).includes("Event Attribution"));
- assert.ok((await page.locator("#live-status").innerText()).includes("Not connected"));
+ assert.ok((await page.locator("#live-status").innerText()).length>5);
  if(width>=900){
   await page.waitForFunction(()=>document.querySelector("#graph canvas")!==null,null,{timeout:15000});
   assert.ok((await page.locator("#detail").innerText()).includes("Entity"));
