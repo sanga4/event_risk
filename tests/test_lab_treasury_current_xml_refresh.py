@@ -4,6 +4,10 @@ All date/value fixtures are synthetic and MUST NOT be described as official
 Treasury yields or historically original provider publication timestamps.
 """
 from datetime import date, datetime, timedelta, timezone
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest.mock import MagicMock, patch
+import json
 import hashlib
 import importlib.util
 from pathlib import Path
@@ -79,6 +83,49 @@ class OfficialCurrentTreasuryRefreshTests(unittest.TestCase):
             original_p[1]["bytes"]=wrong
             original_p[1]["sha256"]=hashlib.sha256(wrong).hexdigest()
             example(original_p)
+
+    def test_live_style_fetch_longer_than_30_seconds_uses_post_response_clock(self):
+        # Regression from the actual MotherDuck read-only Treasury preview:
+        # source GETs succeeded, but 30+ seconds of network fetch caused
+        # the producer to reject its later HTTP received-at as 'future'.
+        # This test executes the real main() and real source XML parser while
+        # mocking only network and DuckDB. No external writes or HTTP access.
+        start=datetime(2026,10,25,17,0,tzinfo=timezone.utc)
+        finish=datetime(2026,10,25,17,30,tzinfo=timezone.utc)
+        live=packets([date(2026,10,23)])
+        fake_con=MagicMock()
+        fake_con.__enter__.return_value=fake_con
+        with patch.object(m,"datetime") as clock, \
+             patch.object(m.requests,"Session"), \
+             patch.object(m,"bounded_fetch",side_effect=live) as fetched, \
+             patch.object(m.duckdb,"connect",return_value=fake_con), \
+             patch.object(m,"existing_inventory",return_value=[]), \
+             patch.object(m.sys,"argv",["phase1_treasury_current_xml_refresh.py"]), \
+             patch.dict(m.os.environ,{"LAB_PIPELINE_COMMIT":"a"*40,
+                                    "LAB_RESEARCH_SCOPE":"internal-only"}):
+            clock.now.side_effect=[start,finish]
+            stream=StringIO()
+            with redirect_stdout(stream):
+                m.main()
+        result=json.loads(stream.getvalue())
+        self.assertEqual(result["mode"],"READ_ONLY_PREVIEW")
+        self.assertEqual(result["proposed_new_research_factor_records"],18)
+        self.assertFalse(result["institutional_beta_release"])
+        self.assertEqual(fetched.call_count,2)
+        self.assertEqual(clock.now.call_count,2)
+
+    def test_month_boundary_source_request_fail_closed_instead_of_mixing_months(self):
+        start=datetime(2026,10,31,23,59,40,tzinfo=timezone.utc)
+        finish=datetime(2026,11,1,0,0,50,tzinfo=timezone.utc)
+        with patch.object(m,"datetime") as clock, \
+             patch.object(m.requests,"Session"), \
+             patch.object(m,"bounded_fetch",return_value={}), \
+             patch.object(m.sys,"argv",["phase1_treasury_current_xml_refresh.py"]), \
+             patch.dict(m.os.environ,{"LAB_PIPELINE_COMMIT":"a"*40,
+                                    "LAB_RESEARCH_SCOPE":"internal-only"}):
+            clock.now.side_effect=[start,finish]
+            with self.assertRaisesRegex(ValueError,"crossed a UTC calendar month"):
+                m.main()
 
     def test_exact_eighteen_factor_codes_and_derived_curve_units(self):
         self.assertEqual(len(m.ALL_FACTORS),18)
