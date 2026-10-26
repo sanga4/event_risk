@@ -231,11 +231,18 @@ def research(route,q):
         if limit==0:limit=30
         offset=_int_arg(q,"offset",0,50000)
         search=_one(q,"q",80).strip().lower()
-        rows=_db_query("""SELECT node_id, arg_max(name, recorded_at) AS name,
-                 strftime(max(recorded_at), '%Y-%m-%dT%H:%M:%SZ') AS last_recorded_at
-                 FROM main.graph_nodes
-                 WHERE node_type=? AND lower(name) LIKE ?
-                 GROUP BY node_id ORDER BY node_id LIMIT ? OFFSET ?""",
+        rows=_db_query("""WITH latest AS (
+                     SELECT node_id, name, node_type, op, recorded_at,
+                       row_number() OVER (
+                          PARTITION BY node_id ORDER BY recorded_at DESC,run_id DESC
+                       ) latest_version
+                     FROM main.graph_nodes
+                   )
+                   SELECT node_id,name,
+                     strftime(recorded_at,'%Y-%m-%dT%H:%M:%SZ') last_recorded_at
+                   FROM latest WHERE latest_version=1 AND op='assert'
+                     AND node_type=? AND lower(name) LIKE ?
+                   ORDER BY node_id LIMIT ? OFFSET ?""",
                 (node_type,"%"+search.replace("%","\\%").replace("_","\\_")+"%",limit,offset))
         return {"mode":"LIVE_RESEARCH_GRAPH_ENTITY_SEARCH","node_type":node_type,
                 "rows":rows,"limit":limit,"offset":offset,
@@ -247,16 +254,30 @@ def research(route,q):
         node_id=_one(q,"node_id",128)
         if not re.fullmatch(r"[A-Za-z0-9:._=/-]{1,128}",node_id):
             raise ValueError("INVALID_NODE_ID")
-        rows=_db_query("""SELECT src_id,dst_id,edge_type,weight,confidence,sign,
-                 provenance,note FROM main.graph_edges
-                 WHERE src_id=? OR dst_id=?
-                 QUALIFY row_number() OVER (PARTITION BY edge_id ORDER BY recorded_at DESC)=1
-                 ORDER BY edge_type,src_id,dst_id LIMIT 100""",(node_id,node_id))
+        rows=_db_query("""WITH latest AS (
+                  SELECT src_id,dst_id,edge_type,weight,confidence,sign,
+                    provenance,note,op,
+                    row_number() OVER (
+                       PARTITION BY edge_id ORDER BY recorded_at DESC,run_id DESC
+                    ) latest_version
+                  FROM main.graph_edges
+                  WHERE src_id=? OR dst_id=?
+                )
+                SELECT src_id,dst_id,edge_type,weight,confidence,sign,provenance,note
+                FROM latest WHERE latest_version=1 AND op='assert'
+                ORDER BY edge_type,src_id,dst_id LIMIT 100""",(node_id,node_id))
         neighbor_ids=list({v for edge in rows for v in (edge["src_id"],edge["dst_id"])})
-        names=(_db_query("""SELECT node_id,arg_max(name,recorded_at) AS name,
-                 arg_max(node_type,recorded_at) AS node_type
-                 FROM main.graph_nodes WHERE node_id IN (SELECT unnest(?::VARCHAR[]))
-                 GROUP BY node_id""",(neighbor_ids,)) if neighbor_ids else [])
+        names=(_db_query("""WITH latest AS (
+                    SELECT node_id,name,node_type,op,
+                    row_number() OVER (
+                       PARTITION BY node_id ORDER BY recorded_at DESC,run_id DESC
+                    ) latest_version
+                    FROM main.graph_nodes
+                    WHERE node_id IN (SELECT unnest(?::VARCHAR[]))
+                  )
+                  SELECT node_id,name,node_type FROM latest
+                  WHERE latest_version=1 AND op='assert'""",(neighbor_ids,))
+               if neighbor_ids else [])
         return {"mode":"LIVE_RESEARCH_GRAPH_NEIGHBORHOOD",
                 "node_id":node_id,"edges":rows,"nodes":names,
                 "total_returned":len(rows),
