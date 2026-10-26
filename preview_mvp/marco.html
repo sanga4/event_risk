@@ -31,7 +31,10 @@
     </div>
     <input id="search" type="search" placeholder="Search">
     <ul id="list"></ul>
-    <div class="list-footnote" id="list-status">Source-referenced research graph. Market question access is restricted. <button type="button" id="open-attribution">Analyze my holdings →</button></div>
+    <div class="list-footnote" id="list-status">Source-referenced research graph. Market question access is restricted.
+<div class="stack"><input id="analyst-key" type="password" autocomplete="off" placeholder="Issued analyst key" aria-label="Analyst research access key"><button type="button" id="connect-research">Access</button></div>
+<div id="access-status" class="mode-label">Only the browser-to-API research key is used. Warehouse token stays on the server.</div>
+<button type="button" id="open-attribution">Analyze my holdings →</button></div>
   </aside>
   <div class="split" data-side="left" role="separator" aria-orientation="vertical" aria-label="Resize list panel" tabindex="0"></div>
   <section id="canvas-wrap">
