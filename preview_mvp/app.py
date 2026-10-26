@@ -73,6 +73,7 @@ ALLOW_ROUTES = {
     "/api/v1/research/graph-nodes", "/api/v1/research/models",
     "/api/v1/research/factor-series", "/api/v1/research/factor-catalog",
     "/api/v1/research/graph-neighbors",
+    "/api/v1/research/funding-diagnostics",
 }
 TICKER_PATTERN = re.compile(r"^[A-Za-z0-9.=_-]{1,25}$")
 FACTOR_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,100}$")
@@ -276,6 +277,46 @@ def research(route,q):
           ORDER BY variant LIMIT 4""",(ticker,))
         return {"mode":"NONCAUSAL_EX_POST_RESEARCH","ticker":ticker,"rows":rows,
                 "warning":"SPY/Treasury/funding coefficients are exploratory; no institutional issuer PIT, adjustments/rights or event-causality approval. Compare source-built variants and separate Holm correction."}
+    if route=="/api/v1/research/funding-diagnostics":
+        if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
+            raise PermissionError("DERIVED_RESEARCH_DISTRIBUTION_NOT_APPROVED")
+        ticker=_one(q,"ticker",25).upper()
+        if not TICKER_PATTERN.fullmatch(ticker):
+            raise ValueError("INVALID_TICKER")
+        fitted=_db_query("""SELECT ticker,variant,matched_dates,training_dates,heldout_dates,
+          CAST(first_day AS VARCHAR) first_day,
+          CAST(train_last_day AS VARCHAR) train_last_day,
+          CAST(heldout_first_day AS VARCHAR) heldout_first_day,
+          CAST(last_day AS VARCHAR) last_day,
+          market_spy_beta,dgs2_yield_change_beta,dgs10_yield_change_beta,
+          funding_basis_beta,funding_hac_nw5_se,funding_ci95_low,funding_ci95_high,
+          market_and_treasury_heldout_mse,joint_market_treasury_funding_heldout_mse,
+          incremental_heldout_skill,training_halves_sign_stable,
+          research_screen_status,issuer_pit_verified,
+          vendor_adjustments_and_rights_approved,institutional_beta_released,build_id
+          FROM main.lab_joint_security_funding_models_v1
+          WHERE upper(ticker)=?
+          QUALIFY row_number() OVER (PARTITION BY variant ORDER BY build_id DESC)=1
+          ORDER BY variant LIMIT 4""",(ticker,))
+        adjusted=_db_query("""SELECT variant,funding_hac_se,nominal_hac_p,
+          holm_familywise_p,holm_p_below_05,heldout_incremental_skill,
+          full_to_trim_funding_sign_flip,relative_full_to_trim_beta_shift,
+          training_half_sign_stable,familywise_research_state,
+          institutional_beta_released,build_id
+          FROM main.lab_joint_funding_familywise_models_v1
+          WHERE upper(ticker)=?
+          QUALIFY row_number() OVER (PARTITION BY variant ORDER BY build_id DESC)=1
+          ORDER BY variant LIMIT 4""",(ticker,))
+        family_by_variant={x["variant"]:x for x in adjusted}
+        for row in fitted:
+            matched=family_by_variant.get(row["variant"],{})
+            row["familywise"]={k:v for k,v in matched.items() if k!="variant"}
+        return {"mode":"NONCAUSAL_FUNDING_REGRESSION_DIAGNOSTICS",
+                "ticker":ticker,"fits":fitted,"familywise_test_scope":
+                "96 total fitted variants across 48 securities, latest accepted independent Holm audit",
+                "approved_event_impact":False,"holdout_from_actual_source":True,
+                "research_warning":
+                "Coefficients estimate exploratory market/Treasury/funding associations, not the causal effect of any particular geopolitical or macro event. Original issuer PIT and vendor adjustments/rights remain unapproved."}
     if route=="/api/v1/research/factor-series":
         if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
             raise PermissionError("FACTOR_SERIES_DISTRIBUTION_NOT_APPROVED")
