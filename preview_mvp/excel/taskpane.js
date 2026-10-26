@@ -174,7 +174,7 @@
         c.channels.length+" economic channels. Dated warehouse audit "+i.evidence_checked_date_utc+".";
     }catch(e){status("Reference catalog not available: "+e.message);return;}
     if(typeof Office==="undefined"){
-      status("Open using Microsoft Excel's installed EventRisk Preview MVP add-in. This browser page is read-only.");
+      status("Open using Microsoft Excel's installed EventRisk Research add-in. This browser page is read-only.");
       return;
     }
     Office.onReady(info=>{
