@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="EventRisk Preview MVP: original Marco knowledge graph and typed portfolio event attribution, research-only.">
+<title>Event Risk Graph — Preview MVP</title>
+<link rel="stylesheet" href="/assets/marco.css">
+<script defer src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script defer src="/assets/marco.js"></script>
+</head><body class="view-explore"><header>
+  <h1>Event Risk Graph <small>PREVIEW MVP</small></h1>
+  <nav role="tablist" aria-label="Research views">
+    <button type="button" role="tab" data-view="explore" aria-selected="true">Explore</button>
+    <button type="button" role="tab" data-view="attribution" aria-selected="false">Event Attribution</button>
+    <a href="/lab">Regression Lab</a>
+    <button type="button" role="tab" data-view="about" aria-selected="false">How it works</button>
+    <button type="button" role="tab" data-view="api" aria-selected="false">Excel &amp; API</button>
+  </nav>
+  <span class="right-note explore-only" id="source-status">Public research reference · no live odds</span>
+  <label class="explore-only">Depth <select id="depth"><option selected>1</option><option>2</option><option>3</option></select></label>
+  <label class="explore-only" title="Show qualitative factor nodes; not estimated coefficients"><input type="checkbox" id="show-factors" checked> Factors</label>
+</header>
+<main>
+  <aside>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="questions" aria-selected="true">Events</button>
+      <button role="tab" data-tab="markets">Warehouse questions</button>
+      <button role="tab" data-tab="entities">Entities</button>
+      <button role="tab" data-tab="securities">Securities</button>
+      <button role="tab" data-tab="factors">Factors</button>
+      <button role="tab" data-tab="channels">Channels</button>
+    </div>
+    <input id="search" type="search" placeholder="Search">
+    <ul id="list"></ul>
+    <div class="list-footnote" id="list-status">Source-referenced research graph. Market question access is restricted. <button type="button" id="open-attribution">Analyze my holdings →</button></div>
+  </aside>
+  <div class="split" data-side="left" role="separator" aria-orientation="vertical" aria-label="Resize list panel" tabindex="0"></div>
+  <section id="canvas-wrap">
+    <div id="graph"></div>
+    <div class="caption" id="caption" hidden></div>
+    <div class="empty" id="empty">Select an event, company, or factor to inspect research relationships.</div>
+    <div class="legend">
+      <span><i class="swatch event"></i>Event scenario</span>
+      <span><i class="swatch entity"></i>Entity</span>
+      <span><i class="swatch security"></i>Security</span>
+      <span><i class="swatch channel"></i>Economic channel</span>
+      <span><i class="swatch question"></i>Source question*</span>
+      <span><i class="swatch factor"></i>Factor (qualitative)</span>
+      <span><i class="dash"></i>Research relation</span>
+    </div>
+  </section>
+  <div class="split" data-side="right" role="separator" aria-orientation="vertical" aria-label="Resize details panel" tabindex="0"></div>
+  <section id="detail"><p class="note">Details appear here.</p></section>
+</main>
+<section id="attribution" class="view-section" aria-labelledby="attribution-heading">
+<div class="attribution-doc">
+<span class="mode-label">PREVIEW MVP / PORTFOLIO RESEARCH</span>
+<h2 id="attribution-heading">Event Attribution</h2>
+<p>Enter holdings directly. Review their qualitative relevance to an event and optionally model your own hypothetical P&amp;L. No file upload, account connection, or server-side position storage.</p>
+<div class="toolbar"><label for="event-choice">Event scenario
+<select id="event-choice" aria-label="Event scenario"></select></label>
+<button type="button" id="load-demo">Load demo holdings</button><button type="button" id="clear-holdings">Clear holdings</button>
+<button type="button" id="print-attribution">Print report</button></div>
+<div id="scenario-context" class="muted-note" aria-live="polite">Loading scenario and public-source links…</div>
+<div class="attribution-grid">
+<div class="attribution-panel">
+<h3>My holdings <span class="tag">Entered here · browser only</span></h3>
+<p class="note">Use signed dollar positions: positive = long; negative = short. Optional assumed return % is your own scenario assumption, not a model output. All monetary amounts use the same chosen currency.</p>
+<div class="holdings-wrap"><table class="holdings-table"><thead><tr><th>Symbol</th><th>Position value ($)</th><th>Assumed return %</th><th></th></tr></thead><tbody id="holdings-body"></tbody></table></div>
+<div class="toolbar"><button type="button" id="add-holding">+ Add holding</button><button type="button" id="calculate">Calculate attribution</button></div>
+<p class="note" id="portfolio-privacy">Holdings remain in your browser tab. Nothing about your positions is sent to the EventRisk API.</p>
+</div>
+<div class="attribution-panel">
+<h3>Portfolio attribution <span class="tag">Analyst priors only</span></h3>
+<div class="info-grid"><div class="info-stat"><strong id="relevance-score">—</strong><span>Gross-weighted seed relevance</span></div>
+<div class="info-stat"><strong id="coverage-score">—</strong><span>Portfolio mapping coverage</span></div>
+<div class="info-stat"><strong id="pnl-score">—</strong><span>User-input what-if P&amp;L</span></div></div>
+<canvas id="attribution-plot" width="590" height="150" aria-label="Portfolio qualitative exposure contribution chart"></canvas>
+<div id="attribution-results" aria-live="polite">Enter at least one ticker and a nonzero position value, then calculate.</div>
+<p class="warning-note">Relevance is not return attribution. “What-if P&amp;L” is computed exclusively from your own entered returns. Event probabilities, causal shocks, security factor betas and realized P&amp;L are <strong>not</strong> estimated by this feature.</p>
+<div class="toolbar"><button id="export-attribution" type="button">Export calculated table (CSV)</button><span class="mode-label">Local download only · no upload</span></div>
+</div></div></div></section>
+<section id="about" class="view-section"><article class="doc">
+<h2>How EventRisk works</h2>
+<p class="lede">Start with an event hypothesis. Trace economic transmission channels, factor definitions, and securities linked by public source analyst priors.</p>
+<div class="flow"><div class="step"><b>Event</b><span>Scenario or permissioned source question</span></div><b>→</b><div class="step"><b>Economic channel</b><span>Unreviewed mechanism</span></div><b>→</b><div class="step"><b>Risk factor</b><span>Source catalog; historical observations vary</span></div><b>→</b><div class="step"><b>Holdings</b><span>Manual research relevance &amp; user-entered P&amp;L assumptions</span></div></div>
+<h3>What is connected</h3>
+<p>The website reads its source-published <strong>543 securities</strong>, <strong>108 factor definitions</strong>, and <strong>22 illustrative economic channels</strong> from Preview MVP's own catalog API. Historical funding-regression outputs and market questions are permissioned research data, not unrestricted public content.</p>
+<h3>Event Attribution</h3>
+<p>Type ticker symbols and position dollar amounts directly into the browser. The app calculates an <strong>analyst-prior relevance score</strong> for each holding and a portfolio-weighted relevance total, using the repository's original entity-to-security seed relationships. Those 0–1 weights are <strong>not risk betas</strong>. If you enter your own hypothetical return changes, a separate what-if P&amp;L calculation uses only those explicit assumptions. No holdings are uploaded or sent to Preview MVP APIs.</p>
+<h3>Data quality boundaries</h3>
+<p>Scenario-to-channel and channel-to-factor links are hypotheses, not causal estimates. An observed historical factor correlation is not the effect of the event. The currently deployed source graph does not publish live market odds or first-published-vintage surprise shocks; permissioned real questions remain locked until source redistribution and user access controls are approved.</p>
+<p class="muted-note">A zero mapped relevance score means no matching seed relationship, not zero economic exposure. Gross dollar weights avoid canceling long and short positions in the relevance display. For holdings with unknown mappings we report coverage separately, never assign a zero measured beta.</p>
+<h3>Further research</h3><p><a href="/lab">Open Regression Lab</a> for observed source research models and factor histories, where appropriately authorized. <a href="/api/v1/inventory">View dated warehouse inventory</a>. Institutional Phase I remains a separate project.</p>
+</article></section>
+<section id="api" class="view-section"><article class="doc"><h2>Excel &amp; API</h2>
+<p class="lede">An analyst research API, bounded to source-approved data classes, and an Excel add-in for qualitative holdings and factor research.</p>
+<h3>Preview MVP Excel add-in</h3><p><a href="/excel/manifest.xml">Get the Excel add-in manifest</a> and sideload it into Excel where your Office installation supports add-ins. It imports the source factor/security catalogs and research graph. Actual Excel client sideload has not been independently tested.</p>
+<h3>Research endpoints</h3><table><tr><th>Endpoint</th><th>What it provides</th></tr><tr><td><a href="/api/v1/catalog">/api/v1/catalog</a></td><td>543 reference securities, 108 defined factors, 22 illustrative channels</td></tr><tr><td><a href="/api/v1/graph">/api/v1/graph</a></td><td>Public analyst priors and hypothesis graph</td></tr><tr><td><a href="/api/v1/inventory">/api/v1/inventory</a></td><td>Dated non-live aggregate evidence</td></tr><tr><td><a href="/api/v1/runtime">/api/v1/runtime</a></td><td>Live MotherDuck configuration vs actually tested connection</td></tr><tr><td>/api/v1/research/</td><td>Permissioned historical observed data, original funding regressions, source questions</td></tr></table>
+<p class="muted-note">The public site currently does not hold a separately authorized MotherDuck token. No original vendor raw quotes or licensed research models are embedded in its public HTML. This interface cannot validate the terms of third-party redistribution by itself.</p>
+<p><a href="/lab">Analyst Regression Lab</a> · <a href="/api/v1/runtime">Current access status</a></p>
+</article></section>
+</body></html>
