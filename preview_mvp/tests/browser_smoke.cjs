@@ -49,6 +49,7 @@ async function assertBrowser(width,height,dir){
     await page.waitForFunction(()=>document.querySelector("#graph canvas")!==null,
       {timeout:20000});
     assert.equal(await page.locator("#empty").isVisible(),false);
+    await page.screenshot({path:path.join(dir,"marco-initial-"+width+".png")});
     await page.locator("#detail").getByText("Related securities", {exact:false}).first().waitFor({state:"attached",timeout:12000});
     assert.ok((await page.locator("#detail").textContent()).includes("Related securities"));
     assert.ok((await page.locator("#detail").textContent()).includes("Related financial factor definitions"));
