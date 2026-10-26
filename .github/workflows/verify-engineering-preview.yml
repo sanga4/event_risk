@@ -1,0 +1,31 @@
+name: Verify isolated engineering preview
+on:
+  push:
+    branches: [feat/engineering-preview-isolated]
+    paths: ['preview/**', '.github/workflows/verify-engineering-preview.yml']
+  pull_request:
+    paths: ['preview/**', '.github/workflows/verify-engineering-preview.yml']
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Python and standalone preview
+        run: |
+          python -m py_compile preview/app.py
+          python -m unittest discover -s preview/tests -p 'test_*.py' -v
+      - name: Check browser and Excel JavaScript syntax
+        run: |
+          node --check preview/assets/app.js
+          node --check preview/excel/taskpane.js
+      - name: Protect main institutional environment
+        run: |
+          test -f preview/railway.json
+          test -f preview/excel/manifest.xml
+          ! grep -R 'LAB_DATA_RIGHTS_ACK=true' preview/
+          ! grep -R 'MOTHERDUCK_TOKEN=' preview/
