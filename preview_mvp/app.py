@@ -18,8 +18,11 @@ import os
 import re
 import threading
 import time
+import sys
 
 ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
+import warehouse
 DATA = ROOT / "data"
 MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
@@ -46,7 +49,7 @@ FILES = {"/": "marco.html", "/previous-explorer": "index.html", "/lab": "lab.htm
          "/excel/taskpane.css":"excel/taskpane.css",
          "/excel/manifest.xml":"excel/manifest.xml"}
 FACTOR_CATALOG_VERSION = "2026-10-20.1"
-SCHEMA = "ANALYST_BETA_V1_RESEARCH_ONLY"
+SCHEMA = "EVENTRISK_RESEARCH_PRODUCT_V1"
 CHANNELS = [
     ("inflation", "Inflation and price expectations", ("inflation", "rates", "commodity")),
     ("growth", "Real economic growth", ("country", "equity_style", "industry")),
@@ -88,7 +91,11 @@ ALLOW_ROUTES = {
     "/api/v1/research/factor-series", "/api/v1/research/factor-catalog",
     "/api/v1/research/graph-neighbors",
     "/api/v1/research/funding-diagnostics",
+    "/api/v1/research/datasets", "/api/v1/research/columns",
+    "/api/v1/research/table",
 }
+ADMIN_ROUTES={"/api/v1/research/datasets",
+              "/api/v1/research/columns", "/api/v1/research/table"}
 TICKER_PATTERN = re.compile(r"^[A-Za-z0-9.=_-]{1,25}$")
 FACTOR_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,100}$")
 def utc_now():
@@ -236,6 +243,11 @@ def _one(q,key,maximum=100):
 def research(route,q):
     # Only fixed SELECT and parameterized WHEREs; no arbitrary SQL, no bulk extraction.
     if route not in ALLOW_ROUTES: raise ValueError("UNSUPPORTED_RESOURCE")
+    if route in ADMIN_ROUTES:
+        operation=route.rsplit("/",1)[1]
+        return warehouse.explore(_db_query,operation,q,
+            source_approved=bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
+            derived_approved=bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"))
     if route=="/api/v1/research/coverage":
         rows=_db_query("""SELECT 'graph_question_nodes' metric,count(DISTINCT node_id) value FROM main.graph_nodes WHERE node_type='question'
  UNION ALL SELECT 'graph_security_nodes',count(DISTINCT node_id) FROM main.graph_nodes WHERE node_type='security'
@@ -387,7 +399,10 @@ def research(route,q):
     raise ValueError("UNKNOWN_RESOURCE")
 
 def runtime_status():
-    return {"product":"Preview MVP","mode":SCHEMA,
+    return {"product":"EventRisk Research","mode":SCHEMA,
+            "research_access":"AUTHENTICATED_READ_ONLY",
+            "full_database_explorer":"ADMIN_ONLY_WITH_ENTITLEMENTS",
+            "admin_key_configured":bool(os.getenv("EVENTRISK_DATA_ADMIN_KEY")),
             "generated_at_utc":utc_now(),
             "public_catalog_available":True,
             "database_credentials_present":bool(os.getenv("MOTHERDUCK_TOKEN")),
@@ -405,7 +420,7 @@ def runtime_status():
             "note":"A configured token is not a tested connection. Authenticated /research/coverage verifies live SELECT."}
 
 class Server(BaseHTTPRequestHandler):
-    server_version="EventRiskPreviewMVP/1.0"
+    server_version="EventRiskResearch/1.0"
     def log_message(self,fmt,*args):
         # Do not print query strings, passwords, bearer keys, or requested row contents.
         print("%s %s" % (self.address_string(),fmt.split("%")[0]),flush=True)
@@ -467,6 +482,11 @@ class Server(BaseHTTPRequestHandler):
             provided=self.headers.get("X-Analyst-Key","")
             if not provided or not hmac.compare_digest(provided,key):
                 return self.send(401,{"error":"ANALYST_AUTHENTICATION_REQUIRED"},method=method)
+            if route in ADMIN_ROUTES:
+                admin=os.getenv("EVENTRISK_DATA_ADMIN_KEY","")
+                supplied=self.headers.get("X-Data-Admin-Key","")
+                if not admin or not supplied or not hmac.compare_digest(supplied,admin):
+                    return self.send(403,{"error":"DATABASE_ADMIN_AUTHORIZATION_REQUIRED"},method=method)
             # Rate limit the expensive MotherDuck SELECT endpoints. This is
             # intentionally conservative while no per-user SSO exists.
             if not within_analyst_budget(key):
@@ -479,7 +499,7 @@ class Server(BaseHTTPRequestHandler):
                 return self.send(400,{"error":str(e)},method=method)
             except Exception as e:
                 # No SQL, source content, tokens or connection strings in public errors.
-                print("Preview MVP read-only query failed:",type(e).__name__,flush=True)
+                print("EventRisk Research read-only query failed:",type(e).__name__,flush=True)
                 return self.send(503,{"error":"LIVE_RESEARCH_SOURCE_UNAVAILABLE"},method=method)
         return self.send(404,{"error":"NOT_FOUND"},method=method)
 
@@ -488,5 +508,5 @@ if __name__=="__main__":
     # Public static catalog remains useful, while restricted queries return 503.
     host=os.getenv("HOST","0.0.0.0")
     port=int(os.getenv("PORT","8080"))
-    print("Preview MVP server starting. Dynamic DB configured =",bool(os.getenv("MOTHERDUCK_TOKEN")),flush=True)
+    print("EventRisk Research server starting. Dynamic DB configured =",bool(os.getenv("MOTHERDUCK_TOKEN")),flush=True)
     ThreadingHTTPServer((host,port),Server).serve_forever()
