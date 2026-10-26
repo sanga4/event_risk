@@ -59,6 +59,7 @@ async function assertBrowser(width,height,dir){
     assert.ok(expandedCount>initialCount,
       "Original Marco graph must offer real company/factor two-hop exploration");
     await page.screenshot({path:path.join(dir,"marco-expanded-"+width+".png")});
+    await page.locator(".graph-options summary").click();
     await page.locator("#depth").selectOption("1");
   }
   if(width<=650){
