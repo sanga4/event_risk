@@ -103,7 +103,7 @@ class SourceVariationInstitutionalGateTests(unittest.TestCase):
     def test_executable_release_script_records_four_new_gates_only_on_rebuild(self):
         source=(LAB/"phase1_release_gates.py").read_text()
         self.assertIn("*prospective_empirical_support_gate_specs(P),",source)
-        self.assertIn('VERSION="phase1-gates-v2.3.0"',source)
+        self.assertIn('VERSION="phase1-gates-v2.4.0"',source)
         self.assertIn("institutional",source.lower())
         self.assertIn("source_script_sha256",source)
         # This code cannot retroactively change existing stored 22/47 gates:
