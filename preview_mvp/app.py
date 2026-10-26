@@ -424,9 +424,13 @@ class Server(BaseHTTPRequestHandler):
                         else "'self' https://unpkg.com" if urlsplit(self.path).path=="/"
                         else "'self'")
         frame_sources="'self' https://*.office.com https://*.office365.com https://*.officeapps.live.com" if office_frame else "'none'"
+        # Marco's pinned vis-network library positions a canvas using dynamic
+        # inline style attributes; allow them ONLY on the original-style root,
+        # never on research API responses, add-in assets, or other pages.
+        style_sources="'self' 'unsafe-inline'" if urlsplit(self.path).path=="/" else "'self'"
         self.send_header("Content-Security-Policy",
             "default-src 'self'; script-src "+script_sources+
-            "; style-src 'self'; img-src 'self' data:; connect-src 'self'; "+
+            "; style-src "+style_sources+"; img-src 'self' data:; connect-src 'self'; "+
             "object-src 'none'; frame-ancestors "+frame_sources+"; base-uri 'none'")
         self.end_headers()
         if method!="HEAD":self.wfile.write(payload)
