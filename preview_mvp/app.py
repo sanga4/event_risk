@@ -34,9 +34,10 @@ JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
                  ".js": "text/javascript; charset=utf-8", ".png": "image/png",
                  ".xml":"application/xml; charset=utf-8"}
-FILES = {"/": "index.html", "/lab": "lab.html",
+FILES = {"/": "marco.html", "/previous-explorer": "index.html", "/lab": "lab.html",
          "/assets/styles.css": "assets/styles.css", "/assets/app.js": "assets/app.js",
-         "/assets/mvp.css": "assets/mvp.css", "/assets/lab.css": "assets/lab.css",
+         "/assets/mvp.css": "assets/mvp.css", "/assets/marco.css": "assets/marco.css",
+         "/assets/marco.js": "assets/marco.js", "/assets/lab.css": "assets/lab.css",
          "/assets/lab.js": "assets/lab.js",
          "/excel/taskpane.html":"excel/taskpane.html",
          "/excel/taskpane.js":"excel/taskpane.js",
@@ -417,7 +418,9 @@ class Server(BaseHTTPRequestHandler):
             if office_frame and k=="X-Frame-Options":
                 continue
             self.send_header(k,v)
-        script_sources="'self' https://appsforoffice.microsoft.com" if office_frame else "'self'"
+        script_sources=("'self' https://appsforoffice.microsoft.com" if office_frame
+                        else "'self' https://unpkg.com" if urlsplit(self.path).path=="/"
+                        else "'self'")
         frame_sources="'self' https://*.office.com https://*.office365.com https://*.officeapps.live.com" if office_frame else "'none'"
         self.send_header("Content-Security-Policy",
             "default-src 'self'; script-src "+script_sources+
