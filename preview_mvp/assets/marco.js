@@ -118,7 +118,7 @@
   function renderNetwork(id){
     const network=state.network;
     if(!network)return;
-    const depth=Number($("#depth").value)||1;
+    const depth=Number($("#depth").value)||2;
     const distances=graphNeighborhood(id,depth);
     const showFactors=$("#show-factors").checked;
     for(const key of distances.keys()){
@@ -469,6 +469,12 @@
         wire.sourceDelay=setTimeout(()=>searchSourceQuestions(true),350);
       }else filterList();
     });
+    $("#graph-toggle").addEventListener("click",()=>{
+      state.expanded=!state.expanded;
+      $("#graph-toggle").textContent=state.expanded?"Focus graph":"More connections";
+      $("#graph-toggle").setAttribute("aria-pressed",String(state.expanded));
+      if(state.selected)renderNetwork(state.selected);
+    });
     $("#depth").addEventListener("change",()=>{if(state.selected)renderNetwork(state.selected);});
     $("#show-factors").addEventListener("change",()=>{if(state.selected)renderNetwork(state.selected);});
     $("#browse-mobile").addEventListener("click",()=>{
@@ -549,9 +555,8 @@
         setMessage("#empty","Graph library blocked by the browser. Original Marco graph requires pinned vis-network from unpkg.com.");
       }else{
         state.network=new vis.Network($("#graph"),{nodes:[],edges:[]},{
-          physics:{solver:"forceAtlas2Based",forceAtlas2Based:{
-            gravitationalConstant:-80,springLength:150,avoidOverlap:.6},
-            stabilization:{iterations:125}},interaction:{hover:true,tooltipDelay:120},
+          physics:false,layout:{hierarchical:{enabled:true,direction:"LR",sortMethod:"directed"}},
+          interaction:{hover:true,tooltipDelay:120},
           nodes:{font:{size:13,face:"system-ui"},borderWidth:2},
           edges:{smooth:{type:"continuous"},selectionWidth:1}
         });
