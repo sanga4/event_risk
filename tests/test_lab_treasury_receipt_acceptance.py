@@ -83,6 +83,22 @@ class OriginalReceiptAcceptanceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"SHA/URL"):
                 qa.inspect(con,COMMIT,SOURCE_SHA,prefix="main.")
 
+    def test_warehouse_availability_cannot_precede_original_source_receipt(self):
+        with fixture() as con:
+            con.execute("""UPDATE main.lab_factor_observations
+                 SET ingested_at=ingested_at-INTERVAL '12 hours',
+                     availability_at=availability_at-INTERVAL '12 hours'
+                 WHERE factor_id='DGS2'""")
+            # Twelve hours before warehouse append can still happen AFTER
+            # 2026-10-25 17:23 UTC in some environments. Force indisputable
+            # pre-receipt timing instead of depending on wall-clock time.
+            con.execute("""UPDATE main.lab_factor_observations
+                 SET ingested_at='2026-10-25 12:00:00+00',
+                     availability_at='2026-10-25 12:00:00+00'
+                 WHERE factor_id='DGS2'""")
+            with self.assertRaisesRegex(ValueError,"availability drift"):
+                qa.inspect(con,COMMIT,SOURCE_SHA,prefix="main.")
+
     def test_shifted_source_warehouse_availability_and_original_value_rejected(self):
         with fixture() as con:
             con.execute("""UPDATE main.lab_factor_observations
@@ -149,6 +165,12 @@ class OriginalReceiptAcceptanceTests(unittest.TestCase):
             source.P="main."
             try:
                 src=packets([RECEIPT.date()-timedelta(days=2)])
+                # A second real HTTP receipt must happen AFTER the first
+                # original XML warehouse load; replaying the old collector
+                # receipt time is not a legitimate repeat acquisition.
+                refetched_at=datetime.now(timezone.utc)
+                for packet in src:
+                    packet["received"]=refetched_at
                 source.append(con,[],src,"noop-unit-test",COMMIT,
                               SOURCE_SHA,1)
             finally:

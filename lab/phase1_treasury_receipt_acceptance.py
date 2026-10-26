@@ -105,7 +105,10 @@ def audit(manifest, packets, values,expected_git,expected_code_sha,
             not math.isclose(float(val),sample["value"],rel_tol=0,
                              abs_tol=1e-9) or
             unit!="percent" or
-            ingest!=sample["received"] or available!=sample["received"] or
+            not isinstance(ingest,datetime) or ingest.tzinfo is None or
+            not isinstance(available,datetime) or available.tzinfo is None or
+            ingest<sample["received"] or ingest>finished or
+            available!=ingest or
             basis!=sample["availability_basis"] or
             provider!=sample["provider"] or
             url!=sample["source_url"] or
@@ -157,8 +160,9 @@ def inspect(con,expected_git,producer_code_sha,prefix=P):
         raise ValueError("No original Treasury source packets")
     cutoff=(received_max-source.timedelta(
         days=source.MAX_RECENT_SOURCE_DAYS)).date()
-    # Reconstruct the exact historical warehouse inventory seen *before*
-    # this append, not source values that the new run itself inserted.
+    # Reconstruct only previously ORIGINAL-PACKET-backed warehouse vintages
+    # known by source receipt time. Legacy retrospective CSV values are not
+    # independent captured XML evidence and must not suppress first intake.
     factor_sql=",".join("'"+x+"'" for x in sorted(source.ALL_FACTORS))
     inventory=con.execute(f"""
        SELECT factor_id,observed_date,value FROM (
@@ -169,6 +173,10 @@ def inspect(con,expected_git,producer_code_sha,prefix=P):
          FROM {prefix}lab_factor_observations
          WHERE run_id != ? AND ingested_at <= ?
            AND observed_date >= ?
+           AND provider IN ('US_TREASURY_CURRENT_XML',
+                            'US_TREASURY_DERIVED_CURRENT_XML')
+           AND availability_basis =
+                 'official_xml_http_receipt_not_original_publication'
            AND factor_id IN ({factor_sql})
        ) q WHERE n=1
     """,[manifest[0],received_max,cutoff]).fetchall()
