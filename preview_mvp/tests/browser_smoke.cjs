@@ -51,6 +51,7 @@ async function viewer(width,height,dir){
  assert.ok((await page.locator("#list li[data-id]").count())>0);
  await page.locator('.tabs [data-tab="questions"]').click();
  assert.ok((await page.locator("#list-info").innerText()).includes("require MotherDuck"));
+ await page.locator("aside details summary").click();
  await page.locator("#analyst-key").fill("not-a-real-analyst-key");
  await page.locator("#connect").click();
  await page.getByText("Live MotherDuck unavailable",{exact:false}).waitFor({timeout:9000});
@@ -64,7 +65,7 @@ async function documents(dir){
  const response=await page.goto(URL+"/lab",{waitUntil:"domcontentloaded"});
  assert.equal(response.status(),200);
  assert.ok((await page.locator("h2").innerText()).includes("EventRisk API"));
- assert.ok((await page.locator("body").innerText()).includes("historical"));
+ assert.ok((await page.locator("body").innerText()).includes("regression"));
  assert.equal(await page.locator("#factor-chart").count(),0,"No fake nonworking regression lab");
  assert.ok((await page.locator('a[href="/excel/manifest.xml"]').count())>0);
  await page.goto(URL+"/data",{waitUntil:"domcontentloaded"});
