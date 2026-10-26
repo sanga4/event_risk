@@ -123,6 +123,30 @@ async function assertBrowser(width,height,dir){
   await page.close();
   console.log("MARCO_REAL_BROWSER_ATTRIBUTION=PASS",width+"x"+height);
 }
+async function assertWarehouseBrowser(dir){
+  const page=await browser.newPage({viewport:{width:1360,height:860}});
+  const errors=[],leaks=[];
+  page.on("pageerror",e=>errors.push(e.message));
+  page.on("request",r=>{
+    if(r.method()!=="GET"&&r.url().includes("/api/"))leaks.push(r.url());
+  });
+  const response=await page.goto(URL+"/data",{waitUntil:"domcontentloaded"});
+  assert.equal(response.status(),200);
+  await page.locator("#dataset-title").waitFor();
+  assert.ok((await page.locator("#live-state").innerText()).includes("setup required"));
+  assert.equal(await page.locator("#table-search").isEnabled(),false);
+  await page.locator("#analyst-key").fill("invalid-research-test");
+  await page.locator("#admin-key").fill("invalid-admin-test");
+  await page.locator("#connect").click();
+  await page.getByText("Connection not established",{exact:false}).waitFor({timeout:10000});
+  assert.equal(await page.locator("#dataset-list button").count(),0);
+  assert.equal(await page.locator("#table-search").isEnabled(),false);
+  await page.screenshot({path:path.join(dir,"research-database-access.png")});
+  assert.deepEqual(errors,[]);
+  assert.deepEqual(leaks,[]);
+  await page.close();
+  console.log("EVENTRISK_WAREHOUSE_BROWSER_FAIL_CLOSED=PASS");
+}
 async function main(){
   const out=path.join(root,"artifacts");
   fs.mkdirSync(out,{recursive:true});
@@ -134,6 +158,7 @@ async function main(){
     browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
     await assertBrowser(1440,900,out);
     await assertBrowser(390,844,out);
+    await assertWarehouseBrowser(out);
     console.log("PREVIEW_MVP_CHROMIUM_E2E=PASS",
       "Original Marco graph / desktop/mobile / 8 scenarios / manual user holdings / qualitative screening / CSV");
   }finally{
