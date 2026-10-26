@@ -7,6 +7,7 @@ are loaded at runtime. Internet-facing demo is NOT the protected research API.
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from datetime import datetime, timezone
 import csv
 from io import StringIO
 import json
@@ -29,11 +30,13 @@ STATIC = {
     "/excel/taskpane.js": ("excel/taskpane.js", "text/javascript; charset=utf-8"),
     "/excel/taskpane.css": ("excel/taskpane.css", "text/css; charset=utf-8"),
     "/excel/manifest.xml": ("excel/manifest.xml", "application/xml; charset=utf-8"),
+    "/report": ("report.html", "text/html; charset=utf-8"),
+    "/assets/report.js": ("assets/report.js", "text/javascript; charset=utf-8"),
 }
 PUBLIC_ROUTES = frozenset({
     "/health/live", "/api/v1/meta", "/api/v1/overview", "/api/v1/release-gates",
     "/api/v1/factors", "/api/v1/evidence", "/api/v1/blockers",
-    "/api/v1/metrics.csv", "/api/v1/graph",
+    "/api/v1/metrics.csv", "/api/v1/graph", "/api/v1/capabilities",
 })
 
 
@@ -93,6 +96,64 @@ def read_graph(path: Path = GRAPH) -> dict:
     return doc
 
 
+def capabilities_report(data: dict) -> dict:
+    """Request-time report from current admitted public snapshots, not live market data."""
+    graph = read_graph()
+    node_counts = {t: sum(n["type"] == t for n in graph["nodes"])
+                   for t in ("event", "entity", "security", "channel", "factor")}
+    edge_counts = {t: sum(e["type"] == t for e in graph["edges"])
+                   for t in ("research_exposure_prior", "hypothetical_involves",
+                             "hypothetical_transmission", "hypothetical_factor_channel")}
+    if not all(e["review_status"] == "RESEARCH_ONLY_NOT_APPROVED" for e in graph["edges"]):
+        raise ValueError("Unapproved graph edge presented as certified evidence")
+    return {
+        "report_type": "ENGINEERING_CAPABILITY_REPORT",
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "source_mode": "REQUEST_TIME_READ_OF_FROZEN_AUDITED_SNAPSHOTS",
+        "continuous_market_refresh_enabled": False,
+        "snapshot_id": data["snapshot_id"],
+        "snapshot_as_of_utc": data["as_of_utc"],
+        "graph_as_of_utc": graph["as_of_utc"],
+        "institutional_release_approved": False,
+        "graph": {"nodes": len(graph["nodes"]), "edges": len(graph["edges"]),
+                  "node_types": node_counts, "edge_types": edge_counts},
+        "capabilities": [
+            {"name": "Explore events, entities, and securities",
+             "earlier": "Existing qualitative graph in the original MVP",
+             "now": "Preserved interaction design with source-segregated research graph",
+             "status": "AVAILABLE"},
+            {"name": "Connect economic transmission channels",
+             "earlier": "Not present in the original event-security graph explorer",
+             "now": "Event -> economic channel -> factor hypotheses with explicit nonapproval",
+             "status": "NEW_PREVIEW"},
+            {"name": "Trace original public exposure weights",
+             "earlier": "The analyst-prior paths were not separately replayed in this preview",
+             "now": "Entity-security weights and rationales independently rechecked against repository seed CSV",
+             "status": "NEW_PREVIEW"},
+            {"name": "Inspect official BEA reported economic values",
+             "earlier": "No independently accepted original BEA actual-value packets in the earlier MVP",
+             "now": "Two actual published values plus October retrieval provenance; no surprise or first-publication claim",
+             "status": "NEW_RESEARCH_EVIDENCE"},
+            {"name": "See institutional readiness and failed tests",
+             "earlier": "Original graph did not foreground the institutional release-gate / beta evidence ledger",
+             "now": "Explicit 54-gate status, 135 missing mandatory fields, 96 beta fit negative result",
+             "status": "NEW_PREVIEW"},
+            {"name": "Use Excel and API research outputs",
+             "earlier": "Earlier graph already provided API and Office add-in foundations",
+             "now": "Separate graph JSON endpoint, capability report and formulas-ready Excel research workbook",
+             "status": "EXPANDED"},
+        ],
+        "release": data["release"],
+        "metrics": data["metrics"],
+        "limitations": [
+            "Request-time generation does not mean real-time warehouse or venue data.",
+            "Event scenarios and channel mappings are illustrative, not certified event innovations.",
+            "Entity-security seed weights are priors, not original-source PIT betas or price forecasts.",
+            "Original corporate actions, source redistribution rights and independent model review remain blocked."
+        ]
+    }
+
+
 def csv_export(data: dict) -> bytes:
     out = StringIO(newline="")
     w = csv.writer(out)
@@ -130,6 +191,8 @@ def response_for(path: str, data: dict):
         obj = {"snapshot_id": data["snapshot_id"], "evidence": data["evidence"]}
     elif path == "/api/v1/blockers":
         obj = {"snapshot_id": data["snapshot_id"], "blockers": data["blockers"]}
+    elif path == "/api/v1/capabilities":
+        obj = capabilities_report(data)
     elif path == "/api/v1/graph":
         return (200, "application/json; charset=utf-8",
                 json.dumps(read_graph(), ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
