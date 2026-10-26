@@ -198,3 +198,37 @@ body.view-explore main{display:grid}
 @media(max-width:950px){.attribution-grid{grid-template-columns:1fr}.attribution-doc{padding:18px 14px}.right-note{display:none}header{padding:8px}header h1{font-size:13px}header nav button{padding:5px;font-size:12px}}
 @media(max-width:650px){main{grid-template-columns:210px 5px minmax(0,1fr) 0 0}main .split[data-side="right"]{display:none}#detail{display:none}header .explore-only{display:none}header nav{flex-wrap:wrap}header nav button,header nav a{font-size:11px;padding:4px}.legend{flex-wrap:wrap;max-width:95%;gap:7px}#list li{padding:8px 6px}.info-grid{grid-template-columns:1fr 1fr}.attribution-doc{padding:14px 8px}.attribution-panel{padding:12px}}
 @media print{header,.toolbar button,.holdings-table .del,.list-footnote,.mini-btn{display:none!important}body{display:block;height:auto}body.view-attribution #attribution{display:block!important;overflow:visible}.attribution-grid{grid-template-columns:1fr 1fr}.attribution-doc{max-width:none}}
+
+/* True narrow-screen navigation: retain Marco's desktop three-pane graph.
+   Under 650 px, turn the original sidebar and detail pane into overlays so the
+   network itself always has the FULL screen width. */
+.mobile-only,.mobile-detail-dismiss{display:none}
+@media (max-width:650px){
+  body.view-explore main{display:grid!important;grid-template-columns:minmax(0,1fr)!important;position:relative;min-height:0}
+  body.view-explore main #canvas-wrap{grid-column:1;min-width:0;min-height:0;width:100%;height:100%;overflow:hidden}
+  body.view-explore main .split{display:none!important}
+  body.view-explore main aside{display:none;position:fixed;z-index:31;left:0;top:85px;bottom:0;
+    width:min(86vw,320px);height:auto;max-height:calc(100dvh - 85px);background:var(--page);
+    border-right:1px solid var(--hairline);box-shadow:5px 0 20px rgba(0,0,0,.13);overflow:hidden}
+  body.view-explore.mobile-list-open main aside{display:flex}
+  body.view-explore main #detail{display:block;position:fixed;z-index:34;left:0;right:0;bottom:0;
+    top:auto;width:100%;height:min(57dvh,520px);min-height:235px;overflow:auto;
+    background:var(--page);border-top:1px solid var(--hairline);
+    box-shadow:0 -10px 30px rgba(0,0,0,.14);border-radius:12px 12px 0 0;
+    transform:translateY(110%);transition:transform .19s ease}
+  body.view-explore.mobile-detail-open main #detail{transform:translateY(0)}
+  body.view-explore main #detail .mobile-detail-dismiss{display:block;width:100%;text-align:center;
+    position:sticky;top:-16px;z-index:1;background:var(--surface);
+    border:0;border-bottom:1px solid var(--hairline);padding:9px 7px;margin:0 0 12px;
+    font-weight:600;cursor:pointer}
+  body.view-explore #canvas-wrap .legend{left:7px;right:7px;bottom:7px;
+    width:auto;max-width:calc(100% - 14px);padding:6px 7px;justify-content:center;
+    flex-wrap:wrap;gap:5px 10px;font-size:10px}
+  body.view-explore #canvas-wrap .caption{left:7px;top:7px;font-size:10px;
+    max-width:calc(100% - 14px)}
+  body.view-explore #graph{width:100%;height:100%}
+  #browse-mobile{display:inline-flex;border:1px solid var(--axis);border-radius:5px;
+    font-size:11px;padding:4px 7px}
+  header nav{flex-wrap:wrap}
+  header nav a,header nav button{font-size:11px}
+}
