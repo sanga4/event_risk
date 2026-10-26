@@ -38,7 +38,8 @@ CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset
                  ".js": "text/javascript; charset=utf-8", ".png": "image/png",
                  ".xml":"application/xml; charset=utf-8"}
 FILES = {"/": "viewer.html", "/previous-explorer": "marco.html",
-         "/lab": "lab.html", "/data": "data.html",
+         "/lab": "api.html", "/api": "api.html",
+         "/legacy-lab": "lab.html", "/data": "data.html",
          "/assets/styles.css": "assets/styles.css", "/assets/app.js": "assets/app.js",
          "/assets/mvp.css": "assets/mvp.css", "/assets/marco.css": "assets/marco.css",
          "/assets/marco.js": "assets/marco.js",
