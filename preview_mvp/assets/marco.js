@@ -192,6 +192,45 @@
       b.append(m);b.addEventListener("click",()=>select(other));host.append(b);
     }
     if(ns.length>35)host.append(el("p","+"+(ns.length-35)+" other links; use graph API for research topology.","note"));
+    if(n.type==="event"){
+      const entityIds=new Set(scenarioEntities(id));
+      const candidates=state.graph.edges.filter(e=>
+        e.type==="research_exposure_prior"&&entityIds.has(e.src)&&
+        e.review_status==="RESEARCH_ONLY_NOT_APPROVED"
+      ).sort((a,b)=>(b.weight||0)-(a.weight||0));
+      const seen=new Set(),companies=[];
+      for(const edge of candidates){
+        if(seen.has(edge.dst))continue;
+        seen.add(edge.dst);
+        const sec=state.byId.get(edge.dst);
+        if(sec?.type==="security")companies.push({edge,sec});
+      }
+      host.append(el("h3","Related securities · source priors ("+companies.length+")"));
+      if(!companies.length)host.append(el("p",
+        "No direct source-entity prior for this scenario. Open Event Attribution for unweighted sector/country watchlist screening.","note"));
+      for(const {edge,sec} of companies.slice(0,12)){
+        const b=el("button",(sec.ticker||"")+" · "+sec.name,"detail-link");
+        b.type="button";
+        b.append(el("div",fmt.format(edge.weight)+" qualitative analyst prior; NOT a return beta","meta"));
+        b.addEventListener("click",()=>select(sec.id));
+        host.append(b);
+      }
+      if(companies.length>12)host.append(el("p","+"+(companies.length-12)+" more source-linked securities. Filter by company or open Event Attribution.","note"));
+      const relatedFactors=scenarioPaths(id).factors.map(fid=>state.byId.get(fid)).filter(Boolean);
+      host.append(el("h3","Related financial factor definitions ("+relatedFactors.length+")"));
+      for(const factor of relatedFactors.slice(0,8)){
+        const b=el("button",factor.name,"detail-link");b.type="button";
+        b.append(el("div",factor.subtitle||"Catalog definition; historical coverage varies","meta"));
+        b.addEventListener("click",()=>select(factor.id));host.append(b);
+      }
+      if(relatedFactors.length>8)host.append(el("p","+"+(relatedFactors.length-8)+" additional factors in the research catalog.","note"));
+      const expand=el("button","Show securities & factors in graph (depth 2)","mini-btn");expand.type="button";
+      expand.addEventListener("click",()=>{
+        $("#depth").value="2";renderNetwork(id);
+        if(window.innerWidth<=650)document.body.classList.remove("mobile-detail-open");
+      });
+      host.append(expand);
+    }
     host.append(el("h3","Provenance"));
     host.append(el("p",n.source||"Public source repository catalog / research hypothesis","note"));
     const warn=el("p","Graph edge direction is not price direction. A seed prior is not a return beta, estimated event P&L, probability, or institutional approval.","note");
