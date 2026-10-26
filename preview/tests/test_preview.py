@@ -61,12 +61,19 @@ class PreviewTests(unittest.TestCase):
         for path in ("/","/assets/app.js","/assets/styles.css",
           "/api/v1/overview","/api/v1/release-gates","/api/v1/factors",
           "/api/v1/evidence","/api/v1/blockers","/api/v1/meta",
-          "/api/v1/metrics.csv","/excel/taskpane.html","/excel/taskpane.js",
+          "/api/v1/metrics.csv","/excel/taskpane.html","/excel/taskpane.js","/excel/taskpane.css",
           "/excel/manifest.xml","/assets/icon-80.png","/health/live"):
             with self.subTest(path=path):
                 status,_,body=self.request(path)
                 self.assertEqual(status,200)
                 self.assertGreater(len(body),0)
+
+    def test_office_taskpane_allows_intended_embedding(self):
+        _,headers,_=self.request("/excel/taskpane.html")
+        self.assertNotIn("X-Frame-Options",headers)
+        self.assertIn("officeapps.live.com",headers["Content-Security-Policy"])
+        _,api_headers,_=self.request("/api/v1/overview")
+        self.assertEqual(api_headers["X-Frame-Options"],"SAMEORIGIN")
 
     def test_private_paths_fail_closed(self):
         for path in ("/api/v1/raw-prices","/api/v1/security-positions",
