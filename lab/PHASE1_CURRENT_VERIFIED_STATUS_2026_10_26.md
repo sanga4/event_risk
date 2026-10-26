@@ -2,6 +2,10 @@
 
 **Verified UTC:** 2026-10-26, after completed MotherDuck runs and merged GitHub PRs #65–#67. **Scope:** `sanga4/event_risk` main, `eventrisk_factor_lab.main`, independent retrospective/prospective source research. This file supersedes older as-of numerical claims in `PROJECT_STATUS.md` or the October 24 closeout roadmap. For exact source/Git/Flight metadata see the MotherDuck Phase I factor warehouse vintages and prospective as-of research grid Guide, version 12.
 
+## New completed official BEA economic source evidence — October 26, 2026 UTC
+
+Two original first-party BEA historical economic-release HTML packets and **ten actual published native-unit values** have now been stored in MotherDuck, in addition to the separately accepted 13-item BEA future-announcement schedule. See [official economic release value source acceptance](PHASE1_BEA_ACTUAL_RELEASE_REPORTED_VALUES_RUNBOOK.md) and [PR #70](https://github.com/sanga4/event_risk/pull/70). Both publisher source packets were actually received **2026-10-26 03:23:52 UTC**, saved with exact BLOB/SHA256, and their seven personal-income/PCE and three international-trade values independently replayed in a separate SELECT-only Flight with `INDEPENDENT_BEA_10_ACTUAL_REPORTED_VALUES_SOURCE_QA=PASS`. Native figures include August headline PCE price monthly +0.3%, core +0.2%, real PCE +0.6%, and reported goods/services trade deficit **magnitude** $105.6 billion. **No original first-release-as-known/PIT, pre-announcement consensus, signed surprise, contractual downstream license or event beta has been verified.** These historical September/October releases were captured LATER in October 26; no backdating. Mandatory institutional source-release calendar and causal event innovation datasets remain blocked. The previously executed release-gate snapshot remains **25 PASS / 29 BLOCK of 54 automatic + four manual**, institutional production FALSE.
+
 ## Verified real materializations — not code plans
 
 | Warehouse / governance workstream | Actual verified state | Important boundary |
