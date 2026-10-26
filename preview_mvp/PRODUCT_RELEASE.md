@@ -56,3 +56,21 @@ A complete read-only database connection does not make every observation a verif
 - `INSTITUTIONAL_MODEL_APPROVED`: separate methodology/validation/governance release, **not inferred** from any above.
 
 Only mark a gate passed after it has actually been verified.
+
+## Product vs. website: corrected scope (October 26)
+
+**The EventRisk product is the API and Excel add-in.** The website is only a minimal, read-only knowledge graph visualization—based directly on the original `web/index.html` from Marco's graph viewer, reusing its first 9,626 bytes of CSS and original list/canvas/details split-pane layout. It is intentionally plain, not a financial dashboard, marketing landing page or separate analyst platform.
+
+- Raw graph: `/`. Search repository entities (source-backed seed CSV), 543 security references and 108 factor definitions. The original fixed research links are displayed with their type and provenance. Questions tab loads actual versioned MotherDuck graph questions only when an authorized backend SELECT succeeds and source redisplay rights permit it.
+- Plain API index: `/api`. The previous nonworking `/lab` UI is retired; `/lab` serves the same plain API/Excel documentation. No unavailable regression/model panel is presented as working. The underlying protected quantitative endpoints remain API-only and explicitly fail closed when source privileges are absent.
+- Excel manifest: `/excel/manifest.xml`; workbook taskpane: `/excel/taskpane.html`. Actual Excel-client sideload acceptance remains outstanding.
+
+The warehouse database and protected `/data` administrative explorer are **backend research infrastructure**, not the main website product or a license to display provider-controlled content publicly.
+
+### What the owner must configure (privately)
+
+In MotherDuck, **create a dedicated service account and issue a Read Scaling Token**, granting it access only to the approved EventRisk research data/approved share. The connected MotherDuck research plugin can query the account but does not offer durable token creation. In Railway's **eventrisk-research → eventrisk-research-web → Variables**, set `MOTHERDUCK_TOKEN` (the database token, private), `EVENTRISK_ANALYST_KEY` (a new strong password for the closed API audience), and only if admin table inspection is needed `EVENTRISK_DATA_ADMIN_KEY` (different and restricted). Do not put MotherDuck tokens or admin keys into GitHub, browser scripts or this chat.
+
+Data-owner approvals are **separate from database connectivity**. Enable `EVENTRISK_SOURCE_REDISPLAY_APPROVED` only after documenting legal rights to display source question names and records. Enable `EVENTRISK_DERIVED_RESEARCH_APPROVED` only after documenting rights to distribute derived financial model/factor records. Without these approvals, the website may show its public repo seed graph, but protected records stay unavailable.
+
+Once Railway variables are set, perform a real authenticated `GET /api/v1/research/coverage` and verify `connection_tested:true` at `/api/v1/runtime`. No credentials are automatically generated or copied from institutional Phase I.
