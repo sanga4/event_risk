@@ -65,7 +65,7 @@ class SourceVariationInstitutionalGateTests(unittest.TestCase):
             "prospective_nonconstant_rate_factor_support"])
         self.assertEqual([x[2] for x in specs],[60,60,30,18])
         self.assertTrue(all(x[3]=="MIN_COUNT" for x in specs))
-        self.assertIn("phase1-gates-v2.3.0",gates.VERSION)
+        self.assertIn("phase1-gates-v2.4.0",gates.VERSION)
         self.assertTrue(all("lab_prospective_event_factor_grid_v1" in x[1]
                             for x in specs))
 
@@ -103,7 +103,7 @@ class SourceVariationInstitutionalGateTests(unittest.TestCase):
     def test_executable_release_script_records_four_new_gates_only_on_rebuild(self):
         source=(LAB/"phase1_release_gates.py").read_text()
         self.assertIn("*prospective_empirical_support_gate_specs(P),",source)
-        self.assertIn('VERSION="phase1-gates-v2.3.0"',source)
+        self.assertIn('VERSION="phase1-gates-v2.4.0"',source)
         self.assertIn("institutional",source.lower())
         self.assertIn("source_script_sha256",source)
         # This code cannot retroactively change existing stored 22/47 gates:
