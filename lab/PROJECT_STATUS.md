@@ -1,5 +1,9 @@
 # EventRisk Factor — Institutional Phase I Status
 
+## Current verified status — October 26, 2026 UTC
+
+**Latest authoritative status:** [PHASE1_CURRENT_VERIFIED_STATUS_2026_10_26.md](PHASE1_CURRENT_VERIFIED_STATUS_2026_10_26.md). Older snapshots retained below are historical, not the current warehouse execution state. Current accepted actuals: **12,764** Treasury-containing factor archive records, **893,988** prospective event-factor co-observations (12 capture runs, four calendar dates, only two independently received factor observed dates), **20,064** independently accepted paired security forecast-loss rows, and **96** independently replayed global Holm audit model cells with **zero** Holm-adjusted and cross-training funding-beta survivors. Latest **executed** institutional release gates: **25 PASS / 29 BLOCK of 54 automatic**, plus **four manual blockers**; institutional release FALSE. Railway API last independently verified deployed PR #44. 25/54=46.3% of automatic checks is **not** overall project completion. No original issuer action PIT, Treasury/NY Fed/venue first-publication clocks, market data redistribution rights, or causal event-factor beta were certified by these executions.
+
 **As-of:** October 25, 2026 UTC (October 24, Los Angeles; checked against MotherDuck and GitHub). This is an **as-of snapshot**, not a live telemetry dashboard. The authoritative current metrics are MotherDuck tables described below; rerun the release-gates Flight before using the numbers as a fresh assessment.
 
 ## Funding beta 96-hypothesis correction and source sensitivity — October 25, 2026

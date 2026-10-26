@@ -32,7 +32,7 @@ python lab/phase1_joint_funding_familywise_acceptance.py \
 
 The auditor computes the SHA of the adjacent exact original `lab/phase1_joint_funding_familywise_audit.py`. If independently replaying the original executed build from a **later repository revision**, the supplied `--source-commit` **must still refer to the writer's original SHA**, and that exact original producer source byte file must accompany the auditor. Do not substitute future estimator source bytes.
 
-**Operational state:** PR #67 introduces this independent verifier; do not label the 96-cell materialization as independently accepted by this new script until a completed live read-only execution returns `INDEPENDENT_HOLM_96_SOURCE_REPLAY_ACCEPTED_RESEARCH_ONLY`.
+**Operational state — independently ACCEPTED:** [PR #67](https://github.com/sanga4/event_risk/pull/67) merged at `0747c1e2c01739a920cb38e90094e644e3213817`, five CI checks passed. Actual SELECT-only MotherDuck Flight `99a7ce0a-40af-412a-b419-d2ce8fa026cc` version 1 run #1 **SUCCEEDED** at 2026-10-26 02:19 UTC, exit 0, reporting `INDEPENDENT_ORIGINAL_SOURCE_96_HOLM_QA=PASS`. It independently recalculated all 96 original model nominal p, ranks, Holm adjusted p, cross-variant rejections and manifest counters, verifying 22 nominal, ZERO adjusted/crossvariant robust, min adjusted p 0.1353732063 and approval flags FALSE. This is retrospective source and statistical calculation integrity only; no first-published PIT, approved issuer-action vintages, distribution rights or institutional beta.
 
 ## Interpretation
 

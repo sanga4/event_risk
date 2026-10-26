@@ -1,5 +1,9 @@
 # EventRisk Factor — Institutional Phase I Closeout Roadmap and Work-Packages
 
+## Latest verified execution — October 26, 2026 UTC
+
+The October 24 numerical as-of material below remains historic. The **current** source-pinned status and institutional blockers are [PHASE1_CURRENT_VERIFIED_STATUS_2026_10_26.md](PHASE1_CURRENT_VERIFIED_STATUS_2026_10_26.md), including the accepted original Treasury XML source records and 893,988 event-factor co-observations, source-locked **20,064 paired security daily losses**, an independently replayed **96-model Holm audit with zero robust candidate survivors**, and a genuinely executed 54-gate release snapshot **25 PASS / 29 BLOCK + four manual**. Source first-published histories, legal data rights, corporate-action-vintage evidence, prospective sampling duration and original economic surprise timing—not merely additional code rounds—remain the critical path. Forecasting a fixed number of user turns or assigning an overall completion percentage from gate count would overstate the evidence.
+
 **As-of:** 2026-10-24 Los Angeles. **Authoritative**: `sanga4/event_risk/main`; MotherDuck `eventrisk_factor_lab`. The separate huimarco/EventRisk MVP is not a deployment target.
 
 ## What was genuinely executed this milestone
