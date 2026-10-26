@@ -216,22 +216,22 @@
       host.append(el("h3","Related securities · source priors ("+companies.length+")"));
       if(!companies.length)host.append(el("p",
         "No direct source-entity prior for this scenario. Open Event Attribution for unweighted sector/country watchlist screening.","note"));
-      for(const {edge,sec} of companies.slice(0,12)){
+      for(const {edge,sec} of companies.slice(0,6)){
         const b=el("button",(sec.ticker||"")+" · "+sec.name,"detail-link");
         b.type="button";
         b.append(el("div",fmt.format(edge.weight)+" qualitative analyst prior; NOT a return beta","meta"));
         b.addEventListener("click",()=>select(sec.id));
         host.append(b);
       }
-      if(companies.length>12)host.append(el("p","+"+(companies.length-12)+" more source-linked securities. Filter by company or open Event Attribution.","note"));
+      if(companies.length>6)host.append(el("p","+"+(companies.length-6)+" more source-linked securities. Filter by company or open Event Attribution.","note"));
       const relatedFactors=scenarioPaths(id).factors.map(fid=>state.byId.get(fid)).filter(Boolean);
       host.append(el("h3","Related financial factor definitions ("+relatedFactors.length+")"));
-      for(const factor of relatedFactors.slice(0,8)){
+      for(const factor of relatedFactors.slice(0,4)){
         const b=el("button",factor.name,"detail-link");b.type="button";
         b.append(el("div",factor.subtitle||"Catalog definition; historical coverage varies","meta"));
         b.addEventListener("click",()=>select(factor.id));host.append(b);
       }
-      if(relatedFactors.length>8)host.append(el("p","+"+(relatedFactors.length-8)+" additional factors in the research catalog.","note"));
+      if(relatedFactors.length>4)host.append(el("p","+"+(relatedFactors.length-4)+" additional factors in the research catalog.","note"));
       const expand=el("button","Show securities & factors in graph (depth 2)","mini-btn");expand.type="button";
       expand.addEventListener("click",()=>{
         state.expanded=true;$("#graph-toggle").textContent="Focus graph";$("#graph-toggle").setAttribute("aria-pressed","true");
