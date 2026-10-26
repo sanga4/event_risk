@@ -153,6 +153,12 @@
   }
   function detail(id){
     const n=state.byId.get(id),host=$("#detail");host.replaceChildren();
+    if(window.innerWidth<=650){
+      const close=el("button","Close details ↓","mobile-detail-dismiss");
+      close.type="button";
+      close.addEventListener("click",()=>document.body.classList.remove("mobile-detail-open"));
+      host.append(close);
+    }
     if(!n)return;
     host.append(el("div",viewNodeType(n),"kind"),el("h2",n.name));
     if(n.subtitle)host.append(el("p",n.subtitle,"note"));
@@ -191,10 +197,15 @@
     const warn=el("p","Graph edge direction is not price direction. A seed prior is not a return beta, estimated event P&L, probability, or institutional approval.","note");
     host.append(warn);
   }
-  async function select(id){
+  async function select(id,openMobile=true){
     if(!state.byId.has(id))return;
     state.selected=id;
     filterList();renderNetwork(id);detail(id);
+    if(openMobile&&window.innerWidth<=650){
+      document.body.classList.remove("mobile-list-open");
+      document.body.classList.add("mobile-detail-open");
+      $("#browse-mobile").setAttribute("aria-expanded","false");
+    }
     const n=state.byId.get(id);
     if(n.liveWarehouse&&n.type==="question")await fetchNeighbors(id);
   }
@@ -415,6 +426,13 @@
     });
     $("#depth").addEventListener("change",()=>{if(state.selected)renderNetwork(state.selected);});
     $("#show-factors").addEventListener("change",()=>{if(state.selected)renderNetwork(state.selected);});
+    $("#browse-mobile").addEventListener("click",()=>{
+      const open=!document.body.classList.contains("mobile-list-open");
+      document.body.classList.toggle("mobile-list-open",open);
+      document.body.classList.remove("mobile-detail-open");
+      $("#browse-mobile").setAttribute("aria-expanded",String(open));
+      if(state.network)requestAnimationFrame(()=>state.network.redraw());
+    });
     $("#open-attribution").addEventListener("click",()=>changeView("attribution"));
     $("#add-holding").addEventListener("click",()=>addHolding());
     $("#calculate").addEventListener("click",calculate);
@@ -498,7 +516,7 @@
       const viewParam=new URLSearchParams(location.search).get("view");
       const eventParam=new URLSearchParams(location.search).get("event");
       if(eventParam&&state.byId.get(eventParam)?.type==="event")$("#event-choice").value=eventParam;
-      await select(eventParam&&state.byId.has(eventParam)?eventParam:"event:taiwan");
+      await select(eventParam&&state.byId.has(eventParam)?eventParam:"event:taiwan",false);
       if(viewParam==="attribution")changeView("attribution");
     }catch(e){
       setMessage("#empty","Public source graph unavailable: "+e.message);
