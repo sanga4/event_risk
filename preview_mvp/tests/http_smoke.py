@@ -20,7 +20,7 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/previous-explorer","/lab","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
+    for route in ("/","/previous-explorer","/lab","/data","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
@@ -31,6 +31,11 @@ try:
     csp=response.headers.get("Content-Security-Policy","")
     assert "https://unpkg.com" in csp
     assert "frame-ancestors 'none'" in csp
+    response,admin=call("/data")
+    assert b"id=\"analyst-key\"" in admin
+    assert b"id=\"admin-key\"" in admin
+    assert b"id=\"dataset-list\"" in admin
+    assert b"MotherDuck" in admin
     _,raw=call("/api/v1/catalog")
     c=json.loads(raw)
     assert c["securities_count"]>=500 and c["factors_count"]==108
@@ -53,6 +58,11 @@ try:
     status=json.loads(raw)
     assert status["direct_database_queries_enabled"] is False
     assert status["institutional_model_approved"] is False
+    try:
+        call("/api/v1/research/datasets")
+        raise AssertionError("Admin database schema should require configured credentials")
+    except urllib.error.HTTPError as e:
+        assert e.code==503,e.code
     try:
         call("/api/v1/research/coverage")
         raise AssertionError("Live DB query illegally succeeded with no credential")
