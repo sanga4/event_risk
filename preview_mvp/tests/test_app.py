@@ -130,25 +130,37 @@ class PreviewMVPAcceptance(TestCase):
         self.assertIn("/assets/lab.js",app.FILES)
         self.assertIn("/assets/lab.css",app.FILES)
 
-    def test_marco_ui_is_now_homepage_with_only_manual_holdings(self):
-        html=(ROOT/"marco.html").read_text()
-        original_css=(ROOT/"assets"/"marco.css").read_text()
-        script=(ROOT/"assets"/"marco.js").read_text()
-        self.assertEqual(app.FILES["/"],"marco.html")
-        self.assertEqual(app.FILES["/previous-explorer"],"index.html")
-        for phrase in ('<main>','class="tabs"','id="graph"','id="detail"',
+    def test_raw_marco_site_is_just_a_graph_viewer(self):
+        html=(ROOT/"viewer.html").read_text()
+        css=(ROOT/"assets"/"viewer.css").read_text()
+        script=(ROOT/"assets"/"viewer.js").read_text()
+        self.assertEqual(app.FILES["/"],"viewer.html")
+        self.assertEqual(app.FILES["/lab"],"api.html")
+        self.assertEqual(app.FILES["/api"],"api.html")
+        self.assertEqual(app.FILES["/previous-explorer"],"marco.html")
+        self.assertIn("Event Risk Graph",html)
+        self.assertNotIn("Event Attribution",html)
+        self.assertNotIn("Regression Lab",html)
+        for phrase in ('<main>','id="graph"','id="detail"',
                        'data-side="left"','data-side="right"',
-                       'id="holdings-body"','id="event-choice"',
-                       'id="attribution-plot"','id="load-demo"'):
+                       'data-tab="entities"','data-tab="securities"',
+                       'data-tab="factors"','data-tab="questions"'):
             self.assertIn(phrase,html)
-        for source_token in ("--page: #f9f9f7","--question: #2a78d6",
-                             "--entity: #eb6834","--security: #1baf7a"):
-            self.assertIn(source_token,original_css)
-        self.assertIn("window.EventRiskAttribution.calculate",script)
+        for token in ("--page: #f9f9f7","--question: #2a78d6",
+                      "--entity: #eb6834","--security: #1baf7a"):
+            self.assertIn(token,css)
+        self.assertIn("/api/v1/research/events",script)
+        self.assertIn("/api/v1/research/coverage",script)
+        self.assertIn("LIVE_RESEARCH_GRAPH_NEIGHBORHOOD",script)
         self.assertNotIn("navigator.sendBeacon",script)
         self.assertNotIn("fetch('/api/v1/holdings",script)
-        self.assertIn("/assets/marco.css",app.FILES)
-        self.assertIn("/assets/attribution-core.js",app.FILES)
+
+    def test_production_analyst_key_sets_runtime_readiness_correctly(self):
+        with mock.patch.dict(os.environ,{"EVENTRISK_ANALYST_KEY":"new-test-key",
+               "MOTHERDUCK_TOKEN":"fake-reader-token"},clear=True):
+            self.assertTrue(app.runtime_status()["direct_database_queries_enabled"])
+            self.assertTrue(app.runtime_status()["analyst_key_configured"])
+            self.assertFalse(app.runtime_status()["connection_tested"])
 
     def test_admin_warehouse_route_requires_separate_authorization(self):
         self.assertIn("/api/v1/research/datasets",app.ALLOW_ROUTES)
