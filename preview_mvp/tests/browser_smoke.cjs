@@ -78,6 +78,12 @@ async function assertBrowser(width,height,dir){
     await page.waitForTimeout(280);
   }
   await page.screenshot({path:path.join(dir,"marco-"+width+".png")});
+  if(width>=1000){
+    await page.locator(".connection-settings summary").click();
+    await page.locator("#analyst-key").fill("invalid-test-only");
+    await page.locator("#connect-research").click();
+    await page.getByText("Live connection not established",{exact:false}).first().waitFor({timeout:9000});
+  }
   await page.locator('nav [data-view="attribution"]').click();
   await page.locator("#load-demo").click();
   assert.equal(await page.locator("#holdings-body tr").count(),4);
