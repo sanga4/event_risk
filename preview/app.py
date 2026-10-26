@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 SNAPSHOT = ROOT / "data" / "snapshot.json"
+GRAPH = ROOT / "data" / "graph.json"
 MAX_BYTES = 1_000_000
 STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
@@ -32,7 +33,7 @@ STATIC = {
 PUBLIC_ROUTES = frozenset({
     "/health/live", "/api/v1/meta", "/api/v1/overview", "/api/v1/release-gates",
     "/api/v1/factors", "/api/v1/evidence", "/api/v1/blockers",
-    "/api/v1/metrics.csv",
+    "/api/v1/metrics.csv", "/api/v1/graph",
 })
 
 
@@ -49,6 +50,47 @@ def read_snapshot(path: Path = SNAPSHOT) -> dict:
     if any(x.get("source_kind") != "audited_aggregate" for x in data["metrics"]):
         raise ValueError("Preview metrics must be reviewed aggregate-only evidence")
     return data
+
+
+def read_graph(path: Path = GRAPH) -> dict:
+    """Only public repository priors and illustrative hypotheses; never vendor quotes."""
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    if (doc.get("mode") != "FROZEN_PUBLIC_SEED_PRIORS_AND_ILLUSTRATIVE_EVENT_SCENARIOS"
+        or doc.get("version") != "1.0"
+        or len(doc.get("nodes", ())) > 250 or len(doc.get("edges", ())) > 600):
+        raise ValueError("Unapproved graph snapshot or overlarge graph")
+    allowed_types = {"event", "entity", "security", "channel", "factor"}
+    expected_status = {
+        "event": {"ILLUSTRATIVE_SCENARIO_NOT_AN_EVENT_OBSERVATION",
+                  "ORIGINAL_OFFICIAL_VALUE_RECEIPT_RESEARCH_ONLY"},
+        "entity": {"UNREVIEWED_RESEARCH"},
+        "security": {"ANALYST_PRIOR_UNVERIFIED"},
+        "channel": {"UNREVIEWED_HYPOTHESIS"},
+        "factor": {"CATALOG_DEFINITION_NOT_MODEL_APPROVAL"},
+    }
+    allowed_edges = {"research_exposure_prior", "hypothetical_involves",
+                     "hypothetical_transmission", "hypothetical_factor_channel"}
+    ids = set()
+    for n in doc["nodes"]:
+        if (not isinstance(n.get("id"), str) or n.get("type") not in allowed_types
+            or not n.get("name") or n["id"] in ids
+            or n.get("review_status") not in expected_status[n["type"]]):
+            raise ValueError("Unknown or promoted graph node")
+        ids.add(n["id"])
+    seen_edges = set()
+    for e in doc["edges"]:
+        edge_key = (e.get("src"), e.get("dst"), e.get("type"))
+        if (e.get("type") not in allowed_edges or e.get("src") not in ids
+            or e.get("dst") not in ids or edge_key in seen_edges
+            or e.get("review_status") != "RESEARCH_ONLY_NOT_APPROVED"):
+            raise ValueError("Invalid or promoted research edge")
+        if e["type"] == "research_exposure_prior":
+            if (not e["src"].startswith("entity:") or not e["dst"].startswith("security:")
+                or type(e.get("weight")) not in (float, int)
+                or not 0 < e["weight"] <= 1):
+                raise ValueError("Invalid source analyst prior")
+        seen_edges.add(edge_key)
+    return doc
 
 
 def csv_export(data: dict) -> bytes:
@@ -88,6 +130,9 @@ def response_for(path: str, data: dict):
         obj = {"snapshot_id": data["snapshot_id"], "evidence": data["evidence"]}
     elif path == "/api/v1/blockers":
         obj = {"snapshot_id": data["snapshot_id"], "blockers": data["blockers"]}
+    elif path == "/api/v1/graph":
+        return (200, "application/json; charset=utf-8",
+                json.dumps(read_graph(), ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     elif path == "/api/v1/metrics.csv":
         return (200, "text/csv; charset=utf-8", csv_export(data))
     else:
@@ -117,7 +162,12 @@ class Handler(BaseHTTPRequestHandler):
             self._write(503, "application/json", b'{"error":"unavailable_snapshot"}', send_body)
             return
         if path in PUBLIC_ROUTES:
-            status, content_type, body = response_for(path, data)
+            try:
+                status, content_type, body = response_for(path, data)
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                self._write(503, "application/json",
+                            b'{"error":"unavailable_graph_snapshot"}', send_body)
+                return
             self._write(status, content_type, body, send_body)
             return
         if path not in STATIC:
@@ -161,6 +211,7 @@ def main():
     if not 1 <= port <= 65535:
         raise ValueError("Invalid port")
     read_snapshot()
+    read_graph()
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"EventRisk frozen-aggregate preview listening on {port}", flush=True)
     server.serve_forever()
