@@ -22,6 +22,10 @@ jobs:
           node --check preview_mvp/assets/app.js
           node --check preview_mvp/assets/lab.js
           node --check preview_mvp/excel/taskpane.js
+          node --check preview_mvp/assets/marco.js
+          node --check preview_mvp/assets/attribution-core.js
+      - name: Browser-only manual attribution engine tests
+        run: node preview_mvp/tests/attribution.test.js
       - name: Python syntax validation
         run: python -m py_compile preview_mvp/app.py
       - name: Static source security and provenance boundaries
