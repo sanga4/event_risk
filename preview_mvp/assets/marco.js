@@ -347,34 +347,12 @@
   function calculate(){
     if(!state.graph)return;
     updateContext();
-    const entities=new Set(scenarioEntities($("#event-choice").value));
-    const priors=new Map();
-    for(const e of state.graph.edges){
-      if(e.type!=="research_exposure_prior"||!entities.has(e.src))continue;
-      const old=priors.get(e.dst);
-      if(!old || Number(e.weight)>old.weight)
-        priors.set(e.dst,{weight:Number(e.weight),reason:e.summary||"Original public seed relevance"});
-    }
-    const errors=[],rows=[];
-    for(const h of state.holdings){
-      const ticker=cleanTicker(h.ticker),position=numeric(h.value);
-      if(!ticker&&!h.value.trim()&&!h.shock.trim())continue;
-      if(!/^[A-Z0-9.=_-]{1,25}$/.test(ticker)||!state.byId.has("security:"+ticker)){
-        errors.push("Unknown/unlisted ticker "+(ticker||"(blank)")+".");continue;
-      }
-      if(!Number.isFinite(position)||position===0){
-        errors.push(ticker+": enter a finite nonzero signed position value.");continue;
-      }
-      const shock=numeric(h.shock,true);
-      if(shock!==null&&(!Number.isFinite(shock)||Math.abs(shock)>1000)){
-        errors.push(ticker+": your assumed return must be between −1000% and +1000%.");continue;
-      }
-      const prior=priors.get("security:"+ticker);
-      rows.push({ticker,value:position,absValue:Math.abs(position),
-        relevance:prior?prior.weight:null,reason:prior?.reason||"",
-        shock,pnl:shock===null?null:position*shock/100,
-        status:prior?"Source prior mapped":"No source-prior mapping"});
-    }
+    const result=window.EventRiskAttribution.calculate({
+      holdings:state.holdings,
+      scenarioId:$("#event-choice").value,
+      graph:state.graph
+    });
+    const {errors,rows,gross,score,coveredFraction,mapped,pnl,provided}=result;
     const root=$("#attribution-results");root.replaceChildren();
     if(errors.length){
       root.append(el("p",errors.slice(0,8).join(" "),"warning-note"));
@@ -388,19 +366,11 @@
       $("#relevance-score").textContent="—";$("#coverage-score").textContent="—";$("#pnl-score").textContent="—";
       drawBars([]);return;
     }
-    const gross=rows.reduce((a,p)=>a+p.absValue,0),mapped=rows.filter(r=>r.relevance!==null);
-    let score=0,covered=0,pnl=0,provided=0;
-    for(const p of rows){
-      p.grossShare=p.absValue/gross;
-      p.contribution=p.relevance===null?null:p.grossShare*p.relevance;
-      if(p.contribution!==null){covered+=p.absValue;score+=p.contribution;}
-      if(p.pnl!==null){provided++;pnl+=p.pnl;}
-    }
     $("#relevance-score").textContent=fmt.format(score*100)+" / 100";
-    $("#coverage-score").textContent=fmt.format(covered/gross*100)+"%";
+    $("#coverage-score").textContent=fmt.format(coveredFraction*100)+"%";
     $("#pnl-score").textContent=provided?(usd.format(pnl)+(provided<rows.length?"*":"")):"Not entered";
     const caption=el("p","Gross positions: "+usd.format(gross)+
-      " · "+mapped.length+"/"+rows.length+" holding lines have a source-prior relationship. "+
+      " · "+mapped+"/"+rows.length+" holding lines have a source-prior relationship. "+
       (provided===rows.length?"Scenario P&L: all rows use YOUR return assumptions.":
         provided? " * P&L is PARTIAL: "+provided+" of "+rows.length+" lines have YOUR return assumptions.":
         "What-if P&L requires manually entered per-security assumed return percentages."),"note");
