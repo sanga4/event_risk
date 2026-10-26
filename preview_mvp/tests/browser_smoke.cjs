@@ -49,6 +49,16 @@ async function assertBrowser(width,height,dir){
     await page.waitForFunction(()=>document.querySelector("#graph canvas")!==null,
       {timeout:20000});
     assert.equal(await page.locator("#empty").isVisible(),false);
+    assert.ok((await page.locator("#detail").innerText()).includes("Related securities"));
+    assert.ok((await page.locator("#detail").innerText()).includes("Related financial factor definitions"));
+    const initialCount=Number((await page.locator("#caption").innerText()).match(/^\\d+/)[0]);
+    await page.getByRole("button",{name:"Show securities & factors in graph (depth 2)"}).click();
+    await page.waitForTimeout(250);
+    const expandedCount=Number((await page.locator("#caption").innerText()).match(/^\\d+/)[0]);
+    assert.ok(expandedCount>initialCount,
+      "Original Marco graph must offer real company/factor two-hop exploration");
+    await page.screenshot({path:path.join(dir,"marco-expanded-"+width+".png")});
+    await page.locator("#depth").selectOption("1");
   }
   if(width<=650){
     const graphRect=await page.locator("#graph").boundingBox();
@@ -64,6 +74,7 @@ async function assertBrowser(width,height,dir){
     assert.ok((await page.locator("#detail").innerText()).includes("Trade restrictions"));
     await page.locator(".mobile-detail-dismiss").click();
     assert.ok(!(await page.locator("body").getAttribute("class")).includes("mobile-detail-open"));
+    await page.waitForTimeout(280);
   }
   await page.screenshot({path:path.join(dir,"marco-"+width+".png")});
   await page.locator('nav [data-view="attribution"]').click();
