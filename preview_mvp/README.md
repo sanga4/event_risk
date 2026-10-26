@@ -70,3 +70,59 @@ In **only** the new Railway project `eventrisk-preview-mvp` → service `preview
 Source-controlled GitHub Actions: `.github/workflows/verify-preview-mvp.yml` executes source-catalog parity, 543/108 definitions, exact example Taiwan→TSM 0.9 prior, node/edge referential integrity, denied unconfigured DB queries and denied source/derived routes; checks Python and JavaScript syntax.
 
 Runtime deploy success and `/health/live` are **not** equivalent to a live database acceptance test or a fully licensed beta launch. Keep separate release-status labels for `DEPLOYED_PUBLIC_CATALOG`, `LIVE_DB_CONNECTED`, `ENTITLED_ANALYST_DATA`, and `INSTITUTIONAL_APPROVED`.
+
+
+## Analyst Beta v1 next workbench milestone — October 26 2026
+
+**Graph:** https://preview-mvp-analyst-production.up.railway.app/
+
+**Analyst use-case desk:** https://preview-mvp-analyst-production.up.railway.app/lab
+
+**Dated verified coverage:** https://preview-mvp-analyst-production.up.railway.app/api/v1/inventory
+
+**Excel add-in manifest:** https://preview-mvp-analyst-production.up.railway.app/excel/manifest.xml
+
+The separately deployed research desk offers eight clearly hypothetical economic
+event scenarios. Each displays an illustrative economic-transmission chain, related
+factor definitions and published seed entity/security relationships. The public
+case-study dashboard never fabricates event effects, probabilities, regression
+coefficients, significance or fitted performance.
+
+Rights-gated research desk functions load the original SPY/2Y/10Y/funding
+security-model variants, Newey-West HAC standard errors, confidence intervals,
+heldout metrics and global Holm familywise audit for any fitted ticker.
+Source-observed Treasury factor time-series charts are also rights-gated.
+Analysts can print the workbench or export ONLY truly retrieved entitled results
+to CSV. Empty or unentitled sources appear as unavailable, not synthetic data.
+
+Read-only aggregate inventory shows 4,907 distinct graph question IDs, 169,996
+versioned graph-edge records, 18 independently source-observed factor series,
+12,764 factor observations on 703 observed dates, 48 funded-regression tickers,
+96 original 48x2 family fits, and ZERO adjusted-Holm surviving funding candidates.
+The inventory is dated as 2026-10-26: not a continuously live provider feed.
+
+The distinct Office.js sideload add-in imports all 543 securities, 108 published
+qualitative factor definitions, 22 hypothesis-only economic channels, graph
+analyst-prior links, actual audited source inventory and formula-driven graph
+connectivity worksheets. Source regressions and factor observations require
+independently approved data-use permissions and actual live warehouse auth.
+The Excel add-in has code/HTTP/syntax acceptance but must still be installed
+in real Excel to verify the Office-host worksheet import end to end.
+
+Source graph SEARCH and neighbor endpoints now enforce latest asserted-only
+temporal record semantics and exclude the withdrawn 'retract' operations.
+Original warehouse versions are never silently treated as simultaneous active links.
+
+Not yet unlocked: new least-privilege server-only MOTHERDUCK_TOKEN, an analyst
+access key, independent authorization for source market-question redisplay and
+derived research coefficient/series distribution, actual successful dynamic
+query acceptance from the Railway service, per-analyst SSO and operations hardening.
+Do not copy the Phase I writer token, flip rights flags without permission, or
+represent a successful static deployment as connected investment-data readiness.
+
+Manual source QA: verify preview_mvp/tests/test_app.py and
+preview_mvp/tests/http_smoke.py under the dedicated Preview MVP workflow;
+add actual browser and Office client testing prior to a broader analyst release.
+
+Both the institutional main branch and the older engineering-preview service
+remain separate and unchanged by this Preview MVP feature branch.
