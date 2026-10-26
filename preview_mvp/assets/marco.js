@@ -187,6 +187,7 @@
       const a=el("a","Explore source-observed factor history →");a.href="/lab";a.className="detail-link";host.append(a);
     }
     const ns=neighbors(id).slice().sort((a,b)=>(b.edge.weight||0)-(a.edge.weight||0));
+    if(n.type!=="event"){
     host.append(el("h3","Related nodes ("+ns.length+")"));
     if(!ns.length)host.append(el("p","No directly linked source references. This does not prove zero actual financial exposure.","note"));
     for(const {edge,other} of ns.slice(0,35)){
@@ -198,6 +199,7 @@
       b.append(m);b.addEventListener("click",()=>select(other));host.append(b);
     }
     if(ns.length>35)host.append(el("p","+"+(ns.length-35)+" other links; use graph API for research topology.","note"));
+    }
     if(n.type==="event"){
       const entityIds=new Set(scenarioEntities(id));
       const candidates=state.graph.edges.filter(e=>
@@ -237,10 +239,10 @@
       });
       host.append(expand);
     }
-    host.append(el("h3","Provenance"));
-    host.append(el("p",n.source||"Public source repository catalog / research hypothesis","note"));
-    const warn=el("p","Graph edge direction is not price direction. A seed prior is not a return beta, estimated event P&L, probability, or institutional approval.","note");
-    host.append(warn);
+    const meta=el("details");meta.append(el("summary","Evidence & methodology"));
+    meta.append(el("p",n.source||"Published reference catalog · unreviewed research hypothesis","detail-source"));
+    meta.append(el("p","Connections are hypotheses or analyst priors, never causal event impact, return direction or approved security beta.","note"));
+    host.append(meta);
   }
   async function select(id,openMobile=true){
     if(!state.byId.has(id))return;
