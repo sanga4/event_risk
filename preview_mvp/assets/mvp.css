@@ -14,3 +14,5 @@
 #warehouse-cards b{font-size:20px;color:var(--security)}
 #runtime-indicator{max-width:290px;white-space:normal;text-align:center}
 @media(max-width:580px){#runtime-indicator{display:none}}
+
+.warehouse-query-actions{display:flex;align-items:center;gap:5px;padding:0 12px 11px}.warehouse-query-actions button{font:inherit;font-size:11px;border:1px solid var(--axis);background:var(--surface);color:var(--ink-2);padding:4px 7px;border-radius:5px;cursor:pointer}.warehouse-query-actions button:hover{background:var(--hover)}.warehouse-query-actions button[hidden]{display:none}
