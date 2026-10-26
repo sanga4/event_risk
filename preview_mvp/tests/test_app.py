@@ -150,6 +150,30 @@ class PreviewMVPAcceptance(TestCase):
         self.assertIn("/assets/marco.css",app.FILES)
         self.assertIn("/assets/attribution-core.js",app.FILES)
 
+    def test_admin_warehouse_route_requires_separate_authorization(self):
+        self.assertIn("/api/v1/research/datasets",app.ALLOW_ROUTES)
+        self.assertIn("/api/v1/research/table",app.ADMIN_ROUTES)
+        self.assertIn("/api/v1/research/columns",app.ADMIN_ROUTES)
+        self.assertEqual(app.FILES["/data"],"data.html")
+        html=(ROOT/"data.html").read_text()
+        js=(ROOT/"assets"/"data.js").read_text()
+        for term in ("id=\"admin-key\"","id=\"analyst-key\"","id=\"dataset-list\"",
+                     "id=\"result\"","/assets/data.css"):
+            self.assertIn(term,html)
+        self.assertIn("X-Data-Admin-Key",js)
+        self.assertIn("LIVE_MOTHERDUCK_ADMIN_READ_ONLY_PAGE",js)
+        self.assertNotIn("localStorage",js)
+
+    def test_warehouse_dataset_request_preserves_source_rights(self):
+        rows=[{"name":"lab_factor_catalog","columns":[{"name":"factor_id","type":"VARCHAR"}],
+               "kind":"FACTOR_METADATA"}]
+        with mock.patch.object(app.warehouse,"explore",return_value={"mode":"LIVE_MOTHERDUCK_CATALOG","tables":rows}) as explorer:
+            d=app.research("/api/v1/research/datasets",{})
+        self.assertEqual(d["mode"],"LIVE_MOTHERDUCK_CATALOG")
+        explorer.assert_called_once()
+        self.assertFalse(explorer.call_args.kwargs["source_approved"])
+        self.assertFalse(explorer.call_args.kwargs["derived_approved"])
+
     def test_excel_addin_sideload_source_contract(self):
         import xml.etree.ElementTree as ET
         manifest=(ROOT/"excel"/"manifest.xml").read_text()
