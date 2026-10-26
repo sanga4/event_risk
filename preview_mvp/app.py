@@ -30,7 +30,7 @@ JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
                  ".js": "text/javascript; charset=utf-8", ".png": "image/png"}
 FILES = {"/": "index.html", "/assets/styles.css": "assets/styles.css",
-         "/assets/app.js": "assets/app.js"}
+         "/assets/app.js": "assets/app.js", "/assets/mvp.css": "assets/mvp.css"}
 FACTOR_CATALOG_VERSION = "2026-10-20.1"
 SCHEMA = "ANALYST_BETA_V1_RESEARCH_ONLY"
 CHANNELS = [
