@@ -67,4 +67,35 @@ for(const text of ["Event Risk Graph","data-side=\"left\"","data-side=\"right\""
   assert.ok(html.includes(text),text);
 assert.ok(frontend.includes("window.EventRiskAttribution.calculate"));
 assert.ok(!frontend.includes("fetch('/api/v1/attribution"),"holdings must stay inside browser");
+
+const fundingGraph={
+  nodes:[{id:"event:funding",type:"event",name:"Funding Stress"},
+    {id:"channel:funding",type:"channel",name:"Funding and money-market basis"},
+    {id:"security:JPM",type:"security",ticker:"JPM",name:"JPM",
+       subtitle:"US",description:"Financials"},
+    {id:"security:TSM",type:"security",ticker:"TSM",name:"TSM",
+       subtitle:"TW",description:"Information Technology"}],
+  edges:[{src:"event:funding",dst:"channel:funding",
+    type:"hypothetical_transmission",review_status:"RESEARCH_ONLY_NOT_APPROVED"}]
+};
+const funding=A.calculate({
+  holdings:[{ticker:"JPM",value:"10000",shock:""},{ticker:"TSM",value:"5000",shock:""}],
+  scenarioId:"event:funding",graph:fundingGraph
+});
+assert.equal(funding.errors.length,0);
+assert.equal(funding.watchlistCount,1);
+assert.deepEqual(funding.rows[0].watchlistChannels,["funding"]);
+assert.deepEqual(funding.rows[1].watchlistChannels,[]);
+assert.equal(funding.mapped,0);
+assert.equal(funding.score,0);
+assert.equal(funding.provided,0);
+assert.equal(funding.rows[0].relevance,null);
+assert.equal(funding.screenSource,"SECTOR_COUNTRY_MATCHED_UNVALIDATED_WATCHLIST_TAGS_ONLY");
+assert.equal(Object.keys(A.CHANNEL_WATCH_RULES).length,22);
+const inflationScreen=A.screenHolding({description:"Energy",subtitle:"US"},
+  ["channel:inflation","channel:treasury"]);
+assert.deepEqual(inflationScreen,["inflation"]);
+const tradeScreen=A.screenHolding({description:"",subtitle:"TW"},["channel:trade","channel:fx"]);
+assert.deepEqual(tradeScreen,["trade","fx"]);
+
 console.log("PREVIEW_MVP_MANUAL_HOLDINGS_ATTRIBUTION=PASS","portfolio_relevance",r.score,"what_if_pnl",r.pnl);
