@@ -1,5 +1,9 @@
 # EventRisk Factor Lab — Institutional production unblock playbook
 
+## Current actual institutional evidence — October 26, 2026 UTC
+
+[Latest source-verified Phase I status](PHASE1_CURRENT_VERIFIED_STATUS_2026_10_26.md) supersedes the October 24 source-count snapshots retained below. The 54 automatic release gates have **actually executed** with 25 PASS and 29 BLOCK plus four external manual blockers; production FALSE. Real Treasury XML source receipts are independently checked, the 48-security × two-variant × 209-date **20,064** daily loss matrix is persisted and independently accepted, and all 96 original model Holm p-values and paired-training reject states were **independently reproduced** (zero robust funding candidate). These technical milestones do not remove the original as-first-known market and Treasury/NY Fed clocks, 135 missing mandatory fields/255 uncertified fields, issuer adjusted-price rights/vintages, pre-event consensus, causal economic innovations, risk covariance source rights or required independent human approvals. Correcting a code or CI test alone is not an approved production release.
+
 As of October 24, 2026. Scope: sanga4/event_risk and eventrisk_factor_lab only. The separate huimarco/event_risk legacy MVP is not a deployment target.
 
 The source-controlled register phase1_release_unblock_register.py maps the latest release gates into measurable acceptance evidence, accountable roles and workstream gate-passing percentages. An operational green status is not independent research or data-rights approval. The latest database tables of record are lab_release_gate_history_v1, lab_release_gate_summary_v1, lab_release_unblock_register_v1, and lab_release_workstream_metrics_v1.
