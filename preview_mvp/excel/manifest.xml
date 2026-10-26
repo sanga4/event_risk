@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="TaskPaneApp">
+ <Id>2d866432-6883-4cab-b5a2-8e19670e89ae</Id>
+ <Version>1.0.0.0</Version>
+ <ProviderName>EventRisk Research</ProviderName>
+ <DefaultLocale>en-US</DefaultLocale>
+ <DisplayName DefaultValue="EventRisk Research Analyst"/>
+ <Description DefaultValue="Source-labeled securities and financial factors, unapproved qualitative event paths, and licensed research-only regression exports."/>
+ <IconUrl DefaultValue="https://eventrisk-preview-web-production.up.railway.app/assets/icon-80.png"/>
+ <HighResolutionIconUrl DefaultValue="https://eventrisk-preview-web-production.up.railway.app/assets/icon-80.png"/>
+ <SupportUrl DefaultValue="https://eventrisk-research-web-production.up.railway.app/"/>
+ <AppDomains><AppDomain>https://eventrisk-research-web-production.up.railway.app</AppDomain></AppDomains>
+ <Hosts><Host Name="Workbook"/></Hosts>
+ <DefaultSettings><SourceLocation DefaultValue="https://eventrisk-research-web-production.up.railway.app/excel/taskpane.html"/></DefaultSettings>
+ <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

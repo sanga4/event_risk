@@ -1,0 +1,979 @@
+{
+  "schema_version": 1,
+  "catalog_version": "2026-10-20.1",
+  "purpose": "Qualitative question/proposition relevance mapping only; never a coefficient, beta, return prediction or risk weight.",
+  "factors": [
+    {
+      "id": "FF5.US.MKT_RF",
+      "name": "U.S. Market excess return",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "U.S.",
+      "definition": "Broad equity market return in excess of the local risk-free rate; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.US.SMB",
+      "name": "U.S. Size",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "U.S.",
+      "definition": "Small-company minus large-company equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.US.HML",
+      "name": "U.S. Value",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "U.S.",
+      "definition": "High book-to-market minus low book-to-market equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.US.RMW",
+      "name": "U.S. Profitability",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "U.S.",
+      "definition": "Robust minus weak operating-profitability equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.US.CMA",
+      "name": "U.S. Investment",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "U.S.",
+      "definition": "Conservative minus aggressive investment equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.DEVXUS.MKT_RF",
+      "name": "Developed ex U.S. Market excess return",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Developed ex U.S.",
+      "definition": "Broad equity market return in excess of the local risk-free rate; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.DEVXUS.SMB",
+      "name": "Developed ex U.S. Size",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Developed ex U.S.",
+      "definition": "Small-company minus large-company equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.DEVXUS.HML",
+      "name": "Developed ex U.S. Value",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Developed ex U.S.",
+      "definition": "High book-to-market minus low book-to-market equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.DEVXUS.RMW",
+      "name": "Developed ex U.S. Profitability",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Developed ex U.S.",
+      "definition": "Robust minus weak operating-profitability equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.DEVXUS.CMA",
+      "name": "Developed ex U.S. Investment",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Developed ex U.S.",
+      "definition": "Conservative minus aggressive investment equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.EM.MKT_RF",
+      "name": "Emerging markets Market excess return",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Emerging markets",
+      "definition": "Broad equity market return in excess of the local risk-free rate; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.EM.SMB",
+      "name": "Emerging markets Size",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Emerging markets",
+      "definition": "Small-company minus large-company equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.EM.HML",
+      "name": "Emerging markets Value",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Emerging markets",
+      "definition": "High book-to-market minus low book-to-market equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.EM.RMW",
+      "name": "Emerging markets Profitability",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Emerging markets",
+      "definition": "Robust minus weak operating-profitability equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "FF5.EM.CMA",
+      "name": "Emerging markets Investment",
+      "family": "equity_style",
+      "model": "Fama–French research portfolios",
+      "universe": "Emerging markets",
+      "definition": "Conservative minus aggressive investment equity portfolio return; a research portfolio return spread, not a company characteristic",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "STYLE.US.UMD",
+      "name": "U.S. Momentum",
+      "family": "equity_style",
+      "model": "Equity style research",
+      "universe": "U.S.",
+      "definition": "Past equity winners minus past equity losers; methodology varies by construction",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "STYLE.US.ST_REVERSAL",
+      "name": "U.S. Short-term reversal",
+      "family": "equity_style",
+      "model": "Equity style research",
+      "universe": "U.S.",
+      "definition": "Recent equity losers minus recent winners over a short horizon; methodology varies by construction",
+      "reference": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+    },
+    {
+      "id": "STYLE.GLOBAL.BETA",
+      "name": "Global Market beta",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Cross-sectional equity sensitivity to the benchmark; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.RESID_VOL",
+      "name": "Global Residual volatility",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Residual volatility after controlling for market and style effects; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.LOW_VOL",
+      "name": "Global Low volatility",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Low-volatility versus high-volatility equity style; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.GROWTH",
+      "name": "Global Growth",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Firms ranked by expected or historical growth; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.EARNINGS_YIELD",
+      "name": "Global Earnings yield",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Earnings-relative-to-price equity style; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.DIVIDEND_YIELD",
+      "name": "Global Dividend yield",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Dividend yield equity style; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.LEVERAGE",
+      "name": "Global Leverage",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Financial leverage equity style; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.LIQUIDITY",
+      "name": "Global Equity liquidity",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Equity liquidity style based on turnover or trading activity; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.QUALITY",
+      "name": "Global Quality",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Balance-sheet and earnings-quality cross-sectional equity style; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "STYLE.GLOBAL.NONLINEAR_SIZE",
+      "name": "Global Nonlinear size",
+      "family": "equity_style",
+      "model": "Generic institutional equity style (not a licensed vendor replica)",
+      "universe": "Global",
+      "definition": "Nonlinear capitalization term used by some equity risk models; explicit definition must be chosen for quantitative replication",
+      "reference": "https://www.msci.com/indexes/factor-indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.US",
+      "name": "United States equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "United States",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.TW",
+      "name": "Taiwan equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Taiwan",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.CN",
+      "name": "China equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "China",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.JP",
+      "name": "Japan equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Japan",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.EU",
+      "name": "Europe equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Europe",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.EM",
+      "name": "Emerging markets equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Emerging markets",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.KR",
+      "name": "South Korea equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "South Korea",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.IN",
+      "name": "India equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "India",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.GB",
+      "name": "United Kingdom equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "United Kingdom",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.RU",
+      "name": "Russia equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Russia",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.COUNTRY.IR",
+      "name": "Iran equity country",
+      "family": "country",
+      "model": "Equity country taxonomy",
+      "universe": "Iran",
+      "definition": "Country-level equity return factor, definition requires specified investment universe and benchmark",
+      "reference": "https://www.msci.com/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.SEMICONDUCTORS",
+      "name": "Semiconductors equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Semiconductors sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.INFORMATION_TECHNOLOGY",
+      "name": "Information technology equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Information technology sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.ENERGY",
+      "name": "Energy equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Energy sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.DEFENSE",
+      "name": "Aerospace and defense equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Aerospace and defense sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.TRANSPORTATION",
+      "name": "Transportation equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Transportation sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.SHIPPING",
+      "name": "Marine transportation equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Marine transportation sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.BANKS",
+      "name": "Banks equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Banks sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.UTILITIES",
+      "name": "Utilities equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Utilities sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.HEALTHCARE",
+      "name": "Health care equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Health care sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.MATERIALS",
+      "name": "Materials equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Materials sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.CONSUMER",
+      "name": "Consumer products equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Consumer products sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.INDUSTRIALS",
+      "name": "Industrials equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Industrials sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.TELECOM",
+      "name": "Telecommunication services equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Telecommunication services sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "EQUITY.INDUSTRY.AGRICULTURE",
+      "name": "Agriculture and food equity industry",
+      "family": "industry",
+      "model": "Industry taxonomy (nonproprietary labels)",
+      "universe": "Global",
+      "definition": "Agriculture and food sector/industry equity factor; benchmark methodology and GICS license require separate review",
+      "reference": "https://www.msci.com/our-solutions/indexes"
+    },
+    {
+      "id": "FX.USD_TWD",
+      "name": "USD/TWD",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Taiwan",
+      "definition": "Exchange-rate or currency-style factor: USD/TWD; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.USD_CNH",
+      "name": "USD/CNH",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "China",
+      "definition": "Exchange-rate or currency-style factor: USD/CNH; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.USD_JPY",
+      "name": "USD/JPY",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Japan",
+      "definition": "Exchange-rate or currency-style factor: USD/JPY; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.EUR_USD",
+      "name": "EUR/USD",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Europe",
+      "definition": "Exchange-rate or currency-style factor: EUR/USD; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.USD_KRW",
+      "name": "USD/KRW",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "South Korea",
+      "definition": "Exchange-rate or currency-style factor: USD/KRW; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.USD_INR",
+      "name": "USD/INR",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "India",
+      "definition": "Exchange-rate or currency-style factor: USD/INR; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.USD_GBP",
+      "name": "GBP/USD",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "United Kingdom",
+      "definition": "Exchange-rate or currency-style factor: GBP/USD; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.BROAD_USD",
+      "name": "Broad U.S. dollar",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Global",
+      "definition": "Exchange-rate or currency-style factor: Broad U.S. dollar; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.EM_BASKET",
+      "name": "Emerging-market currency basket",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Emerging markets",
+      "definition": "Exchange-rate or currency-style factor: Emerging-market currency basket; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.FX_CARRY",
+      "name": "FX carry",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Global",
+      "definition": "Exchange-rate or currency-style factor: FX carry; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "FX.FX_VOL",
+      "name": "FX implied volatility",
+      "family": "fx",
+      "model": "FX risk factors",
+      "universe": "Global",
+      "definition": "Exchange-rate or currency-style factor: FX implied volatility; quotation and benchmark conventions must be defined",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "RATES.US_2Y",
+      "name": "U.S. 2-year government yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. 2-year government yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.US_10Y",
+      "name": "U.S. 10-year government yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. 10-year government yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.US_REAL_10Y",
+      "name": "U.S. 10-year real yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. 10-year real yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.US_CURVE_2S10S",
+      "name": "U.S. 2s10s curve slope",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. 2s10s curve slope; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.US_CURVATURE",
+      "name": "U.S. Treasury curve curvature",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. Treasury curve curvature; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.EU_10Y",
+      "name": "European 10-year government yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "Europe",
+      "definition": "Rates factor European 10-year government yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.JP_10Y",
+      "name": "Japan 10-year government yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "Japan",
+      "definition": "Rates factor Japan 10-year government yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.CN_10Y",
+      "name": "China 10-year sovereign yield",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "China",
+      "definition": "Rates factor China 10-year sovereign yield; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.US_POLICY",
+      "name": "U.S. policy rate",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "US",
+      "definition": "Rates factor U.S. policy rate; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.ECB_POLICY",
+      "name": "ECB policy rate",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "Europe",
+      "definition": "Rates factor ECB policy rate; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "RATES.BOJ_POLICY",
+      "name": "BOJ policy rate",
+      "family": "rates",
+      "model": "Rates key-rate and curve factors",
+      "universe": "Japan",
+      "definition": "Rates factor BOJ policy rate; not an estimated security duration or sensitivity",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.US_IG",
+      "name": "U.S. investment-grade spread",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "US",
+      "definition": "Credit spread or funding spread factor: U.S. investment-grade spread; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.US_HY",
+      "name": "U.S. high-yield spread",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "US",
+      "definition": "Credit spread or funding spread factor: U.S. high-yield spread; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.ASIA_IG",
+      "name": "Asian investment-grade spread",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "Asia",
+      "definition": "Credit spread or funding spread factor: Asian investment-grade spread; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.ASIA_HY",
+      "name": "Asian high-yield spread",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "Asia",
+      "definition": "Credit spread or funding spread factor: Asian high-yield spread; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.EM_SOVEREIGN",
+      "name": "Emerging-market sovereign spreads",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "EM",
+      "definition": "Credit spread or funding spread factor: Emerging-market sovereign spreads; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.TW_SOVEREIGN",
+      "name": "Taiwan sovereign spreads",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "Taiwan",
+      "definition": "Credit spread or funding spread factor: Taiwan sovereign spreads; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.CN_SOVEREIGN",
+      "name": "China sovereign spreads",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "China",
+      "definition": "Credit spread or funding spread factor: China sovereign spreads; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "CREDIT.FUNDING_SPREAD",
+      "name": "Short-term bank funding spread",
+      "family": "credit",
+      "model": "Credit spread risk taxonomy",
+      "universe": "Global",
+      "definition": "Credit spread or funding spread factor: Short-term bank funding spread; model index methodology must be specified",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.BRENT",
+      "name": "Brent crude oil",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Brent crude oil price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.WTI",
+      "name": "WTI crude oil",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "WTI crude oil price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.NATGAS",
+      "name": "Natural gas",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Natural gas price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.LNG_ASIA",
+      "name": "Asian LNG",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Asian LNG price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.GOLD",
+      "name": "Gold",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Gold price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.COPPER",
+      "name": "Copper",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Copper price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.WHEAT",
+      "name": "Wheat",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Wheat price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "COMMODITY.FREIGHT",
+      "name": "Ocean freight",
+      "family": "commodity",
+      "model": "Commodity risk taxonomy",
+      "universe": "Global",
+      "definition": "Ocean freight price factor; precise spot/futures contract and roll convention to be configured",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "INFLATION.US_5Y_BE",
+      "name": "U.S. 5-year inflation breakeven",
+      "family": "inflation",
+      "model": "Inflation and breakeven taxonomy",
+      "universe": "US",
+      "definition": "U.S. 5-year inflation breakeven; market-based or surveyed inflation signal requires explicit benchmark",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "INFLATION.US_5Y5Y",
+      "name": "U.S. five-year forward inflation expectations",
+      "family": "inflation",
+      "model": "Inflation and breakeven taxonomy",
+      "universe": "US",
+      "definition": "U.S. five-year forward inflation expectations; market-based or surveyed inflation signal requires explicit benchmark",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "INFLATION.EU_5Y5Y",
+      "name": "Euro-area forward inflation expectations",
+      "family": "inflation",
+      "model": "Inflation and breakeven taxonomy",
+      "universe": "Europe",
+      "definition": "Euro-area forward inflation expectations; market-based or surveyed inflation signal requires explicit benchmark",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "INFLATION.GLOBAL_INFLATION",
+      "name": "Global inflation expectations",
+      "family": "inflation",
+      "model": "Inflation and breakeven taxonomy",
+      "universe": "Global",
+      "definition": "Global inflation expectations; market-based or surveyed inflation signal requires explicit benchmark",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "VOL.US_EQUITY_VOL",
+      "name": "U.S. equity implied volatility",
+      "family": "volatility",
+      "model": "Volatility factors",
+      "universe": "Global",
+      "definition": "U.S. equity implied volatility; implied/realized horizon definitions must be supplied",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "VOL.ASIA_EQUITY_VOL",
+      "name": "Asian equity implied volatility",
+      "family": "volatility",
+      "model": "Volatility factors",
+      "universe": "Global",
+      "definition": "Asian equity implied volatility; implied/realized horizon definitions must be supplied",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "VOL.RATE_VOL",
+      "name": "Interest-rate implied volatility",
+      "family": "volatility",
+      "model": "Volatility factors",
+      "universe": "Global",
+      "definition": "Interest-rate implied volatility; implied/realized horizon definitions must be supplied",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "VOL.CREDIT_VOL",
+      "name": "Credit volatility",
+      "family": "volatility",
+      "model": "Volatility factors",
+      "universe": "Global",
+      "definition": "Credit volatility; implied/realized horizon definitions must be supplied",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "VOL.VOL_RISK_PREMIUM",
+      "name": "Volatility risk premium",
+      "family": "volatility",
+      "model": "Volatility factors",
+      "universe": "Global",
+      "definition": "Volatility risk premium; implied/realized horizon definitions must be supplied",
+      "reference": "https://www.bis.org/bcbs/publ/d457.htm"
+    },
+    {
+      "id": "LIQUIDITY.USD_FUNDING",
+      "name": "USD funding liquidity",
+      "family": "liquidity",
+      "model": "Liquidity conditions",
+      "universe": "Global",
+      "definition": "USD funding liquidity; market-level liquidity indicator, not an individual-asset coefficient",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "LIQUIDITY.EQUITY_MARKET",
+      "name": "Equity market liquidity",
+      "family": "liquidity",
+      "model": "Liquidity conditions",
+      "universe": "Global",
+      "definition": "Equity market liquidity; market-level liquidity indicator, not an individual-asset coefficient",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "LIQUIDITY.EM_FUNDING",
+      "name": "EM market funding conditions",
+      "family": "liquidity",
+      "model": "Liquidity conditions",
+      "universe": "Global",
+      "definition": "EM market funding conditions; market-level liquidity indicator, not an individual-asset coefficient",
+      "reference": "https://www.bis.org/statistics/"
+    },
+    {
+      "id": "XASSET.CARRY",
+      "name": "Cross-asset carry",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset carry factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    },
+    {
+      "id": "XASSET.TREND",
+      "name": "Cross-asset trend",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset trend factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    },
+    {
+      "id": "XASSET.VALUE",
+      "name": "Cross-asset value",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset value factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    },
+    {
+      "id": "XASSET.MOMENTUM",
+      "name": "Cross-asset momentum",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset momentum factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    },
+    {
+      "id": "XASSET.DEFENSIVE",
+      "name": "Cross-asset defensive",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset defensive factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    },
+    {
+      "id": "XASSET.QUALITY",
+      "name": "Cross-asset quality",
+      "family": "cross_asset_style",
+      "model": "Generic diversified style (not a tradable or licensed index)",
+      "universe": "Global",
+      "definition": "Cross-asset quality factor across asset classes; instrument selection and return construction must be defined",
+      "reference": "https://www.aqr.com/Insights/Research"
+    }
+  ]
+}

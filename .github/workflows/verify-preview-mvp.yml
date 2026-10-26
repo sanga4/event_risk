@@ -1,0 +1,66 @@
+name: Preview MVP Analyst Beta Acceptance
+on:
+  push:
+    branches: [feat/preview-mvp-analyst-v1]
+  pull_request:
+    paths: [preview_mvp/**]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-mvp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python source contract tests
+        run: python -m unittest discover -s preview_mvp/tests -p 'test_*.py' -v
+      - name: HTTP listener and closed research source acceptance
+        run: python preview_mvp/tests/http_smoke.py
+      - name: JavaScript syntax validation
+        run: |
+          node --check preview_mvp/assets/app.js
+          node --check preview_mvp/assets/lab.js
+          node --check preview_mvp/excel/taskpane.js
+          node --check preview_mvp/assets/marco.js
+          node --check preview_mvp/assets/attribution-core.js
+      - name: Browser-only manual attribution engine tests
+        run: node preview_mvp/tests/attribution.test.js
+      - name: Python syntax validation
+        run: python -m py_compile preview_mvp/app.py
+      - name: Static source security and provenance boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          code=Path('preview_mvp/app.py').read_text()
+          for term in ('PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED',
+                       'PREVIEW_MVP_DERIVED_RESEARCH_APPROVED',
+                       'X-Analyst-Key','read-only','RESEARCH_ONLY_NOT_APPROVED'):
+              assert term.lower() in code.lower(),term
+          assert 'eval(' not in code
+          assert 'subprocess.' not in code
+          print('ANALYST_MVP_STATIC_SOURCE_CONTRACT=PASS')
+          PY
+
+  browser-analyst:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Actual original Marco browser and manual holdings acceptance
+        run: node preview_mvp/tests/browser_smoke.cjs
+      - name: Publish visual acceptance snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-mvp-marco-browser-screenshots
+          path: preview_mvp/artifacts/
+          if-no-files-found: ignore
+          retention-days: 7

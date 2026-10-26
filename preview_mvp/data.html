@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="EventRisk Research — authorized live MotherDuck dataset browser.">
+<title>Data Warehouse · EventRisk Research</title>
+<link rel="stylesheet" href="/assets/marco.css"><link rel="stylesheet" href="/assets/data.css">
+<script defer src="/assets/data.js"></script></head>
+<body class="data-app">
+<header><h1>EventRisk <small>RESEARCH</small></h1>
+<nav><a href="/">Explore</a><a href="/?view=attribution">Attribution</a>
+<a href="/lab">Factor Lab</a><a href="/data" aria-current="page">Database</a></nav>
+<span id="live-state" class="connection-label">Checking connection</span></header>
+<div class="research-banner">Protected research environment · source data may be revised, licensed, or non-PIT. No approved event-specific security return attribution.</div>
+<main class="warehouse-layout">
+<aside class="warehouse-sidebar"><section class="access-panel">
+<h2>Research access</h2><p>Two independent credentials are required to explore warehouse tables. Neither is saved, uploaded as holdings, or embedded in the site.</p>
+<label for="analyst-key">Analyst access key</label><input id="analyst-key" type="password" autocomplete="off" placeholder="Issued by your organization">
+<label for="admin-key">Database administrator key</label><input id="admin-key" type="password" autocomplete="off" placeholder="Read-only research admin">
+<button id="connect" type="button">Connect to MotherDuck</button><p id="connect-status" role="status">Private connection needed to load authorized datasets.</p>
+</section>
+<section class="table-sidebar"><div class="data-row"><h2>Datasets</h2><span id="dataset-count">—</span></div>
+<input id="table-search" type="search" aria-label="Filter research datasets" placeholder="Filter warehouse tables" disabled>
+<div id="dataset-list" class="dataset-list"><p class="placeholder">Connect to browse the live database schema.</p></div>
+</section></aside>
+<section class="dataset-main"><div class="data-row"><div><span class="overline">MOTHERDUCK / SOURCE DATABASE</span>
+<h2 id="dataset-title">Database Explorer</h2><p id="dataset-description">Live database metadata and bounded SELECT results will appear here after authorization.</p></div>
+<div class="data-toolbar"><button type="button" id="refresh" disabled>Refresh</button><button type="button" id="download" disabled>Export visible CSV</button></div></div>
+<div class="quality-strip"><span id="provenance">Not connected</span><span id="source-status">No query executed</span></div>
+<section id="schema" class="schema-panel" hidden></section>
+<div id="result" class="data-result"><p class="placeholder">Choose an entitled dataset after connecting. No example financial rows or simulated coefficients will be shown.</p></div>
+<div class="pager"><button type="button" id="previous" disabled>Previous</button><span id="page-caption">—</span><button type="button" id="next" disabled>Next</button></div>
+<footer>All SQL is fixed and executed server-side; no browser SQL editor, no credentials in results, and no unauthorized redistribution rights implied. <a href="/api/v1/runtime">View connection health</a>.</footer>
+</section></main></body></html>
