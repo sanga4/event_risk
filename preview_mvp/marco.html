@@ -22,15 +22,16 @@
 </header>
 <main>
   <aside>
-    <div class="tabs" role="tablist">
+    <div class="tabs simple-tabs" role="tablist">
       <button role="tab" data-tab="questions" aria-selected="true">Events</button>
-      <button role="tab" data-tab="markets">Warehouse questions</button>
-      <button role="tab" data-tab="entities">Entities</button>
-      <button role="tab" data-tab="securities">Securities</button>
+      <button role="tab" data-tab="securities">Companies</button>
       <button role="tab" data-tab="factors">Factors</button>
       <button role="tab" data-tab="channels">Channels</button>
     </div>
-    <input id="search" type="search" placeholder="Search">
+    <details class="sidebar-advanced"><summary>Advanced sources</summary>
+      <div class="tabs" role="tablist"><button role="tab" data-tab="markets">Source questions</button><button role="tab" data-tab="entities">Entities</button></div>
+    </details>
+    <input id="search" type="search" placeholder="Search this category" aria-label="Search events, companies or factors">
     <ul id="list"></ul>
     <div class="list-footnote" id="list-status">Source-referenced research graph. Market question access is restricted.
 <div class="stack"><input id="analyst-key" type="password" autocomplete="off" placeholder="Issued analyst key" aria-label="Analyst research access key"><button type="button" id="connect-research">Access</button></div>
