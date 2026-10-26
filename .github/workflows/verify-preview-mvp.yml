@@ -1,7 +1,7 @@
-name: Preview MVP Analyst Beta Acceptance
+name: EventRisk API Excel and Raw Graph Acceptance
 on:
   push:
-    branches: [feat/preview-mvp-analyst-v1]
+    branches: [feat/preview-mvp-analyst-v1, product/eventrisk-research-v1]
   pull_request:
     paths: [preview_mvp/**]
   workflow_dispatch:
@@ -23,6 +23,7 @@ jobs:
           node --check preview_mvp/assets/lab.js
           node --check preview_mvp/excel/taskpane.js
           node --check preview_mvp/assets/marco.js
+          node --check preview_mvp/assets/viewer.js
           node --check preview_mvp/assets/attribution-core.js
       - name: Browser-only manual attribution engine tests
         run: node preview_mvp/tests/attribution.test.js
