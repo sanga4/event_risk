@@ -33,10 +33,12 @@
     </details>
     <input id="search" type="search" placeholder="Search this category" aria-label="Search events, companies or factors">
     <ul id="list"></ul>
-    <div class="list-footnote" id="list-status">Source-referenced research graph. Market question access is restricted.
-<div class="stack"><input id="analyst-key" type="password" autocomplete="off" placeholder="Issued analyst key" aria-label="Analyst research access key"><button type="button" id="connect-research">Access</button></div>
-<div id="access-status" class="mode-label">Only the browser-to-API research key is used. Warehouse token stays on the server.</div>
-<button type="button" id="open-attribution">Analyze my holdings →</button></div>
+    <div class="list-footnote" id="list-status">Browse source references.</div>
+    <div class="sidebar-cta"><button type="button" id="open-attribution">Analyze my holdings</button></div>
+    <details class="connection-settings"><summary>Research connection</summary>
+      <p id="access-status">Restricted research data is available to authorized analysts only.</p>
+      <div class="stack"><input id="analyst-key" type="password" autocomplete="off" placeholder="Issued analyst key" aria-label="Analyst research access key"><button type="button" id="connect-research">Connect</button></div>
+    </details>
   </aside>
   <div class="split" data-side="left" role="separator" aria-orientation="vertical" aria-label="Resize list panel" tabindex="0"></div>
   <section id="canvas-wrap">
