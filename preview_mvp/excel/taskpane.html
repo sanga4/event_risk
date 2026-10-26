@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preview MVP · Excel Analyst Add-in</title><link rel="stylesheet" href="/excel/taskpane.css"><script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script><script defer src="/excel/taskpane.js"></script></head>
+<body><main>
+<div class="brand">ER / PREVIEW MVP</div><h1>EventRisk Research for Excel</h1><p>Source-labeled reference catalogs, graph priors, economic channels, and permitted model/factor research outputs.</p>
+<div class="notice"><b>Research only.</b> Analyst-prior weights are not estimated risk betas. Original event-price impact and historical original-first-published vintages are not certified.</div>
+<div class="module"><b>Public reference sources</b><p id="public-status">Checking published catalogs…</p>
+<button id="reference" disabled>Import 543 securities &amp; 108 factors</button>
+<button id="graph" disabled>Import graph, priors &amp; formulas</button></div>
+<div class="module"><b>Authenticated analyst research</b>
+<label for="key">Issued analyst research key</label><input type="password" id="key" placeholder="Key never embedded in workbook" autocomplete="off">
+<label for="ticker">Security ticker</label><input id="ticker" value="TSM" maxlength="25">
+<button id="regression" disabled>Import actual regression diagnostics</button>
+<label for="factor">Observed source series</label>
+<select id="factor"><option value="DGS2">DGS2 — 2Y Treasury</option><option value="DGS10">DGS10 — 10Y Treasury</option><option value="DGS5">DGS5 — 5Y Treasury</option><option value="PAR_NOMINAL_REAL_GAP_10Y">10Y nominal/real gap</option></select>
+<button id="series" disabled>Import approved factor history</button>
+</div>
+<p class="status" id="status">Open the add-in in Microsoft Excel to enable worksheet insertion.</p>
+<div class="footer"><a href="/">Graph website</a> · <a href="/lab">Analyst case studies</a> · <a href="/api/v1/runtime">Source availability</a></div>
+</main></body></html>
