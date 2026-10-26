@@ -28,11 +28,16 @@ DB_CONNECTION = {"conn": None}
 JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
                 "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY"}
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-                 ".js": "text/javascript; charset=utf-8", ".png": "image/png"}
+                 ".js": "text/javascript; charset=utf-8", ".png": "image/png",
+                 ".xml":"application/xml; charset=utf-8"}
 FILES = {"/": "index.html", "/lab": "lab.html",
          "/assets/styles.css": "assets/styles.css", "/assets/app.js": "assets/app.js",
          "/assets/mvp.css": "assets/mvp.css", "/assets/lab.css": "assets/lab.css",
-         "/assets/lab.js": "assets/lab.js"}
+         "/assets/lab.js": "assets/lab.js",
+         "/excel/taskpane.html":"excel/taskpane.html",
+         "/excel/taskpane.js":"excel/taskpane.js",
+         "/excel/taskpane.css":"excel/taskpane.css",
+         "/excel/manifest.xml":"excel/manifest.xml"}
 FACTOR_CATALOG_VERSION = "2026-10-20.1"
 SCHEMA = "ANALYST_BETA_V1_RESEARCH_ONLY"
 CHANNELS = [
@@ -382,8 +387,17 @@ class Server(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type",ctype)
         self.send_header("Content-Length",str(len(payload)))
-        for k,v in JSON_HEADERS.items():self.send_header(k,v)
-        self.send_header("Content-Security-Policy","default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+        office_frame=urlsplit(self.path).path=="/excel/taskpane.html"
+        for k,v in JSON_HEADERS.items():
+            if office_frame and k=="X-Frame-Options":
+                continue
+            self.send_header(k,v)
+        script_sources="'self' https://appsforoffice.microsoft.com" if office_frame else "'self'"
+        frame_sources="'self' https://*.office.com https://*.office365.com https://*.officeapps.live.com" if office_frame else "'none'"
+        self.send_header("Content-Security-Policy",
+            "default-src 'self'; script-src "+script_sources+
+            "; style-src 'self'; img-src 'self' data:; connect-src 'self'; "+
+            "object-src 'none'; frame-ancestors "+frame_sources+"; base-uri 'none'")
         self.end_headers()
         if method!="HEAD":self.wfile.write(payload)
     def do_HEAD(self):self.respond("HEAD")
