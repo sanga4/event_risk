@@ -32,6 +32,7 @@ STATIC = {
     "/excel/manifest.xml": ("excel/manifest.xml", "application/xml; charset=utf-8"),
     "/report": ("report.html", "text/html; charset=utf-8"),
     "/assets/report.js": ("assets/report.js", "text/javascript; charset=utf-8"),
+    "/assets/report.css": ("assets/report.css", "text/css; charset=utf-8"),
 }
 PUBLIC_ROUTES = frozenset({
     "/health/live", "/api/v1/meta", "/api/v1/overview", "/api/v1/release-gates",
