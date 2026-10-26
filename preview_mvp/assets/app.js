@@ -18,7 +18,7 @@
   const state={
     nodes:[],edges:[],byId:new Map(),positions:new Map(),visibleNodes:[],visibleEdges:[],
     focus:"event:taiwan",previous:[],tab:"event",depth:2,full:false,labels:false,
-    hidePrior:false,search:"",camera:{zoom:1,panX:0,panY:0},
+    hidePrior:false,search:"",warehouseOffset:0,warehouseEvents:[],camera:{zoom:1,panX:0,panY:0},
     w:0,h:0,ratio:1,motion:null,hover:null,layoutIterations:0,anim:false
   };
   const nfmt=new Intl.NumberFormat("en-US");
@@ -73,6 +73,7 @@
     changeTab(state.byId.get(id).type);
     drawDetail(state.byId.get(id));
     $("detail-panel").classList.add("open");
+    if(state.byId.get(id)?.liveWarehouse)loadNeighbors(id);
   }
   function initializePositions(){
     state.positions.clear();
@@ -403,6 +404,73 @@
     }catch(e){host.replaceChildren(el("p","detail-alert","Warehouse not connected: "+e.message));
       $("warehouse-message").textContent="Live query not enabled: "+e.message;}
   }
+  function researchHeaders(){
+    return {"X-Analyst-Key":sessionStorage.getItem("eventrisk_analyst_key")||""};
+  }
+  function addLiveNode(row){
+    if(!row?.node_id||state.byId.has(row.node_id))return;
+    const type=row.node_type==="security"?"security":row.node_type==="factor"?"factor":
+      row.node_type==="entity"?"entity":"event";
+    const n={id:row.node_id,type,name:row.name||row.node_id,
+      subtitle:"MotherDuck source graph · "+(row.node_type||"question"),
+      description:"Real recorded source graph item. Provider-original first-published timestamp and point-in-time release remain unverified.",
+      review_status:"LIVE_SOURCE_RESEARCH_NOT_APPROVED",liveWarehouse:true,source:"graph_nodes"};
+    state.nodes.push(n);state.byId.set(n.id,n);
+    state.positions.set(n.id,{x:LANES[type]+(stableHash(n.id)%65),y:(stableHash(n.id)%200)-100,vx:0,vy:0});
+  }
+  async function loadNeighbors(nodeId){
+    const elResult=$("model-result");
+    if(elResult)elResult.replaceChildren(el("p","source-line","Reading bounded live graph neighborhood..."));
+    try{
+      const r=await fetch("/api/v1/research/graph-neighbors?node_id="+encodeURIComponent(nodeId),
+        {headers:researchHeaders(),cache:"no-store"});
+      const d=await r.json();if(!r.ok)throw Error(d.error||"HTTP "+r.status);
+      for(const n of d.nodes||[])addLiveNode(n);
+      const keys=new Set(state.edges.map(e=>e.src+"|"+e.dst+"|"+e.type));
+      for(const e of d.edges||[]){
+        if(!state.byId.has(e.src_id)||!state.byId.has(e.dst_id))continue;
+        const k=e.src_id+"|"+e.dst_id+"|"+e.edge_type;
+        if(keys.has(k))continue;
+        state.edges.push({src:e.src_id,dst:e.dst_id,type:e.edge_type,
+          weight:e.weight,summary:e.note||e.provenance||"Original recorded research graph relation",
+          review_status:"RESEARCH_ONLY_NOT_APPROVED"});
+        keys.add(k);
+      }
+      if(state.focus===nodeId){
+        updateVisible();drawDetail(state.byId.get(nodeId));
+        const out=$("model-result");
+        if(out)out.appendChild(el("p","source-line",
+          "Live neighbors: "+(d.edges||[]).length+
+          ". These are source graph relationships, NOT approved event betas."));
+      }
+    }catch(e){
+      if(elResult)elResult.replaceChildren(el("p","detail-alert",
+        "Live neighborhood unavailable: "+e.message));
+    }
+  }
+  async function searchWarehouseEvents(reset=true){
+    const output=$("warehouse-message");
+    if(reset){state.warehouseOffset=0;state.warehouseEvents=[];}
+    output.textContent="Searching source-dated warehouse graph questions...";
+    try{
+      const q=$("search").value.trim();
+      const path="/api/v1/research/events?limit=50&offset="+state.warehouseOffset+
+        "&q="+encodeURIComponent(q);
+      const r=await fetch(path,{headers:researchHeaders(),cache:"no-store"});
+      const d=await r.json();
+      if(!r.ok)throw Error(d.error||"HTTP "+r.status);
+      for(const row of d.rows||[])addLiveNode({...row,node_type:"question"});
+      state.warehouseOffset+=(d.rows||[]).length;
+      $("more-warehouse-events").hidden=(d.rows||[]).length<50;
+      changeTab("event");
+      output.textContent="Warehouse search loaded "+state.warehouseOffset+
+        " real source questions (paginated); original provider clock and impact certification unverified.";
+    }catch(e){
+      $("more-warehouse-events").hidden=true;
+      output.textContent="Warehouse event search unavailable: "+e.message+
+        ". Source rights, analyst access and a scoped server database token must be configured.";
+    }
+  }
   function handlers(){
     document.querySelectorAll("[data-kind]").forEach(btn=>btn.addEventListener("click",()=>changeTab(btn.dataset.kind)));
     $("search").addEventListener("input",e=>{state.search=e.target.value;buildList();});
@@ -439,6 +507,8 @@
     $("live-tab").addEventListener("click",()=>page("live"));
     $("back-explore").addEventListener("click",()=>page("explore"));
     $("back-from-live").addEventListener("click",()=>page("explore"));
+    $("find-warehouse-events").addEventListener("click",()=>searchWarehouseEvents(true));
+    $("more-warehouse-events").addEventListener("click",()=>searchWarehouseEvents(false));
     $("connect-warehouse").addEventListener("click",()=>{
       const key=$("analyst-key").value.trim();
       if(key){sessionStorage.setItem("eventrisk_analyst_key",key);$("analyst-key").value="";
