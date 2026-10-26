@@ -8,7 +8,7 @@ import duckdb
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-gates-v2.3.0"
+VERSION="phase1-gates-v2.4.0"
 
 # These are minimum empirical RESEARCH sample-diversity screens, not original
 # publisher PIT, independent economics, commercial rights or institutional
@@ -51,6 +51,67 @@ def prospective_empirical_support_gate_specs(prefix=P):
          "At least 18 prospective rate factors must each have real level "
          "variation over 30+ observed factor dates before exploratory "
          "event-factor impact model screening")
+    ]
+
+
+def funding_model_evidence_gate_specs(prefix=P):
+    """Separate retrospective research calculation integrity from beta robustness.
+
+    Passing source-lock rectangularity never means original-source provider PIT,
+    issuer corporate actions, license rights, or institutional risk release.
+    """
+    loss=f"{prefix}lab_joint_funding_daily_paired_losses_v1"
+    builds=f"{prefix}lab_joint_funding_daily_loss_builds_v1"
+    holm=f"{prefix}lab_joint_funding_familywise_models_v1"
+    audit=f"{prefix}lab_joint_funding_familywise_builds_v1"
+    return [
+        ("joint_funding_daily_loss_retrospective_rectangular_research",
+         f"""SELECT CASE WHEN COUNT(*)=20064
+             AND COUNT(DISTINCT ticker)=48
+             AND COUNT(DISTINCT model_variant)=2
+             AND COUNT(DISTINCT heldout_date)=209
+             AND COUNT(DISTINCT ticker || '/' || model_variant || '/' ||
+                  CAST(heldout_date AS VARCHAR))=COUNT(*)
+             AND COUNT(*) FILTER (WHERE
+                  original_issuer_prices_asof_verified OR
+                  original_factor_publication_asof_verified OR
+                  licensed_risk_use_approved OR institutional_beta_released)=0
+             THEN 1 ELSE 0 END FROM {loss}
+             WHERE build_id=(SELECT build_id FROM {builds}
+                             ORDER BY built_at DESC LIMIT 1)""",
+         1,"MIN_COUNT",
+         "Complete 48x2x209 retrospective source-locked daily loss panel; "
+         "not original issuer first-known or institutional PIT"),
+        ("joint_funding_global_holm_audit_rectangular_research",
+         f"""SELECT CASE WHEN COUNT(*)=96
+             AND COUNT(DISTINCT ticker)=48
+             AND COUNT(DISTINCT variant)=2
+             AND COUNT(DISTINCT ticker || '/' || variant)=COUNT(*)
+             AND COUNT(*) FILTER(WHERE institutional_beta_released)=0
+             AND COUNT(*) FILTER(WHERE
+                nominal_hac_p < 0 OR nominal_hac_p > 1 OR
+                holm_familywise_p < nominal_hac_p OR
+                holm_familywise_p > 1)=0
+             THEN 1 ELSE 0 END FROM {holm}
+             WHERE build_id=(SELECT build_id FROM {audit}
+                             ORDER BY built_at DESC LIMIT 1)""",
+         1,"MIN_COUNT",
+         "Exact 96 model cells of source-locked Holm research audit, "
+         "unreleased and internally coherent; not a certified funding beta"),
+        ("joint_funding_both_training_variants_holm_robust_candidate",
+         f"""SELECT COUNT(*) FROM (
+             SELECT ticker FROM {holm}
+             WHERE build_id=(SELECT build_id FROM {audit}
+                             ORDER BY built_at DESC LIMIT 1)
+                AND holm_p_below_05
+                AND familywise_research_state =
+                     'RESEARCH_MULTIPLICITY_SCREEN_PASS_NOT_INSTITUTIONAL'
+             GROUP BY ticker HAVING COUNT(DISTINCT variant)=2
+             ) candidates""",
+         1,"MIN_COUNT",
+         "Funding risk beta candidate requires BOTH predeclared training "
+         "variants and 96-cell Holm familywise support; separate provider "
+         "PIT, data rights and governance gates remain mandatory")
     ]
 
 
@@ -99,6 +160,8 @@ def main():
         # identifiable event-driven rate changes. Source rights and causal
         # identification gates below are independent and may still fail.
         *prospective_empirical_support_gate_specs(P),
+        # Technical research data completeness != funding model robustness.
+        *funding_model_evidence_gate_specs(P),
         ("prospective_mapping_review_queue_prepared",
          f"SELECT COUNT(*) FROM {P}lab_forward_mapping_review_queue_v1 WHERE review_state='pending_human_review' AND NOT released_for_signal_use",
          50,"MIN_COUNT","At least 50 forward-mapping hypotheses in traceable pending-review queue; no analyst decision implied"),
