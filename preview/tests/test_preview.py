@@ -59,7 +59,7 @@ class PreviewTests(unittest.TestCase):
 
     def test_all_documented_routes(self):
         for path in ("/","/assets/app.js","/assets/styles.css",
-          "/api/v1/overview","/api/v1/release-gates","/api/v1/factors",
+          "/api/v1/overview","/api/v1/graph","/api/v1/release-gates","/api/v1/factors",
           "/api/v1/evidence","/api/v1/blockers","/api/v1/meta",
           "/api/v1/metrics.csv","/excel/taskpane.html","/excel/taskpane.js","/excel/taskpane.css",
           "/excel/manifest.xml","/assets/icon-80.png","/health/live"):
@@ -74,6 +74,73 @@ class PreviewTests(unittest.TestCase):
         self.assertIn("officeapps.live.com",headers["Content-Security-Policy"])
         _,api_headers,_=self.request("/api/v1/overview")
         self.assertEqual(api_headers["X-Frame-Options"],"SAMEORIGIN")
+
+    def test_graph_api_and_source_types(self):
+        from app import read_graph
+        graph=read_graph()
+        self.assertEqual(graph["mode"], "FROZEN_PUBLIC_SEED_PRIORS_AND_ILLUSTRATIVE_EVENT_SCENARIOS")
+        self.assertGreaterEqual(len(graph["nodes"]), 70)
+        self.assertGreaterEqual(len(graph["edges"]), 90)
+        self.assertEqual({n["type"] for n in graph["nodes"]},
+                         {"event","entity","security","channel","factor"})
+        api=json.loads(self.request("/api/v1/graph")[2])
+        self.assertEqual(api["version"],graph["version"])
+        self.assertTrue(all(e["review_status"]=="RESEARCH_ONLY_NOT_APPROVED" for e in api["edges"]))
+
+    def test_graph_original_seed_weights_and_no_fake_model_approval(self):
+        from app import read_graph
+        graph=read_graph()
+        exposed=[e for e in graph["edges"] if e["type"]=="research_exposure_prior"]
+        self.assertGreaterEqual(len(exposed), 40)
+        self.assertTrue(all("seeds/exposures.csv"==e["source"] for e in exposed))
+        self.assertTrue(all(0 < e["weight"] <= 1 for e in exposed))
+        self.assertTrue(all(n["review_status"]!="INSTITUTIONAL_APPROVED" for n in graph["nodes"]))
+        self.assertTrue(all(n["source"]=="seeds/factors.json" for n in graph["nodes"] if n["type"]=="factor"))
+
+    def test_official_bea_values_are_not_surprises(self):
+        from app import read_graph
+        graph=read_graph()
+        bea=[n for n in graph["nodes"] if n.get("source_received_at")]
+        self.assertEqual(len(bea),2)
+        self.assertEqual({n["reported_value"] for n in bea},{0.2,105.6})
+        self.assertTrue(all(n["review_status"]=="ORIGINAL_OFFICIAL_VALUE_RECEIPT_RESEARCH_ONLY" for n in bea))
+        self.assertTrue(all(n["source_received_at"].startswith("2026-10-26") for n in bea))
+
+    def test_graph_rejects_false_institutional_approval(self):
+        from app import read_graph
+        import tempfile
+        good=read_graph()
+        good["edges"][0]["review_status"]="INSTITUTIONAL_APPROVED"
+        with tempfile.TemporaryDirectory() as d:
+            file=Path(d)/"graph.json"
+            file.write_text(json.dumps(good))
+            with self.assertRaises(ValueError):
+                read_graph(file)
+
+    def test_graph_rejects_forged_analyst_weights(self):
+        from app import read_graph
+        import tempfile
+        good=read_graph()
+        edge=next(e for e in good["edges"] if e["type"]=="research_exposure_prior")
+        edge["weight"]=1.5
+        with tempfile.TemporaryDirectory() as d:
+            file=Path(d)/"graph.json"
+            file.write_text(json.dumps(good))
+            with self.assertRaises(ValueError):
+                read_graph(file)
+
+    def test_graph_ui_has_three_panes_and_interactions(self):
+        html=self.request("/")[2].decode("utf-8")
+        for s in ("left-panel", "canvas-panel", "detail-panel",
+                  "id=\"network\"", "data-depth=\"3\"", "id=\"search\"",
+                  "id=\"full-network\"", "id=\"back-focus\"",
+                  "id=\"hide-analyst\""):
+            self.assertIn(s,html)
+        js=self.request("/assets/app.js")[2].decode("utf-8")
+        for fn in ("function selectNode", "function updateVisible", "function drawDetail",
+                   "function fitGraph", "function screenToWorld"):
+            self.assertIn(fn,js)
+        self.assertNotIn("unpkg.com",html)
 
     def test_private_paths_fail_closed(self):
         for path in ("/api/v1/raw-prices","/api/v1/security-positions",
