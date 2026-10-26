@@ -130,6 +130,26 @@ class PreviewMVPAcceptance(TestCase):
         self.assertIn("/assets/lab.js",app.FILES)
         self.assertIn("/assets/lab.css",app.FILES)
 
+    def test_marco_ui_is_now_homepage_with_only_manual_holdings(self):
+        html=(ROOT/"marco.html").read_text()
+        original_css=(ROOT/"assets"/"marco.css").read_text()
+        script=(ROOT/"assets"/"marco.js").read_text()
+        self.assertEqual(app.FILES["/"],"marco.html")
+        self.assertEqual(app.FILES["/previous-explorer"],"index.html")
+        for phrase in ('<main>','class="tabs"','id="graph"','id="detail"',
+                       'data-side="left"','data-side="right"',
+                       'id="holdings-body"','id="event-choice"',
+                       'id="attribution-plot"','id="load-demo"'):
+            self.assertIn(phrase,html)
+        for source_token in ("--page: #f9f9f7","--question: #2a78d6",
+                             "--entity: #eb6834","--security: #1baf7a"):
+            self.assertIn(source_token,original_css)
+        self.assertIn("window.EventRiskAttribution.calculate",script)
+        self.assertNotIn("navigator.sendBeacon",script)
+        self.assertNotIn("fetch('/api/v1/holdings",script)
+        self.assertIn("/assets/marco.css",app.FILES)
+        self.assertIn("/assets/attribution-core.js",app.FILES)
+
     def test_excel_addin_sideload_source_contract(self):
         import xml.etree.ElementTree as ET
         manifest=(ROOT/"excel"/"manifest.xml").read_text()
