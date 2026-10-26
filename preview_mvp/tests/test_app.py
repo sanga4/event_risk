@@ -104,6 +104,27 @@ class PreviewMVPAcceptance(TestCase):
         self.assertIn("/assets/lab.js",app.FILES)
         self.assertIn("/assets/lab.css",app.FILES)
 
+    def test_excel_addin_sideload_source_contract(self):
+        import xml.etree.ElementTree as ET
+        manifest=(ROOT/"excel"/"manifest.xml").read_text()
+        ET.fromstring(manifest)
+        self.assertIn("https://preview-mvp-analyst-production.up.railway.app/excel/taskpane.html",manifest)
+        self.assertNotIn("eventrisk-preview-web-production.up.railway.app/excel/taskpane.html",manifest)
+        js=(ROOT/"excel"/"taskpane.js").read_text()
+        for term in ('Office.onReady', 'Excel.run(', 'ER_Securities', 'ER_Factors',
+                     'ER_Channels', 'ER_Regressions', 'ER_FactorHistory',
+                     'ER_Explorer', 'SUMIFS(', 'COUNTIFS(', 'function safeCell'):
+            self.assertIn(term,js)
+        self.assertIn('function safeCell(x)',js)
+        self.assertIn("api(\x22/api/v1/research/funding-diagnostics",js)
+
+    def test_versioned_graph_operations_are_not_promoted(self):
+        import inspect
+        code=inspect.getsource(app.research)
+        self.assertIn("latest_version=1 AND op='assert'",code)
+        self.assertIn("PARTITION BY edge_id",code)
+        self.assertIn("PARTITION BY node_id",code)
+
     def test_original_style_assets_present(self):
         text=(ROOT/"index.html").read_text()
         self.assertIn('id="network"',text)
