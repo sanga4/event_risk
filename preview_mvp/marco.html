@@ -77,10 +77,10 @@
 <h3>Portfolio attribution <span class="tag">Analyst priors only</span></h3>
 <div class="info-grid"><div class="info-stat"><strong id="relevance-score">—</strong><span>Gross-weighted seed relevance</span></div>
 <div class="info-stat"><strong id="coverage-score">—</strong><span>Portfolio mapping coverage</span></div>
-<div class="info-stat"><strong id="pnl-score">—</strong><span>User-input what-if P&amp;L</span></div></div>
+<div class="info-stat"><strong id="pnl-score">—</strong><span>User-input what-if P&amp;L</span></div><div class="info-stat"><strong id="watchlist-score">—</strong><span>Sector / country watchlist</span></div></div>
 <canvas id="attribution-plot" width="590" height="150" aria-label="Portfolio qualitative exposure contribution chart"></canvas>
 <div id="attribution-results" aria-live="polite">Enter at least one ticker and a nonzero position value, then calculate.</div>
-<p class="warning-note">Relevance is not return attribution. “What-if P&amp;L” is computed exclusively from your own entered returns. Event probabilities, causal shocks, security factor betas and realized P&amp;L are <strong>not</strong> estimated by this feature.</p>
+<p class="mode-label">Unweighted sector/country watchlist is a separate rule-based screening layer; it never increases the quantitative relevance score.</p><p class="warning-note">Relevance is not return attribution. “What-if P&amp;L” is computed exclusively from your own entered returns. Event probabilities, causal shocks, security factor betas and realized P&amp;L are <strong>not</strong> estimated by this feature.</p>
 <div class="toolbar"><button id="export-attribution" type="button">Export calculated table (CSV)</button><span class="mode-label">Local download only · no upload</span></div>
 </div></div></div></section>
 <section id="about" class="view-section"><article class="doc">
