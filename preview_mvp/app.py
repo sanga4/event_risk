@@ -118,8 +118,14 @@ def within_analyst_budget(session_key: str) -> bool:
         return True
 
 
+def analyst_key():
+    """Accept the product key name, then the legacy isolated-beta alias."""
+    return os.getenv("EVENTRISK_ANALYST_KEY") or os.getenv("PREVIEW_MVP_ANALYST_KEY","")
+
 def bool_flag(name):
-    return os.getenv(name, "").strip().lower() == "true"
+    canonical=name.replace("PREVIEW_MVP_","EVENTRISK_")
+    return any(os.getenv(key,"").strip().lower()=="true"
+               for key in {canonical,name})
 
 def data():
     with (DATA / "factors.json").open(encoding="utf-8") as f:
@@ -408,7 +414,7 @@ def runtime_status():
             "generated_at_utc":utc_now(),
             "public_catalog_available":True,
             "database_credentials_present":bool(os.getenv("MOTHERDUCK_TOKEN")),
-            "analyst_key_configured":bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
+            "analyst_key_configured":bool(analyst_key()),
             "direct_database_queries_enabled":bool(os.getenv("MOTHERDUCK_TOKEN"))
                 and bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
             "market_source_redisplay_approved":bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
@@ -478,7 +484,7 @@ class Server(BaseHTTPRequestHandler):
             try:return self.send(200,public_graph(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"GRAPH_UNAVAILABLE"},method=method)
         if route in ALLOW_ROUTES:
-            key=os.getenv("PREVIEW_MVP_ANALYST_KEY","")
+            key=analyst_key()
             if not key or not os.getenv("MOTHERDUCK_TOKEN"):
                 return self.send(503,{"error":"ANALYST_DATABASE_CONNECTION_NOT_CONFIGURED"},method=method)
             provided=self.headers.get("X-Analyst-Key","")
