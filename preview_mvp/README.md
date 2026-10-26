@@ -40,3 +40,33 @@ Build an analyst-usable, research-only **direct server-to-MotherDuck** web API w
 ## Separate Phase I
 
 Do not modify original `main`, `eventrisk-factor-lab`, canonical panel builds, source producer Flights, governance gate fields, or merge Preview MVP into them. Institutional original provider PIT and source licensing approval remain separate milestones.
+
+## Live preview and implementation status (2026-10-26)
+
+**New Preview MVP site:** https://preview-mvp-analyst-production.up.railway.app/
+
+**Separate GitHub review track:** https://github.com/sanga4/event_risk/pull/75 (DRAFT, base is `feat/engineering-preview-isolated`; never merge into Phase I `main`). GitHub creation of a completely separate repository is not exposed by the installed GitHub connector, so isolation is via a dedicated feature branch, source root, CI workflow and entirely separate Railway project. If repository-level independence is required, create a new GitHub repo and move `preview_mvp/` there as a standalone root.
+
+### What an analyst can use now
+
+- Browse the **543-security** and **108-qualitative-factor** public repository references and **22** explicit economic-mechanism hypothesis categories, and inspect the original-source qualitative seed exposures in the central graph.
+- Explore graph node connections, searchable company/factor catalog and source notes in the original light-mode three-pane layout. Canvas rendering caps dense neighborhoods to keep it responsive; search is over the whole catalog, not just rendered nodes.
+- Inspect `GET /api/v1/runtime`, `GET /api/v1/catalog` and `GET /api/v1/graph` without source credentials. They are **public reference data**, NOT active MotherDuck queries.
+- The server implements parameterized, read-only `/api/v1/research/coverage`, `/events`, `/graph-nodes`, `/graph-neighbors`, `/factor-catalog`, `/models?ticker=...` and `/factor-series?factor_id=...`, but **live data is NOT connected by default**. The site will show a setup-required state until newly scoped credentials are provided and tested.
+
+### Exact secure connection setup
+
+In **only** the new Railway project `eventrisk-preview-mvp` → service `preview-mvp-analyst` → Variables, configure:
+
+1. `MOTHERDUCK_TOKEN` — a **new, dedicated, least-privileged SELECT-only** MotherDuck credential restricted to entitled tables/columns or separately reviewed research-safe views. Do **not** reuse Phase I's production/ingestion writer credential.
+2. `PREVIEW_MVP_ANALYST_KEY` — a new secret, random 32+ byte analyst research key, not committed to Git and not published to the homepage. This temporary shared-key scheme is for controlled beta testing only; add real per-analyst SSO before external analyst access.
+3. Keep `PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED` **unset/false** until the provider's market/question redistribution terms and your users' research rights are independently confirmed. Real warehouse event/question search and source graph neighbors fail HTTP 403 meanwhile.
+4. Keep `PREVIEW_MVP_DERIVED_RESEARCH_APPROVED` **unset/false** until derived security regression/factor-observation data publication is licensed and reviewed. Regression/factor-series routes fail HTTP 403 meanwhile.
+5. Deploy, visit `/api/v1/runtime` and confirm `direct_database_queries_enabled:true`, then use the analyst key in the website's left panel and check **actual successful live COUNT query** through `/api/v1/research/coverage`. Successful configuration alone is not proof of a connected query. Any schema mismatches should fail closed and be remediated against the independently read-only warehouse catalog.
+6. For public access to individual source market questions and derived research, use separate entitled datasets, real analyst accounts, rate limits, audit logs, usage policy and model disclaimers. Merely flipping a flag is not a rights review.
+
+### Separate acceptances
+
+Source-controlled GitHub Actions: `.github/workflows/verify-preview-mvp.yml` executes source-catalog parity, 543/108 definitions, exact example Taiwan→TSM 0.9 prior, node/edge referential integrity, denied unconfigured DB queries and denied source/derived routes; checks Python and JavaScript syntax.
+
+Runtime deploy success and `/health/live` are **not** equivalent to a live database acceptance test or a fully licensed beta launch. Keep separate release-status labels for `DEPLOYED_PUBLIC_CATALOG`, `LIVE_DB_CONNECTED`, `ENTITLED_ANALYST_DATA`, and `INSTITUTIONAL_APPROVED`.
