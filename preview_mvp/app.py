@@ -24,7 +24,7 @@ DATA = ROOT / "data"
 MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
 SESSION_LOCK = threading.RLock()
-DB_CONNECTION = {"conn": None}
+DB_CONNECTION = {"conn": None, "last_success_utc": None}
 JSON_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
                 "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY"}
 CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
@@ -191,7 +191,9 @@ def _db_query(sql,params=()):
         try:
             cursor=conn.execute(sql,params)
             cols=[d[0] for d in cursor.description]
-            return [dict(zip(cols,row)) for row in cursor.fetchall()]
+            rows=[dict(zip(cols,row)) for row in cursor.fetchall()]
+            DB_CONNECTION["last_success_utc"]=utc_now()
+            return rows
         except Exception:
             DB_CONNECTION["conn"]=None
             try:conn.close()
@@ -372,7 +374,11 @@ def runtime_status():
                 and bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
             "market_source_redisplay_approved":bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
             "derived_research_distribution_approved":bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"),
-            "connection_tested":False,
+            "connection_tested":bool(DB_CONNECTION.get("last_success_utc"))
+                and bool(os.getenv("MOTHERDUCK_TOKEN"))
+                and bool(os.getenv("PREVIEW_MVP_ANALYST_KEY")),
+            "last_successful_authenticated_query_at_utc":
+                DB_CONNECTION.get("last_success_utc"),
             "institutional_model_approved":False,
             "note":"A configured token is not a tested connection. Authenticated /research/coverage verifies live SELECT."}
 
