@@ -1,0 +1,46 @@
+/* EventRisk Research Data Explorer inherits Marco's system typography. */
+body.data-app{display:grid;grid-template-rows:auto auto minmax(0,1fr);min-height:100vh;height:100vh}
+body.data-app header{flex-wrap:wrap}
+header nav{display:flex;gap:4px;align-items:center}
+header nav a[aria-current="page"]{background:var(--hover);font-weight:700;color:var(--ink)}
+.connection-label{margin-left:auto;color:var(--muted);font-size:11px}
+.research-banner{padding:7px 18px;border-bottom:1px solid var(--hairline);font-size:11px;color:var(--muted)}
+.warehouse-layout{display:grid;grid-template-columns:290px minmax(0,1fr);height:100%;min-height:0;overflow:hidden}
+.warehouse-sidebar{border-right:1px solid var(--hairline);overflow:auto;display:flex;flex-direction:column}
+.access-panel,.table-sidebar{padding:15px}
+.access-panel{border-bottom:1px solid var(--hairline)}
+.access-panel h2,.table-sidebar h2{margin:0 0 7px;font-size:14px}
+.access-panel p{font-size:11px;color:var(--muted);line-height:1.6;margin:5px 0 10px}
+.access-panel label{display:block;margin:9px 0 4px;color:var(--ink-2);font-size:11px}
+.access-panel input,.table-sidebar input{display:block;width:100%;min-width:0;padding:9px 8px;border:1px solid var(--hairline);border-radius:5px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px}
+.access-panel button{display:block;width:100%;margin:13px 0 8px;background:var(--ink);color:var(--surface);padding:10px;border:0;border-radius:6px;font-weight:650;cursor:pointer}
+#connect-status{overflow-wrap:anywhere}
+.table-sidebar{flex:1;display:flex;flex-direction:column;min-height:180px}
+.table-sidebar h2{margin:0}
+.table-sidebar input{margin-top:12px}
+.dataset-list{margin-top:7px;overflow:auto;flex:1;min-height:50px}
+.dataset-list button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:9px 6px;border:0;border-bottom:1px solid var(--hairline);background:transparent;color:var(--ink);font:inherit;font-size:11px;cursor:pointer}
+.dataset-list button:hover,.dataset-list button[aria-current="true"]{background:var(--hover)}
+.dataset-list button span{min-width:0;overflow-wrap:anywhere}.dataset-list small{color:var(--muted);font-size:9px;flex-shrink:0}
+.dataset-main{display:flex;flex-direction:column;padding:21px 23px;overflow:hidden;min-width:0;min-height:0}
+.data-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.data-row h2{margin:0;font-size:20px;letter-spacing:-.03em}
+.data-row p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+.overline{color:var(--muted);font-size:10px;letter-spacing:.07em;font-weight:650}
+.data-toolbar{display:flex;gap:5px}
+.data-toolbar button,.pager button{border:1px solid var(--hairline);border-radius:5px;padding:7px 10px;background:var(--surface);color:var(--ink);white-space:nowrap;font-size:11px;cursor:pointer}
+.data-toolbar button:disabled,.pager button:disabled{opacity:.4;cursor:default}
+.quality-strip{display:flex;gap:16px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid var(--hairline);color:var(--muted);font-size:11px}
+.schema-panel{max-height:125px;overflow:auto;padding:9px 0;display:flex;gap:4px;flex-wrap:wrap}
+.schema-panel[hidden]{display:none}
+.schema-panel span{border:1px solid var(--hairline);border-radius:5px;padding:4px 6px;font-size:10px}
+.data-result{min-height:0;overflow:auto;flex:1;padding:10px 0}
+.placeholder{color:var(--muted);font-size:12px;line-height:1.65}
+table.research-table{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}
+.research-table th,.research-table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--hairline);max-width:380px;overflow:hidden;text-overflow:ellipsis}
+.research-table th{position:sticky;top:0;background:var(--page);font-weight:650;z-index:1}
+.research-table tr:hover{background:var(--hover)}
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--hairline);font-size:11px;color:var(--muted)}
+.dataset-main footer{color:var(--muted);font-size:10px;line-height:1.5}
+.dataset-main footer a{color:inherit;text-decoration:underline}
+@media(max-width:820px){body.data-app{height:auto;min-height:100vh;grid-template-rows:auto auto auto}.warehouse-layout{grid-template-columns:1fr;height:auto;overflow:visible}.warehouse-sidebar{max-height:380px;border-right:0;border-bottom:1px solid var(--hairline)}.dataset-main{overflow:visible;min-height:460px;padding:15px}.data-result{max-height:500px}.access-panel{padding:12px}.dataset-list{max-height:180px}.research-banner{padding:6px 10px}.data-row{flex-wrap:wrap}}
