@@ -126,3 +126,21 @@ add actual browser and Office client testing prior to a broader analyst release.
 
 Both the institutional main branch and the older engineering-preview service
 remain separate and unchanged by this Preview MVP feature branch.
+
+## Marco-original homepage and manual Event Attribution (Oct 26)
+
+The default `/` route now serves `preview_mvp/marco.html`, which reuses the **exact original Marco Hui CSS** from `web/index.html` and the same header, tabs, resizable 3-column panels, vis-network graph, shapes, type colors, labels and right-hand detail interaction. New feature-specific CSS is appended below the original unchanged stylesheet at `preview_mvp/assets/marco.css`. The previous prototype UI remains available at `/previous-explorer` for rollback comparison, but is no longer the homepage.
+
+The website does **not** silently bring over old sample market odds from the legacy Graph MVP: Preview MVP shows the full public catalog of 543 company/security references, 108 factor definitions, 22 illustrative economic channels and eight research event scenarios from its own `/api/v1/catalog` and `/api/v1/graph`. Real provider questions remain rights-gated via `/api/v1/research/events`. The pinned original vis-network library (v9.1.9) loads from the same external unpkg.com library originally used by Marco's app, under a route-restricted CSP; standard desktop browsers need access to that library. All other application code is first-party.
+
+### Manual portfolio Event Attribution
+
+From the original-style header select **Event Attribution**, or use `/?view=attribution`; no upload is required. Users type up to 100 ticker holdings and signed USD position amounts (positive long, negative short). A demo portfolio is available through an **explicit** sample button, never auto-presented as the user's actual positions. The client joins the selected research scenario's entity associations to the original `seeds/exposures.csv` analyst-prior entity/security links. For each security with multiple matching entity links it takes the **highest** prior, not the sum, so interconnected hypotheses do not inflate exposure.
+
+Formula: `qualitative_relevance_score = Σ_i (|position_i| / total_gross_position) × max_matching_seed_prior_i`. Source-prior mapping coverage = mapped gross positions / total gross. Any holding with no seed prior is labeled **not mapped** and not treated as an actual 0-beta security. Long and short positions both contribute to qualitative gross relevance without implying an event return sign. No probability, event coefficient, factor beta, realized historical P&L, or forecast is invented.
+
+A **separate what-if P&L** is `Σ_i (signed_position_i × user_entered_assumed_return_i / 100)` and reports a partial-coverage label if any return is left blank. It is wholly user-entered scenario return assumptions, not EventRisk's own price-impact estimate. All holdings stay in tab-memory only, are never sent in API requests or query strings, and are exported as local CSV only when the user clicks Export. Input and calculation support unknown ticker/blank/shock range validation and nonzero signed positions; tests include long/short and no-P&L-unless-entered cases.
+
+The feature is tested by `node preview_mvp/tests/attribution.test.js` (deterministic pure `preview_mvp/assets/attribution-core.js`) and the Preview MVP Python HTTP smoke. The separate institutional Phase I remains unaffected.
+
+**Security status:** users can research public seed relevance without a database key; reading actual market question records and actual fitted funding models still requires newly scoped and permissioned server-side MotherDuck access. Event attribution must not be advertised as causal or risk-return-based until data-quality and model-validation milestones exist.
