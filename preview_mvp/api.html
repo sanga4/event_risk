@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventRisk API &amp; Excel</title>
+<link rel="stylesheet" href="/assets/viewer.css">
+</head><body style="display:block;height:auto;padding:18px;max-width:1000px;margin:auto">
+<h2>EventRisk API &amp; Excel add-in</h2>
+<p><a href="/">← Event Risk Graph</a></p>
+<p>The graph page is a simple visual inspection tool. The API and Excel add-in are the research interfaces. There is no public Research Lab dashboard.</p>
+<h3>Available endpoints</h3>
+<table class="rungs" style="width:100%"><tr><th>Resource</th><th>Purpose</th></tr>
+<tr><td><a href="/api/v1/runtime">/api/v1/runtime</a></td><td>Actual live-connection configuration and last successful SELECT; a configured token does not prove connectivity</td></tr>
+<tr><td><a href="/api/v1/catalog">/api/v1/catalog</a></td><td>Repository reference securities (543), factor definitions (108), economic-channel labels</td></tr>
+<tr><td><a href="/api/v1/graph">/api/v1/graph</a></td><td>Public source seed links; hypothetical transmission links labeled noncausal</td></tr>
+<tr><td><a href="/api/v1/inventory">/api/v1/inventory</a></td><td>Dated warehouse audit, not live market data</td></tr>
+<tr><td>/api/v1/research/coverage</td><td>Authenticated live MotherDuck SELECT of source counts</td></tr>
+<tr><td>/api/v1/research/events</td><td>Authorized source question IDs/names with pagination</td></tr>
+<tr><td>/api/v1/research/graph-neighbors</td><td>Authenticated versioned graph neighbor relationships</td></tr>
+<tr><td>/api/v1/research/factor-series</td><td>Authorized observed macro financial-factor history</td></tr>
+<tr><td>/api/v1/research/funding-diagnostics</td><td>Authorized source-fitted regression diagnostics and familywise audit</td></tr>
+<tr><td>/api/v1/research/datasets</td><td>Independently admin-authorized live warehouse schema catalog</td></tr>
+</table>
+<h3>Excel add-in</h3>
+<p><a href="/excel/manifest.xml">Excel taskpane sideload manifest</a> · <a href="/excel/taskpane.html">Excel taskpane</a></p>
+<p>After sideloading the manifest inside Excel, use the taskpane to import source catalog worksheets, reference priors, lookup formulas and—if separately entitled—actual funding regressions and observed factor history. Installation in a real Excel client has not yet been independently accepted.</p>
+<h3>Connecting MotherDuck</h3>
+<p>Set a dedicated read-only <code>MOTHERDUCK_TOKEN</code> and strong <code>EVENTRISK_ANALYST_KEY</code> in the Railway service's private Variables. The database token must not be pasted into the website. For row-level admin exploration also set <code>EVENTRISK_DATA_ADMIN_KEY</code>; data-use rights must be approved independently.</p>
+<p>Authentication uses the <code>X-Analyst-Key</code> request header on protected endpoints. A successful <code>coverage</code> response, not a public page loading, proves the live warehouse connection.</p>
+<p><strong>No claim:</strong> original publisher first-release times, event surprises, event-specific causal returns, licensed quotes or globally approved investment betas.</p>
+</body></html>
