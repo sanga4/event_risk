@@ -29,7 +29,7 @@ import requests
 
 DB="eventrisk_factor_lab"
 P=DB+".main."
-VERSION="phase1-treasury-current-xml-refresh-v1.2.0"
+VERSION="phase1-treasury-current-xml-refresh-v1.3.0"
 BASE="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml"
 DATASET={"nominal":"daily_treasury_yield_curve",
          "real":"daily_treasury_real_yield_curve"}
@@ -301,15 +301,21 @@ def main():
         raise ValueError("Exact source Git SHA and internal-only research scope required")
     if write and os.getenv("LAB_SOURCE_REFRESH_WRITE_ACK")!="confirmed":
         raise ValueError("Explicit Treasury source research append approval required")
-    now=datetime.now(timezone.utc)
-    run=VERSION+"-"+now.strftime("%Y%m%dT%H%M%S%fZ")
+    start_at=datetime.now(timezone.utc)
+    run=VERSION+"-"+start_at.strftime("%Y%m%dT%H%M%S%fZ")
     script_hash=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    month=now.strftime("%Y%m")
+    month=start_at.strftime("%Y%m")
     with requests.Session() as session:
         raw=[bounded_fetch(session,k,month) for k in ("nominal","real")]
+    # The bounded HTTPS GETs can take more than 30 seconds in aggregate.
+    # Record the validation clock AFTER the actual HTTP responses; testing
+    # receipt timestamps against run start would label valid fetches 'future'.
+    validated_at=datetime.now(timezone.utc)
+    if validated_at.strftime("%Y%m") != month:
+        raise ValueError("Treasury XML retrieval crossed a UTC calendar month")
     with duckdb.connect(f"md:{DB}?attach_mode=single") as con:
-        inventory=existing_inventory(con,now)
-        proposed,coverage=prepare(raw,inventory,run,now=now)
+        inventory=existing_inventory(con,validated_at)
+        proposed,coverage=prepare(raw,inventory,run,now=validated_at)
         if write:
             append(con,proposed,raw,run,commit,script_hash,len(coverage))
     print(json.dumps({
