@@ -248,3 +248,9 @@ header nav button,header nav a{font-size:12px;padding:7px 9px;white-space:nowrap
 #list{flex:1;min-height:0;padding-bottom:5px}#list li{padding:9px 11px;gap:8px}#list li .name{font-size:12px}#list li .num{font-size:10px;color:var(--muted)}
 .list-footnote{font-size:10px;line-height:1.4;padding:8px 12px 5px}.sidebar-cta{padding:7px 12px}.sidebar-cta button{border:1px solid var(--ink);color:var(--surface);background:var(--ink);border-radius:6px;padding:9px;font-weight:600;width:100%;cursor:pointer}
 .connection-settings{font-size:11px;border-top:1px solid var(--hairline);padding:8px 12px;color:var(--muted)}.connection-settings summary{cursor:pointer}.connection-settings .stack input{width:100%;min-width:0}
+
+.compact-legend{display:block;position:absolute;z-index:5;left:12px;bottom:12px;width:auto;max-width:330px;padding:6px 10px}
+.compact-legend summary{font-size:10px;cursor:pointer;color:var(--muted)}
+.compact-legend .legend-items{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.compact-legend .legend-items span{font-size:10px}
+.graph-actions{position:absolute;top:12px;right:12px;z-index:6;display:flex;gap:6px}
