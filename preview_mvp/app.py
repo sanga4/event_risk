@@ -72,6 +72,7 @@ ALLOW_ROUTES = {
     "/api/v1/research/coverage", "/api/v1/research/events",
     "/api/v1/research/graph-nodes", "/api/v1/research/models",
     "/api/v1/research/factor-series", "/api/v1/research/factor-catalog",
+    "/api/v1/research/graph-neighbors",
 }
 TICKER_PATTERN = re.compile(r"^[A-Za-z0-9.=_-]{1,25}$")
 FACTOR_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,100}$")
@@ -237,6 +238,27 @@ def research(route,q):
                 "rows":rows,"limit":limit,"offset":offset,
                 "quote_pit_verified":False,
                 "rights_scope":"OWNER_REDISPLAY_ACK_REQUIRED_NOT_A_LEGAL_DETERMINATION"}
+    if route=="/api/v1/research/graph-neighbors":
+        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+            raise PermissionError("SOURCE_GRAPH_REDISPLAY_NOT_APPROVED")
+        node_id=_one(q,"node_id",128)
+        if not re.fullmatch(r"[A-Za-z0-9:._=/-]{1,128}",node_id):
+            raise ValueError("INVALID_NODE_ID")
+        rows=_db_query("""SELECT src_id,dst_id,edge_type,weight,confidence,sign,
+                 provenance,note FROM main.graph_edges
+                 WHERE src_id=? OR dst_id=?
+                 QUALIFY row_number() OVER (PARTITION BY edge_id ORDER BY recorded_at DESC)=1
+                 ORDER BY edge_type,src_id,dst_id LIMIT 100""",(node_id,node_id))
+        neighbor_ids=list({v for edge in rows for v in (edge["src_id"],edge["dst_id"])})
+        names=(_db_query("""SELECT node_id,arg_max(name,recorded_at) AS name,
+                 arg_max(node_type,recorded_at) AS node_type
+                 FROM main.graph_nodes WHERE node_id IN (SELECT unnest(?::VARCHAR[]))
+                 GROUP BY node_id""",(neighbor_ids,)) if neighbor_ids else [])
+        return {"mode":"LIVE_RESEARCH_GRAPH_NEIGHBORHOOD",
+                "node_id":node_id,"edges":rows,"nodes":names,
+                "total_returned":len(rows),
+                "review_status":"SOURCE_RELATIONS_UNREVIEWED_NOT_CAUSAL",
+                "no_original_pit_or_licensing_claim":True}
     if route=="/api/v1/research/models":
         if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
             raise PermissionError("DERIVED_RESEARCH_DISTRIBUTION_NOT_APPROVED")
