@@ -139,12 +139,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        if not urlsplit(self.path).path.startswith("/excel/taskpane"):
+            self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Content-Security-Policy",
             "default-src 'self'; script-src 'self' https://appsforoffice.microsoft.com; "
             "style-src 'self'; connect-src 'self'; img-src 'self' data:; "
-            "frame-ancestors 'self' https://*.office.com https://*.office365.com; object-src 'none'; base-uri 'none'")
+            "frame-ancestors 'self' https://*.office.com https://*.office365.com https://*.officeapps.live.com; object-src 'none'; base-uri 'none'")
         self.end_headers()
         if send_body:
             self.wfile.write(body)
