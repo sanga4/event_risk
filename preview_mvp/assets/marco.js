@@ -234,6 +234,7 @@
       if(relatedFactors.length>8)host.append(el("p","+"+(relatedFactors.length-8)+" additional factors in the research catalog.","note"));
       const expand=el("button","Show securities & factors in graph (depth 2)","mini-btn");expand.type="button";
       expand.addEventListener("click",()=>{
+        state.expanded=true;$("#graph-toggle").textContent="Focus graph";$("#graph-toggle").setAttribute("aria-pressed","true");
         $("#depth").value="2";renderNetwork(id);
         if(window.innerWidth<=650)document.body.classList.remove("mobile-detail-open");
       });
