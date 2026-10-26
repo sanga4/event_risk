@@ -51,10 +51,10 @@ async function assertBrowser(width,height,dir){
     assert.equal(await page.locator("#empty").isVisible(),false);
     assert.ok((await page.locator("#detail").innerText()).includes("Related securities"));
     assert.ok((await page.locator("#detail").innerText()).includes("Related financial factor definitions"));
-    const initialCount=Number((await page.locator("#caption").innerText()).match(/^\\d+/)[0]);
+    const initialCount=Number((await page.locator("#caption").innerText()).match(/^\d+/)[0]);
     await page.getByRole("button",{name:"Show securities & factors in graph (depth 2)"}).click();
     await page.waitForTimeout(250);
-    const expandedCount=Number((await page.locator("#caption").innerText()).match(/^\\d+/)[0]);
+    const expandedCount=Number((await page.locator("#caption").innerText()).match(/^\d+/)[0]);
     assert.ok(expandedCount>initialCount,
       "Original Marco graph must offer real company/factor two-hop exploration");
     await page.screenshot({path:path.join(dir,"marco-expanded-"+width+".png")});
