@@ -178,7 +178,7 @@ class PreviewMVPAcceptance(TestCase):
         import xml.etree.ElementTree as ET
         manifest=(ROOT/"excel"/"manifest.xml").read_text()
         ET.fromstring(manifest)
-        self.assertIn("https://preview-mvp-analyst-production.up.railway.app/excel/taskpane.html",manifest)
+        self.assertIn("https://eventrisk-research-web-production.up.railway.app/excel/taskpane.html",manifest)
         self.assertNotIn("eventrisk-preview-web-production.up.railway.app/excel/taskpane.html",manifest)
         js=(ROOT/"excel"/"taskpane.js").read_text()
         for term in ('Office.onReady', 'Excel.run(', 'ER_Securities', 'ER_Factors',
