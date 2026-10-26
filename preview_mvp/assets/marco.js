@@ -1,5 +1,5 @@
 "use strict";
-/* Marco original UI layout + EventRisk Preview MVP source contracts.
+/* Marco original UI layout + EventRisk Research source contracts.
  * All holding inputs and scenario return assumptions remain in this tab.
  * Scores = gross weights x source analyst-prior relevance, NOT causal impact.
  */
