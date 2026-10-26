@@ -50,8 +50,8 @@ async function assertBrowser(width,height,dir){
       {timeout:20000});
     assert.equal(await page.locator("#empty").isVisible(),false);
     await page.locator("#detail").getByText("Related securities", {exact:false}).first().waitFor({state:"attached",timeout:12000});
-    assert.ok((await page.locator("#detail").innerText()).includes("Related securities"));
-    assert.ok((await page.locator("#detail").innerText()).includes("Related financial factor definitions"));
+    assert.ok((await page.locator("#detail").textContent()).includes("Related securities"));
+    assert.ok((await page.locator("#detail").textContent()).includes("Related financial factor definitions"));
     const initialCount=Number((await page.locator("#caption").innerText()).match(/^\d+/)[0]);
     await page.getByRole("button",{name:"Show securities & factors in graph (depth 2)"}).click();
     await page.waitForTimeout(250);
