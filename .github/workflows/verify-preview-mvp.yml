@@ -18,7 +18,9 @@ jobs:
       - name: HTTP listener and closed research source acceptance
         run: python preview_mvp/tests/http_smoke.py
       - name: JavaScript syntax validation
-        run: node --check preview_mvp/assets/app.js
+        run: |
+          node --check preview_mvp/assets/app.js
+          node --check preview_mvp/assets/lab.js
       - name: Python syntax validation
         run: python -m py_compile preview_mvp/app.py
       - name: Static source security and provenance boundaries
