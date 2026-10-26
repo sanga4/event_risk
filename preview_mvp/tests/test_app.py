@@ -39,6 +39,21 @@ class PreviewMVPAcceptance(TestCase):
             with self.assertRaisesRegex(RuntimeError,"DATABASE_CREDENTIAL_NOT_CONFIGURED"):
                 app._db_query("SELECT 1")
 
+    def test_credential_presence_does_not_imply_query_verified(self):
+        previous=app.DB_CONNECTION.get("last_success_utc")
+        try:
+            app.DB_CONNECTION["last_success_utc"]=None
+            with mock.patch.dict(os.environ,{"MOTHERDUCK_TOKEN":"test-only-token",
+                 "PREVIEW_MVP_ANALYST_KEY":"test-only-key"},clear=True):
+                state=app.runtime_status()
+                self.assertTrue(state["direct_database_queries_enabled"])
+                self.assertFalse(state["connection_tested"])
+                self.assertIsNone(state["last_successful_authenticated_query_at_utc"])
+                app.DB_CONNECTION["last_success_utc"]="2026-10-26T00:00:00Z"
+                self.assertTrue(app.runtime_status()["connection_tested"])
+        finally:
+            app.DB_CONNECTION["last_success_utc"]=previous
+
     def test_derived_results_fail_closed(self):
         with mock.patch.dict(os.environ,{"PREVIEW_MVP_DERIVED_RESEARCH_APPROVED":"false"}):
             with self.assertRaisesRegex(PermissionError,"DERIVED_RESEARCH"):
