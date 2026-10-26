@@ -61,7 +61,7 @@ assert.ok(A.calculate({holdings:Array.from({length:101},()=>holdings[0]),
   scenarioId:"event:taiwan",graph}).errors.length);
 const html=fs.readFileSync(path.join(__dirname,"../marco.html"),"utf8");
 const frontend=fs.readFileSync(path.join(__dirname,"../assets/marco.js"),"utf8");
-for(const text of ["Event Risk Graph","data-side=\"left\"","data-side=\"right\"",
+for(const text of ["EventRisk","data-side=\"left\"","data-side=\"right\"",
   "Event Attribution","holdings-body","add-holding","event-choice","attribution-results",
   "assets/attribution-core.js","assets/marco.js","unpkg.com/vis-network@9.1.9"])
   assert.ok(html.includes(text),text);
