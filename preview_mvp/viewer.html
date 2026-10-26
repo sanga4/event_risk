@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Event Risk Graph</title>
+<link rel="stylesheet" href="/assets/viewer.css">
+<script defer src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script defer src="/assets/viewer.js"></script>
+</head><body>
+<header>
+  <h1>Event Risk Graph</h1>
+  <nav aria-label="Tools"><a href="/api">API</a> <a href="/excel/manifest.xml">Excel add-in</a></nav>
+  <label>Depth <select id="depth"><option selected>1</option><option>2</option></select></label>
+  <label><input type="checkbox" id="show-factors" checked> Factors</label>
+</header>
+<main>
+  <aside>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="entities" aria-selected="true">Entities</button>
+      <button type="button" role="tab" data-tab="securities">Securities</button>
+      <button type="button" role="tab" data-tab="factors">Factors</button>
+      <button type="button" role="tab" data-tab="questions">Questions</button>
+    </div>
+    <input id="search" type="search" placeholder="Search">
+    <ul id="list"></ul>
+    <details style="padding:8px 12px;border-top:1px solid var(--hairline)">
+      <summary>MotherDuck</summary>
+      <p class="note" id="live-status">Checking live data connection…</p>
+      <input id="analyst-key" type="password" autocomplete="off" placeholder="Analyst API key" aria-label="Analyst API key" style="width:100%">
+      <button type="button" id="connect">Connect / load questions</button>
+    </details>
+    <p class="note" id="list-info" style="padding:0 12px"></p>
+  </aside>
+  <div class="split" data-side="left" role="separator" aria-orientation="vertical" aria-label="Resize list panel" tabindex="0"></div>
+  <section id="canvas-wrap">
+    <div id="graph"></div>
+    <div class="caption" id="caption" hidden></div>
+    <div class="empty" id="empty">Select a node on the left.</div>
+    <div class="legend">
+      <span><i class="swatch question"></i>Question*</span>
+      <span><i class="swatch entity"></i>Entity</span>
+      <span><i class="swatch security"></i>Security</span>
+      <span><i class="swatch factor"></i>Factor definition</span>
+      <span><i class="dash"></i>Research link</span>
+    </div>
+  </section>
+  <div class="split" data-side="right" role="separator" aria-orientation="vertical" aria-label="Resize detail panel" tabindex="0"></div>
+  <section id="detail"><p class="note">Select a node to see its source properties and links.</p></section>
+</main>
+</body></html>
