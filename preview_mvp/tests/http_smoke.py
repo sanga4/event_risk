@@ -20,7 +20,7 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/assets/styles.css","/assets/mvp.css","/assets/app.js"):
+    for route in ("/","/lab","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
