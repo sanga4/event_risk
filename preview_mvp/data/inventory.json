@@ -1,0 +1,44 @@
+{
+  "version": "analyst-coverage-inventory-v1",
+  "evidence_checked_date_utc": "2026-10-26",
+  "refresh_mode": "DATED_READ_ONLY_AGGREGATE_AUDIT_NOT_LIVE_DATABASE_CONNECTION",
+  "source_database": "eventrisk_factor_lab",
+  "counts": {
+    "graph_node_rows_versioned": 41058,
+    "graph_edge_records_versioned": 169996,
+    "distinct_question_nodes": 4907,
+    "distinct_proposition_nodes": 11096,
+    "distinct_market_nodes": 11128,
+    "distinct_entity_nodes": 1478,
+    "distinct_security_nodes": 543,
+    "distinct_graph_factor_nodes": 34,
+    "source_public_security_catalog": 543,
+    "source_public_factor_definitions": 108,
+    "warehouse_factor_catalog_rows": 22,
+    "distinct_factor_observed_series": 18,
+    "factor_observation_rows": 12764,
+    "factor_observed_dates": 703,
+    "venue_market_latest_source_records": 4889,
+    "funding_regression_unique_tickers": 48,
+    "funding_regression_source_model_versions": 192,
+    "funding_regression_original_family_size": 96,
+    "independent_familywise_Holm_survivors": 0,
+    "economic_channel_hypothesis_types": 22
+  },
+  "factor_observation_window": {
+    "start": "2024-01-02",
+    "end": "2026-10-23"
+  },
+  "funding_model_window": {
+    "max_last_day": "2026-10-15"
+  },
+  "restrictions": [
+    "Question/proposition/market node counts overlap at different grains; they are not counts of unique observed macroeconomic events.",
+    "Raw provider market questions and original quote histories are not approved for unrestricted redistribution.",
+    "Source factor observations and regression tables have not been approved for public distribution.",
+    "Source factor definitions do not imply historically observed time series or original point-in-time publication vintages.",
+    "Funding regression model versions total 192 across two research builds, not 192 distinct approved regressions.",
+    "Zero global Holm-surviving funding effects; not an identified causal event return model."
+  ],
+  "last_independently_confirmed_institutional_phase1": false
+}
