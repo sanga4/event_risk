@@ -50,6 +50,21 @@ async function assertBrowser(width,height,dir){
       {timeout:20000});
     assert.equal(await page.locator("#empty").isVisible(),false);
   }
+  if(width<=650){
+    const graphRect=await page.locator("#graph").boundingBox();
+    assert.ok(graphRect&&graphRect.width>=width-15,
+      "Mobile graph must occupy full viewport width, not a narrow right sliver");
+    assert.equal(await page.locator("#browse-mobile").isVisible(),true);
+    assert.equal(await page.locator("main aside").isVisible(),false);
+    await page.locator("#browse-mobile").click();
+    assert.equal(await page.locator("main aside").isVisible(),true);
+    await page.locator('main aside [data-id="event:trade"]').click();
+    assert.equal(await page.locator("main aside").isVisible(),false);
+    assert.equal(await page.locator("#detail").isVisible(),true);
+    assert.ok((await page.locator("#detail").innerText()).includes("Trade restrictions"));
+    await page.locator(".mobile-detail-dismiss").click();
+    assert.ok(!(await page.locator("body").getAttribute("class")).includes("mobile-detail-open"));
+  }
   await page.screenshot({path:path.join(dir,"marco-"+width+".png")});
   await page.locator('nav [data-view="attribution"]').click();
   await page.locator("#load-demo").click();
