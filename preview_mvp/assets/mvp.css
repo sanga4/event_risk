@@ -1,0 +1,16 @@
+/* Preview MVP additions; retains the original Marco Hui visual foundations. */
+.auth-panel{padding:12px;border-top:1px solid var(--hairline);background:var(--surface);font-size:11px}
+.auth-panel .overline{font-size:10px;display:block;margin-bottom:7px}
+.auth-row{display:flex;gap:4px;align-items:stretch}
+.auth-row input{min-width:0;flex:1;font:inherit;border:1px solid var(--axis);background:var(--surface);padding:5px 6px;border-radius:5px}
+.auth-row button{border:1px solid var(--axis);background:var(--page);padding:5px 8px;border-radius:5px;font:inherit;cursor:pointer}
+.auth-row button:hover{background:var(--hover)}
+.auth-caption{margin-top:6px;color:var(--ink-2);font-size:10px;line-height:1.45}
+#model-result{margin-top:16px}
+#model-result .detail-rel{word-break:break-word}
+#model-result h3{font-size:13px}
+#live-panel:not([hidden]){display:block}
+#live-panel .doc-grid article{min-width:0}
+#warehouse-cards b{font-size:20px;color:var(--security)}
+#runtime-indicator{max-width:290px;white-space:normal;text-align:center}
+@media(max-width:580px){#runtime-indicator{display:none}}
