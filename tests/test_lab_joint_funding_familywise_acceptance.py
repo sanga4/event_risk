@@ -104,7 +104,7 @@ class IndependentHolmReceiptFalsificationTests(unittest.TestCase):
 
     def test_false_cross_variant_stability_rejection_state_is_rejected(self):
         x=list(setup());cells=list(x[3]);v=list(cells[0])
-        v[16]="RESEARCH_MULTIPLICITY_SCREEN_PASS_NOT_INSTITUTIONAL"
+        v[16]="REJECT_FAMILYWISE_HOLM_MULTIPLE_TESTING"
         cells[0]=tuple(v);x[3]=cells
         with self.assertRaisesRegex(ValueError,"rank/variant"):
             do_accept(tuple(x))
