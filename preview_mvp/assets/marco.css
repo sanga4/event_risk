@@ -268,3 +268,8 @@ header nav button,header nav a{font-size:12px;padding:7px 9px;white-space:nowrap
 
 .info-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.info-stat strong{font-size:18px}
 @media(max-width:940px){.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Two readable rows beat four squeezed attribution KPIs. */
+.info-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.info-stat strong{font-size:22px;word-break:normal}
+.info-stat{min-width:0;padding:12px}
