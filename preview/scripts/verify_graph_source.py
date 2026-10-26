@@ -26,7 +26,7 @@ def audit_graph_sources(root: Path=ROOT):
         if x.get("qid") and x["qid"].startswith("Q"):
             try: weight=float(x["weight"])
             except (TypeError,ValueError):continue
-            prior[x["qid"],x["ticker"]].add((weight,x.get("rationale","")))
+            prior[x["qid"],x["ticker"]].add((weight,x.get("rationale") or "Analyst-prior exposure membership"))
     with (root/"securities.csv").open(newline="",encoding="utf-8") as f:
         security={x["ticker"]:x for x in csv.DictReader(f)}
     factor={x["id"]:x for x in json.loads((root/"seeds"/"factors.json").read_text())["factors"]}
