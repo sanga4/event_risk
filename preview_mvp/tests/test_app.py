@@ -54,6 +54,17 @@ class PreviewMVPAcceptance(TestCase):
         finally:
             app.DB_CONNECTION["last_success_utc"]=previous
 
+    def test_authenticated_beta_query_budget(self):
+        session="unit-test-isolated-analyst-key-allowlist"
+        app.RATE_BY_SESSION.pop(session,None)
+        with mock.patch.object(app.time,"monotonic",return_value=1000.0):
+            for _ in range(app.RATE_MAX_REQUESTS_PER_WINDOW):
+                self.assertTrue(app.within_analyst_budget(session))
+            self.assertFalse(app.within_analyst_budget(session))
+        with mock.patch.object(app.time,"monotonic",return_value=1065.0):
+            self.assertTrue(app.within_analyst_budget(session))
+        app.RATE_BY_SESSION.pop(session,None)
+
     def test_derived_results_fail_closed(self):
         with mock.patch.dict(os.environ,{"PREVIEW_MVP_DERIVED_RESEARCH_APPROVED":"false"}):
             with self.assertRaisesRegex(PermissionError,"DERIVED_RESEARCH"):
