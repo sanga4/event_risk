@@ -26,6 +26,7 @@ STATIC = {
     "/assets/icon-80.png": ("assets/icon-80.png", "image/png"),
     "/excel/taskpane.html": ("excel/taskpane.html", "text/html; charset=utf-8"),
     "/excel/taskpane.js": ("excel/taskpane.js", "text/javascript; charset=utf-8"),
+    "/excel/taskpane.css": ("excel/taskpane.css", "text/css; charset=utf-8"),
     "/excel/manifest.xml": ("excel/manifest.xml", "application/xml; charset=utf-8"),
 }
 PUBLIC_ROUTES = frozenset({
