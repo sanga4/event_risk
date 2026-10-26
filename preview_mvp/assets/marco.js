@@ -500,11 +500,27 @@
     });
     $("#print-attribution").addEventListener("click",()=>window.print());
     $("#export-attribution").addEventListener("click",exportAttribution);
-    $("#connect-research").addEventListener("click",()=>{
+    $("#connect-research").addEventListener("click",async()=>{
       state.key=$("#analyst-key").value.trim();$("#analyst-key").value="";
-      if(!state.key){setMessage("#access-status","A separately issued beta access key is required.");return;}
-      setMessage("#access-status","Analyst key held only in this browser tab memory. Data rights and the server credential remain separate.");
-      if(state.tab==="markets")searchSourceQuestions();
+      if(!state.key){setMessage("#access-status","Enter an issued analyst access key.");return;}
+      setMessage("#access-status","Verifying real read-only MotherDuck access…");
+      try{
+        const r=await fetch("/api/v1/research/coverage",{
+          headers:researchHeaders(),cache:"no-store"});
+        const body=await r.json();
+        if(!r.ok)throw Error(body.error||"Research API HTTP "+r.status);
+        if(body.mode!=="LIVE_DATABASE_COUNT_ONLY")throw Error("Unexpected source provenance");
+        const questions=body.coverage.find(x=>x.metric==="graph_question_nodes");
+        const count=questions?Number(questions.value).toLocaleString():"unknown";
+        setMessage("#access-status","Live warehouse verified: "+count+
+          " source question identifiers. Provider redisplay rights are separate.");
+        setMessage("#source-status","MOTHERDUCK LIVE · read-only source counts");
+        if(state.tab==="markets")searchSourceQuestions();
+      }catch(e){
+        state.key="";
+        setMessage("#access-status","Live connection not established: "+e.message+
+          ". This service needs its own server-side, least-privileged MotherDuck credential.");
+      }
     });
     const root=document.documentElement.style;
     document.querySelectorAll(".split").forEach(handle=>{
