@@ -20,7 +20,7 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/lab","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js"):
+    for route in ("/","/lab","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
@@ -33,6 +33,15 @@ try:
     assert len(graph["nodes"])==len(ids) and len(ids)>680
     assert all(e["src"] in ids and e["dst"] in ids for e in graph["edges"])
     assert all(e["review_status"]=="RESEARCH_ONLY_NOT_APPROVED" for e in graph["edges"])
+    response,html=call("/excel/taskpane.html")
+    assert response.headers.get("X-Frame-Options") is None
+    assert "appsforoffice.microsoft.com" in response.headers.get("Content-Security-Policy","")
+    assert b"Office" in html
+    _,inv=call("/api/v1/inventory")
+    evidence=json.loads(inv)
+    assert evidence["counts"]["distinct_question_nodes"]==4907
+    assert evidence["counts"]["independent_familywise_Holm_survivors"]==0
+    assert evidence["refresh_mode"]=="DATED_READ_ONLY_AGGREGATE_AUDIT_NOT_LIVE_DATABASE_CONNECTION"
     _,raw=call("/api/v1/runtime")
     status=json.loads(raw)
     assert status["direct_database_queries_enabled"] is False
