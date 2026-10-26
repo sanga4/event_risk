@@ -33,6 +33,7 @@
         <button role="tab" aria-selected="false" data-kind="channel">Channels</button>
       </div>
       <div class="search-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path></svg><input id="search" type="search" placeholder="Search all securities, factors, entities, channels…" aria-label="Search nodes"><span class="shortcut">⌘ K</span></div>
+      <div class="warehouse-query-actions"><button id="find-warehouse-events" type="button">Search warehouse events (access required)</button><button id="more-warehouse-events" type="button" hidden>Next 50</button></div>
       <div class="list-meta"><span id="list-title">EVENT SCENARIOS</span><span id="list-count"></span></div>
       <div class="node-list" id="node-list" role="listbox" aria-label="Knowledge graph nodes"></div>
       <div class="auth-panel"><label for="analyst-key" class="overline">ANALYST ACCESS FOR LIVE WAREHOUSE</label><div class="auth-row"><input type="password" id="analyst-key" placeholder="Analyst access key (if issued)" autocomplete="off"><button id="connect-warehouse" type="button">Connect</button></div><div id="warehouse-message" class="auth-caption">No database password or source token is sent to the browser.</div></div><div class="left-footer"><div class="source-dot"></div><div>Public seed exposures & official reported source receipts <small id="source-stamp">Source snapshot: October 26, 2026</small></div></div>
