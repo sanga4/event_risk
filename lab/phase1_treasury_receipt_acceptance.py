@@ -191,6 +191,11 @@ def main():
         "phase1_treasury_current_xml_refresh.py")
     code_sha=hashlib.sha256(original_source.read_bytes()).hexdigest()
     with duckdb.connect("md:eventrisk_factor_lab?attach_mode=single") as con:
+        # MotherDuck's default remote session may identify as Etc/Unknown.
+        # DuckDB->Python TIMESTAMPTZ conversion then fails inside pytz
+        # BEFORE the source audit even sees the row. Pin UTC per connection
+        # rather than altering authentic stored source receipt timestamps.
+        con.execute("SET TimeZone='UTC'")
         result=inspect(con,args.source_commit,code_sha)
     print(json.dumps(result,sort_keys=True,indent=2))
     print("PROVIDER_FIRST_PUBLICATION_PIT=UNVERIFIED RIGHTS=UNAPPROVED INSTITUTIONAL_RELEASE=FALSE")

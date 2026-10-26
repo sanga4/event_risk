@@ -4,6 +4,10 @@
 
 **Producer:** `lab/phase1_treasury_current_xml_refresh.py` (PR #59).
 
+## Actual remote execution note — October 26, 2026 UTC
+
+The first fully authorized source append **did persist** 108 official Treasury XML-backed internal research factor records, spanning six observed factor days. The combined on-demand producer+auditor Flight exited nonzero because the Flight dependencies omitted `pytz` while DuckDB loaded timezone-aware SQL values. A separate subsequent read-only audit Flight with `pytz` also initially failed **before accessing any audit rows** because MotherDuck remote session timezone `Etc/Unknown` cannot be mapped to a `pytz` timezone. This is an auditor runtime configuration failure, **not evidence of source arithmetic validity or invalidity**. The new auditor now executes `SET TimeZone='UTC'` on its MotherDuck connection before calling SELECT/fetchall; the resulting timestamps remain original UTC instants. The source rows are NOT to be re-appended merely to get an auditor result. Run the corrected, read-only auditor against the original pinned writer build `phase1-treasury-current-xml-refresh-v1.3.0-20261026T011511640541Z`. Reconcile source packet hashes, 108 actual rows, old-retrospective exclusion and all false publication/right/approval flags. A passing audit is required to close this acceptance incident.
+
 ## Trust boundary
 
 Treasury's recorded `NEW_DATE` is an observation-date label, **not** a separately verified first-publication timestamp. This audit verifies exact downloaded Treasury XML bytes, SHA256, source URL, actual HTTP receipt times, matching warehouse rate values, and the Git-pinned research build. It NEVER authenticates provider first-publication chronology, original historical vintages, licensed redistribution, an economic surprise, causal event-to-factor betas, or institutional risk model release.

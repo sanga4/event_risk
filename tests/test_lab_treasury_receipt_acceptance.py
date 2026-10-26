@@ -10,6 +10,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import MagicMock, patch
 
 import duckdb
 
@@ -49,6 +50,21 @@ def fixture():
 
 
 class OriginalReceiptAcceptanceTests(unittest.TestCase):
+    def test_real_remote_auditor_must_set_utc_before_loading_timestamptz(self):
+        fake_con=MagicMock()
+        fake_con.__enter__.return_value=fake_con
+        with patch.object(qa.duckdb,"connect",return_value=fake_con), \
+             patch.object(qa,"inspect",return_value={"status":qa.VERIFIED}) as inspected, \
+             patch.object(qa.sys,"argv",[
+                 "phase1_treasury_receipt_acceptance.py",
+                 "--source-commit",COMMIT]):
+            qa.main()
+        fake_con.execute.assert_any_call("SET TimeZone='UTC'")
+        inspected.assert_called_once()
+        self.assertEqual(
+            fake_con.method_calls[0].args if fake_con.method_calls else (),
+            ("SET TimeZone='UTC'",))
+
     def test_complete_source_packet_byte_hash_and_all_factor_rows_reconcile(self):
         with fixture() as con:
             data=qa.inspect(con,COMMIT,SOURCE_SHA,prefix="main.")
