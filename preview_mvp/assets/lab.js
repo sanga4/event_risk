@@ -231,6 +231,30 @@
     const a=element("a");a.href=url;a.download="eventrisk-preview-mvp-research-"+state.caseId+".csv";
     document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
   }
+  function renderInventory(doc){
+    if(doc.refresh_mode!=="DATED_READ_ONLY_AGGREGATE_AUDIT_NOT_LIVE_DATABASE_CONNECTION")
+      throw Error("Warehouse provenance classification unexpected");
+    $("inventory-date").textContent="Read-only audited aggregates dated "+doc.evidence_checked_date_utc+" · NOT live";
+    const d=doc.counts;
+    const measures=[
+      ["Observed question nodes",d.distinct_question_nodes],
+      ["Graph edge versions",d.graph_edge_records_versioned],
+      ["Factor series observed",d.distinct_factor_observed_series],
+      ["Historical factor rows",d.factor_observation_rows],
+      ["Funding-model securities",d.funding_regression_unique_tickers],
+      ["Holm-surviving models",d.independent_familywise_Holm_survivors],
+    ];
+    const box=$("inventory-counters");box.replaceChildren();
+    for(const [name,value] of measures){
+      const c=element("div");
+      const n=element("strong",Number(value).toLocaleString("en-US"));
+      c.append(n,element("span",name));box.append(c);
+    }
+    $("inventory-caution").textContent=
+      "Research source window "+doc.factor_observation_window.start+"–"+doc.factor_observation_window.end+
+      ". Dataset counts represent different grains, not unique independent economic events. "+
+      "No original-first-publication PIT or trading-model approval is claimed.";
+  }
   async function init(){
     $("case").addEventListener("change",e=>{state.caseId=e.target.value;renderCase();});
     $("run-regression").addEventListener("click",runModels);
@@ -244,8 +268,8 @@
     $("export").addEventListener("click",exportLoaded);
     $("print").addEventListener("click",()=>window.print());
     try{
-      const [catalog,graph,runtime]=await Promise.all([
-        request("/api/v1/catalog"),request("/api/v1/graph"),request("/api/v1/runtime")]);
+      const [catalog,graph,runtime,inventory]=await Promise.all([
+        request("/api/v1/catalog"),request("/api/v1/graph"),request("/api/v1/runtime"),request("/api/v1/inventory")]);
       if(catalog.factors_count!==108||catalog.securities_count<500||
          graph.mode!=="PUBLIC_CATALOG_PLUS_HYPOTHETICAL_TRANSMISSION_NOT_LIVE")throw Error("Unexpected catalog source state");
       state.catalog=catalog;state.graph=graph;state.runtime=runtime;
@@ -259,7 +283,7 @@
         option.label=sec.name;
         $("ticker-choices").append(option);
       }
-      renderCase();
+      renderCase();renderInventory(inventory);
     }catch(e){
       displayStatus("case-description","Public source catalog unavailable: "+errText(e));
       $("status").textContent="SOURCE ERROR";
