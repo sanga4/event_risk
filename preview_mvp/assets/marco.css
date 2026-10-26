@@ -254,3 +254,8 @@ header nav button,header nav a{font-size:12px;padding:7px 9px;white-space:nowrap
 .compact-legend .legend-items{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .compact-legend .legend-items span{font-size:10px}
 .graph-actions{position:absolute;top:12px;right:12px;z-index:6;display:flex;gap:6px}
+
+.graph-actions button,.graph-options summary{cursor:pointer;border:1px solid var(--hairline);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:7px 9px;font-size:11px}
+.graph-options[open]{background:var(--surface);border-radius:7px;padding-bottom:6px}
+.graph-options label{display:block;padding:5px 9px;font-size:11px}
+#caption{top:auto;bottom:43px;left:12px;border:0;background:transparent;color:var(--muted);font-size:10px;max-width:65%;pointer-events:none}
