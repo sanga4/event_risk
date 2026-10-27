@@ -205,6 +205,36 @@
         "No actual Kalshi/Polymarket contract, verified series, or security return beta was claimed.");
     }catch(e){status("Extended factor/pathway import failed: "+e.message);}
   }
+  async function importMarkets(){
+    if(!inExcel)return;
+    status("Retrieving licensed captured market values from MotherDuck via EventRisk API...");
+    try{
+      if(!$("key").value.trim())throw Error("Issued analyst key is required");
+      const venue=$("venue").value;
+      if(!["kalshi","polymarket"].includes(venue))throw Error("Invalid venue");
+      const d=await api("/api/v1/research/markets?venue="+venue+"&limit=50",true);
+      if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTES"||d.venue!==venue)
+        throw Error("Unexpected market-data source contract");
+      await Excel.run(async c=>{
+        await writeSheet(c,"ER_MarketValues",[
+          ["Venue","Native contract ID","Event ID","Event title","Market question",
+           "YES market-implied %","Previous capture %","Change (percentage points)",
+           "Quote basis","Warehouse known at","Provider observed at",
+           "Captured timestamp verified","Quote freshness verified","Original PIT released"],
+          ...d.rows.map(m=>[
+           m.venue,m.market_id,m.event_id,m.event_title,m.question,
+           typeof m.probability==="number"?m.probability*100:"",
+           typeof m.previous_probability==="number"?m.previous_probability*100:"",
+           m.probability_delta_pp,m.quote_basis,m.known_at,m.observed_at,
+           m.capture_time_verified,m.provider_quote_freshness_verified,
+           m.historical_point_in_time_released])
+        ]);
+        await c.sync();
+      });
+      status("Imported "+d.rows.length+" source-permitted market quotes. Captured quotes are not current executable prices, calibrated probabilities of the normalized event, or verified original PIT.");
+    }catch(e){status("Market odds import unavailable: "+e.message+
+      ". Requires a valid analyst key and independent source redisplay authorization.");}
+  }
   async function init(){
     try{
       const [c,g,i]=await Promise.all([
@@ -223,7 +253,7 @@
     Office.onReady(info=>{
       if(info.host!==Office.HostType.Excel){status("This taskpane must run inside Microsoft Excel.");return;}
       inExcel=true;
-      for(const id of ["reference","graph","extended","regression","series"])$(id).disabled=false;
+      for(const id of ["reference","graph","extended","regression","series","market-values"])$(id).disabled=false;
       status("Connected to Microsoft Excel. Public catalogs are ready; real warehouse regressions and factor data require separate analyst/source authorization.");
     });
   }
@@ -231,6 +261,7 @@
     $("reference").addEventListener("click",importReference);
     $("graph").addEventListener("click",importGraph);
     $("extended").addEventListener("click",importExtended);
+    $("market-values").addEventListener("click",importMarkets);
     $("regression").addEventListener("click",importModels);
     $("series").addEventListener("click",importSeries);
     init();
