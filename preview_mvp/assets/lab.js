@@ -10,7 +10,7 @@
     return n;
   };
   const state={graph:null,catalog:null,runtime:null,
-    key:"",
+    key:"",ownerKey:"",
     caseId:"inflation",loadedModels:[],loadedSeries:[],loadedFactor:null,
     fetchedModelTicker:null};
   const CASES={
@@ -37,7 +37,9 @@
   };
   const errText=e=>e instanceof Error?e.message:String(e);
   async function request(path){
-    const r=await fetch(path,{cache:"no-store",headers:{"X-Analyst-Key":state.key}});
+    const headers={"X-Analyst-Key":state.key};
+    if(state.ownerKey)headers["X-Data-Admin-Key"]=state.ownerKey;
+    const r=await fetch(path,{cache:"no-store",headers});
     let data;
     try{data=await r.json();}catch(_){throw Error("Invalid source response");}
     if(!r.ok)throw Error(data.error||"Research API HTTP "+r.status);
@@ -262,8 +264,11 @@
     $("set-key").addEventListener("click",()=>{
       const value=$("key").value.trim();
       if(!value){$("auth-message").textContent="No key entered; source queries remain locked.";return;}
-      state.key=value;
-      $("key").value="";$("auth-message").textContent="Key saved only for this browser tab. No database credential is exposed; source permission remains independent.";
+      state.key=value;state.ownerKey=$("owner-key").value.trim();
+      $("key").value="";$("owner-key").value="";
+      $("auth-message").textContent=state.ownerKey?
+        "Private owner research keys held only in this page memory; no public source redistribution granted.":
+        "Analyst key held only in page memory; source and derived records need owner authorization or separate rights approval.";
     });
     $("export").addEventListener("click",exportLoaded);
     $("print").addEventListener("click",()=>window.print());
@@ -285,7 +290,7 @@
       $("auth-message").textContent=runtime.connection_tested?
         (runtime.derived_research_distribution_approved?
           "Historical models and factor series require an issued analyst key; coefficients remain noncausal.":
-          "Database is live, but derived research redistribution is not authorized. Public scenario pathways work; historical model and factor endpoints correctly return 403.") :
+          "Database is live. Personal research can load models and factor histories with BOTH owner and analyst keys; without owner authorization the source rights gate returns 403.") :
         "Historical queries require a successful MotherDuck connection, an analyst key, and approved data-use rights.";
       for(const sec of catalog.securities){
         const option=element("option");option.value=sec.ticker;
