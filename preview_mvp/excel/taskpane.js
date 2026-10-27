@@ -15,6 +15,7 @@
   }
   async function api(path,priv=false){
     const headers=priv?{"X-Analyst-Key":$("key").value.trim()}:{};
+    if(priv&&$("owner-key").value.trim())headers["X-Data-Admin-Key"]=$("owner-key").value.trim();
     const r=await fetch(path,{headers,cache:"no-store"});
     let d;try{d=await r.json();}catch(_){throw Error("Invalid backend source response");}
     if(!r.ok)throw Error(d.error||"HTTP "+r.status);
