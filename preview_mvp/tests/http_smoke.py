@@ -55,6 +55,13 @@ try:
     assert "event:data_center_demand" in path_ids
     assert "security:EQIX" in path_ids
     assert "factor:PROPOSED.REAL_ESTATE.DC_REIT" in path_ids
+    _,extension=call("/api/v1/factor-proposals")
+    extension=json.loads(extension)
+    assert extension["mode"]=="PROPOSED_UNMEASURED_FACTOR_TAXONOMY"
+    assert extension["count"]>=140
+    assert extension["validated_series_count"]==0
+    assert all(f["validated_observation_series"] is False for f in extension["factors"])
+
 
     assert len(graph["nodes"])==len(ids) and len(ids)>680
     assert all(e["src"] in ids and e["dst"] in ids for e in graph["edges"])
