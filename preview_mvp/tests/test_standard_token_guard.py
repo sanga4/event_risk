@@ -43,14 +43,8 @@ class StandardMotherDuckTokenGuardTests(unittest.TestCase):
         ]
         for sql in statements:
             with self.subTest(sql=sql[:70]):
-                with self.assertRaises((ValueError,Exception)):
-                    # Strongly ensure a rejection, rather than parser code silently
-                    # accepting a malformed mutation without contacting MotherDuck.
-                    try:
-                        app._assert_read_query(sql)
-                    except Exception:
-                        continue
-                    self.fail("unsafe SQL accepted")
+                with self.assertRaises(Exception):
+                    app._assert_read_query(sql)
 
     def test_dynamic_external_readers_rejected(self):
         statements=[
@@ -63,11 +57,8 @@ class StandardMotherDuckTokenGuardTests(unittest.TestCase):
         ]
         for sql in statements:
             with self.subTest(sql=sql):
-                try:
+with self.assertRaises(Exception):
                     app._assert_read_query(sql)
-                except Exception:
-                    continue
-                self.fail("dynamic or external function accepted")
 
     def test_error_before_any_query_or_connection(self):
         # A missing credential must fail closed, not connect or execute.
