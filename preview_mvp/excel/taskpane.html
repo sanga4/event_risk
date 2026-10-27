@@ -10,6 +10,9 @@
 <div class="module"><b>Authenticated analyst research</b>
 <label for="key">Issued analyst research key</label><input type="password" id="key" placeholder="Key never embedded in workbook" autocomplete="off">
 <label for="ticker">Security ticker</label><input id="ticker" value="TSM" maxlength="25">
+<label for="venue">Prediction-market venue</label>
+<select id="venue"><option value="kalshi">Kalshi</option><option value="polymarket">Polymarket</option></select>
+<button id="market-values" disabled>Import captured market probabilities</button>
 <button id="regression" disabled>Import actual regression diagnostics</button>
 <label for="factor">Observed source series</label>
 <select id="factor"><option value="DGS2">DGS2 — 2Y Treasury</option><option value="DGS10">DGS10 — 10Y Treasury</option><option value="DGS5">DGS5 — 5Y Treasury</option><option value="PAR_NOMINAL_REAL_GAP_10Y">10Y nominal/real gap</option></select>
