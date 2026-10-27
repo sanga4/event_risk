@@ -44,8 +44,10 @@ async function viewer(width,height,dir){
  assert.equal(await page.locator('a[href="/excel/manifest.xml"]').count(),1);
  assert.ok(!(await page.locator("body").innerText()).includes("Event Attribution"));
  assert.ok((await page.locator("#live-status").textContent()).length>5);
- if(width>=900){
-  await page.waitForFunction(()=>document.querySelector("#graph canvas")!==null,null,{timeout:15000});
+ if(width<900)assert.equal(await page.locator("#detail").isVisible(),true);
+  if(width>=900){
+  await page.waitForFunction(()=>document.querySelector("#graph svg g[role='button']")!==null,null,{timeout:15000});
+   assert.ok((await page.locator("#graph svg g[role='button']").count())>=5);
   // Initial selection is asynchronous; verify concrete security details after the explicit click.
  }
  await page.locator('.tabs [data-tab="securities"]').click();
@@ -59,8 +61,10 @@ async function viewer(width,height,dir){
  assert.ok((await page.locator("#list li[data-id]").count())>0);
  assert.equal(await page.locator('.tabs [data-tab="markets"]').count(),1);
  await page.locator('.tabs [data-tab="markets"]').click();
- assert.ok((await page.locator("#live-status").textContent()).includes("source redisplay rights"));
+ assert.ok((await page.locator("#live-status").textContent()).includes("private warehouse"));
  assert.equal(await page.locator("#market-venue").count(),1);
+  assert.equal(await page.locator("#market-next").count(),1);
+  assert.equal(await page.locator("#owner-key").count(),1);
  await page.locator('.tabs [data-tab="questions"]').click();
  assert.ok((await page.locator("#list-info").innerText()).includes("require MotherDuck"));
  await page.locator("aside details summary").click();
