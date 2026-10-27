@@ -38,7 +38,7 @@
        const range=sh.getRangeByIndexes(0,0,rows.length,2);
        range.values=rows;
        sh.getRange("A1:B1").format.font.bold=true;
-       sh.getRange("A1:B1").format.fill="#E9EDF3";
+       sh.getRange("A1:B1").format.fill.color="#E9EDF3";
        range.format.autofitColumns();
        await ctx.sync();
      });
