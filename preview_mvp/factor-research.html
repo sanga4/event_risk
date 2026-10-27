@@ -18,7 +18,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
 <div class="research-page"><h2>Factor Research</h2>
 <p class="subtle">A financial-factor research workspace. Public definitions are not observed values. The data below come from actual entitled warehouse queries, never invented histories or regression coefficients.</p>
 <div class="cols"><section>
-<article><h3>01 · Financial factor</h3>
+<article><h3>Factor definitions → related events</h3>
+<label class="field">Public research factor definition <select id="reference-factor"><option>Loading public factor catalog…</option></select></label>
+<button id="reference-factor-run" type="button" class="btn">Find related events</button>
+<p class="subtle">Reference-only event scenarios are hypotheses. Actual captured contracts require analyst access and approved source use.</p>
+<div id="reference-factor-status" class="subtle"></div></article>
+<article><h3>01 · Observed financial factor</h3>
 <label class="field">Published observed factor <select id="factor-id"><option>Loading factor catalog…</option></select></label>
 <button id="load-factor" type="button" class="btn">Load observed history</button>
 <p id="catalog-note" class="subtle"></p></article>
@@ -30,7 +35,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
 <label class="field">Analyst access key <input id="research-key" type="password" autocomplete="off" placeholder="Only when source rights allow"></label>
 <button id="save-key" type="button" class="btn">Use key for this session</button><button id="clear-key" type="button" class="btn">Clear</button>
 <p id="access-status" class="subtle" role="status">Catalog available without a key.</p></article></section>
-<section><article><h3>Observed factor history</h3><p id="series-status" class="subtle" role="status">Select an observed factor to request dated values.</p>
+<section><article><h3>Factor → event and contract relationships</h3><div id="reference-factor-results"><p class="subtle">Choose a factor on the left to inspect source-labeled event relevance.</p></div></article><article><h3>Observed factor history</h3><p id="series-status" class="subtle" role="status">Select an observed factor to request dated values.</p>
 <div id="factor-results"></div></article>
 <article><h3>Funding regression diagnostics</h3><p id="model-status" class="subtle" role="status">Choose a ticker to retrieve original fitted coefficients.</p><div id="model-results"></div></article>
 <article><h3>Research limitations</h3><p class="subtle">The 108 public factor definitions are not 108 financial-factor histories. The 22 original warehouse catalog rows contain approximately 18 observed series, mainly rates and related measures. Original publisher first-known timing, vendor rights, issuer adjustments and event-causal beta validity require independent review.</p></article></section></div>
