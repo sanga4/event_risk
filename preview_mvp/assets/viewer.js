@@ -84,6 +84,18 @@
      addRow(host,"Native provider event ID",n.event_id||"Not supplied");
      addRow(host,"Resolution terms","Verify at the venue; this normalized quote view does not certify them.");
      addRow(host,"Canonical event mapping","UNREVIEWED: provider grouping is not verified real-world event identity.");
+     const capture=n.capture_record;
+     if(capture){
+       addRow(host,"Venue contract status",capture.status||"Not recorded");
+       addRow(host,"YES bid",pct(capture.yes_bid));
+       addRow(host,"YES ask",pct(capture.yes_ask));
+       addRow(host,"Last traded price",pct(capture.last_price));
+       addRow(host,"Provider quote timestamp",capture.provider_quote_at||"Not available");
+       addRow(host,"Warehouse receipt timestamp",capture.capture_received_at||"Not available");
+       addRow(host,"Venue source URL",capture.source_url||"Not available");
+       addRow(host,"Capture source record hash",capture.source_record_sha256||"Not available");
+       addRow(host,"Data use classification",capture.data_use_class||"Not reviewed");
+     }
      if(Array.isArray(n.probabilityHistory)&&n.probabilityHistory.length){
        host.append(mk("h3","Captured probability history"));
        for(const p of n.probabilityHistory.slice(0,8)){
