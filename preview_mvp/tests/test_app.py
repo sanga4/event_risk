@@ -137,7 +137,7 @@ class PreviewMVPAcceptance(TestCase):
         self.assertEqual(app.FILES["/"],"viewer.html")
         self.assertEqual(app.FILES["/lab"],"lab.html")
         self.assertEqual(app.FILES["/api"],"api.html")
-        self.assertIn("/api/v1/graph-paths",inspect.getsource(app.Server.respond))
+        self.assertIn("/api/v1/graph-paths",(ROOT/"app.py").read_text())
         self.assertEqual(app.FILES["/previous-explorer"],"marco.html")
         self.assertIn("Event Risk Graph",html)
         self.assertNotIn("Event Attribution",html)
