@@ -6,7 +6,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
-              key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],sourceEvents:[],marketOffset:0,network:null,runtime:null};
+              key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],sourceEvents:[],sourcePropositions:[],marketOffset:0,network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
  const mk=(tag,text,cls)=>{const e=document.createElement(tag);
@@ -20,7 +20,7 @@
      state.adj.get(id).push(e);
    }
  }
- function nodeType(n){return n.source_event?"Native provider event (not canonical)":n.type==="market"?"Captured market contract":n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
+ function nodeType(n){return n.source_event?"Native provider event (not canonical)":n.type==="market"?"Captured market contract":n.type==="proposition"?"Warehouse proposition (identity unverified)":n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
    n.type==="factor"?"Factor definition":n.type==="channel"?"Economic channel":n.type==="security"?"Security":"Entity";}
  function graphNeighbors(id){
    return (state.adj.get(id)||[]).map(edge=>({edge,other:edge.src===id?edge.dst:edge.src}))
@@ -65,6 +65,7 @@
    if(n.description)addRow(host,"Description",n.description);
    if(n.last_recorded_at)addRow(host,"Warehouse recorded",n.last_recorded_at);
    if(n.native_event_id)addRow(host,"Native provider event ID",n.native_event_id);
+   if(n.proposition_id)addRow(host,"Warehouse proposition ID",n.proposition_id);
    if(n.type==="market"){
      const pct=v=>typeof v==="number"&&Number.isFinite(v)?(v*100).toFixed(1)+"%":"Not captured";
      const percentage=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+" pp":"Not captured";
@@ -281,14 +282,14 @@
      const d=await request("/api/v1/research/markets?venue="+encodeURIComponent(venue)+
        "&limit=50&offset="+state.marketOffset+"&q="+encodeURIComponent(query));
      if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTES")throw Error("Unexpected quote source");
-     for(const n of [...state.sourceMarkets,...state.sourceEvents])state.nodes.delete(n.id);
-     state.sourceMarkets=[];state.sourceEvents=[];
+     for(const n of [...state.sourceMarkets,...state.sourceEvents,...state.sourcePropositions])state.nodes.delete(n.id);
+     state.sourceMarkets=[];state.sourceEvents=[];state.sourcePropositions=[];
      state.edges=state.edges.filter(e=>!e.ownerMarketGrouping);
-     const sourceGroupIds=new Set();
+     const sourceGroupIds=new Set(),sourcePropositionIds=new Set();
      for(const m of d.rows||[]){
        const n={id:"market:"+m.venue+":"+m.market_id,type:"market",
          name:m.question||m.event_title||m.market_id,
-         provider:m.venue,market_id:m.market_id,event_id:m.event_id,event_title:m.event_title,liveWarehouse:true,
+         provider:m.venue,market_id:m.market_id,event_id:m.event_id,event_title:m.event_title,proposition_id:m.proposition_id,liveWarehouse:true,
          probability:m.probability,previous_probability:m.previous_probability,
          probability_delta_pp:m.probability_delta_pp,quote_basis:m.quote_basis,
          known_at:m.known_at,observed_at:m.observed_at,
@@ -297,6 +298,19 @@
          historical_point_in_time_released:m.historical_point_in_time_released,
          review_status:"Captured warehouse quote; venue freshness and original PIT unverified"};
        state.nodes.set(n.id,n);state.sourceMarkets.push(n);
+       if(m.proposition_id){
+         const propositionId=m.proposition_id;
+         if(!sourcePropositionIds.has(propositionId)){
+           sourcePropositionIds.add(propositionId);
+           const proposition={id:propositionId,name:"Warehouse proposition · "+propositionId,
+             type:"proposition",liveWarehouse:true,
+             review_status:"WAREHOUSE_PROPOSITION_ID_NOT_VERIFIED_CANONICAL_EVENT"};
+           state.nodes.set(propositionId,proposition);state.sourcePropositions.push(proposition);
+         }
+         state.edges.push({src:n.id,dst:propositionId,
+           type:"warehouse_market_to_proposition",ownerMarketGrouping:true,
+           review_status:"SOURCE_DERIVED_IDENTITY_NOT_CANONICAL_EVENT"});
+       }
        if(m.event_id){
          const groupId="venue-event:"+m.venue+":"+m.event_id;
          if(!sourceGroupIds.has(groupId)){
@@ -341,6 +355,8 @@
        }catch(_){n.probabilityHistory=[];}
        Object.assign(n,d.record);
        n.probability=d.record.probability;
+       if(n.proposition_id && state.nodes.has(n.proposition_id))
+         await loadNeighbors(n.proposition_id);
        if(state.selected===id){detail(id);browse();}
      }
    }catch(e){$("live-status").textContent="Market detail unavailable: "+e.message;}
@@ -374,7 +390,7 @@
      for(const r of d.nodes||[]){
        if(!state.nodes.has(r.node_id))state.nodes.set(r.node_id,{
           id:r.node_id,name:r.name||r.node_id,
-          type:["question","entity","security","factor"].includes(r.node_type)?r.node_type:"entity",
+          type:["question","entity","security","factor","proposition","market"].includes(r.node_type)?r.node_type:"entity",
           liveWarehouse:true,review_status:"Source graph record (PIT not verified)"});
      }
      const sig=new Set(state.edges.map(e=>[e.src,e.dst,e.type].join("|")));
