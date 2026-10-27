@@ -150,3 +150,15 @@ aside details input { margin: 3px 0 8px; }
   .tabs button { flex-shrink: 0; }
   .legend { flex-wrap: wrap; gap: 5px; left: 6px; right: 6px; }
 }
+
+/* Original Marco hierarchy: plain text navigation, compact 3-column browser. */
+header nav a {color:var(--ink-2);font-size:13px;text-decoration:none;padding:6px 9px;border-radius:6px;}
+header nav a[aria-current="page"] {font-weight:600;color:var(--ink);background:var(--hover);}
+header nav a:hover {background:var(--hover);}
+#detail .detail-link {display:block;width:100%;text-align:left;padding:8px 0;border:0;
+ border-top:1px solid var(--hairline);background:transparent;cursor:pointer;white-space:normal;
+ color:var(--ink);}
+#detail .detail-link:hover {background:var(--hover);}
+#detail .detail-link .meta{color:var(--ink-2);font-size:12px;margin-top:3px;}
+#list li {min-height:35px;}
+#market-pagination {flex-shrink:0;}
