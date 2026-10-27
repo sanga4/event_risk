@@ -1,3 +1,5 @@
+> **Verified connection update (2026-10-26/27):** EventRisk Research Railway successfully executed a MotherDuck startup SELECT using its privately configured token. This verifies network/database connectivity, **not** database-level read-only privileges. The API uses one-statement SELECT parsing, fixed SQL templates, parameterized filters and separate source/derived redisplay gates. Regression and factor-history queries were independently checked against live warehouse tables. The API and Excel are the product; the Marco-style website is only a reference graph viewer.
+
 # EventRisk Research — Product Release & MotherDuck Integration
 
 **Product identity:** EventRisk Research (not an MVP or Preview-branded customer product).
@@ -18,10 +20,10 @@
 
 ## Credentials — owner action required
 
-Create **one new dedicated MotherDuck service account** with a **Read Scaling Token** and only reviewed, entitled research database shares. Read scaling prevents writes but **does not grant table-level confidentiality automatically**. Limit the shared database/rights at the MotherDuck service-account level. MotherDuck docs: https://motherduck.com/docs/key-tasks/authenticating-and-connecting-to-motherduck/read-scaling/ and https://motherduck.com/docs/key-tasks/ai-and-motherduck/securing-read-only-access/.
+Use a dedicated MotherDuck identity and approved research database share. A Read Scaling Token is preferable when the subscription supports it; a standard token can connect on Lite but retains database write authority, so only use it for controlled internal research with tightly scoped application queries. Read scaling prevents writes but **does not grant table-level confidentiality automatically**. Limit the shared database/rights at the MotherDuck service-account level. MotherDuck docs: https://motherduck.com/docs/key-tasks/authenticating-and-connecting-to-motherduck/read-scaling/ and https://motherduck.com/docs/key-tasks/ai-and-motherduck/securing-read-only-access/.
 
 In Railway project `eventrisk-research` → service `eventrisk-research-web` → Variables, set these server-only, strong secrets privately:
-- `MOTHERDUCK_TOKEN` — newly issued read-scaling service token scoped to permitted research data.
+- `MOTHERDUCK_TOKEN` — a securely stored MotherDuck token; standard Lite PATs can write at the database level even though EventRisk API paths use fixed parsed SELECTs.
 - `EVENTRISK_ANALYST_KEY` — separate closed-research identity verification key; replace with per-user SSO for a wider commercial multi-analyst release.
 - `EVENTRISK_DATA_ADMIN_KEY` — distinct, high-entropy internal read-only admin key. **Never** give it to ordinary public-site visitors.
 
@@ -33,7 +35,7 @@ The previous `PREVIEW_MVP_ANALYST_KEY` and `PREVIEW_MVP_*_APPROVED` aliases rema
 
 **Never paste issued tokens into chat or the public website.** The browser prompts only for the analyst access key, and /data additionally requires its separate administrator key.
 
-## Exact read-only connection acceptance
+## Live connection and application-layer SELECT acceptance
 1. Set the three independent server-only secrets. Do not reuse Phase I's token.
 2. Confirm `GET /api/v1/runtime` reports `database_credentials_present:true`, `analyst_key_configured:true`, `admin_key_configured:true`. Those flags indicate **configuration, not proof of a query**.
 3. Enter the issued analyst access key under the Marco graph's `Research connection` disclosure. It calls `GET /api/v1/research/coverage` and should return `LIVE_DATABASE_COUNT_ONLY`, matching current MotherDuck counts. After a *successful* SELECT, `connection_tested:true` and the last-successful timestamp are reported.
@@ -43,7 +45,7 @@ The previous `PREVIEW_MVP_ANALYST_KEY` and `PREVIEW_MVP_*_APPROVED` aliases rema
 
 ## Explicit source limitations
 
-A complete read-only database connection does not make every observation a verified event nor validate the institutional factor model. Captured market/question node counts differ from unique independent economic events; the historical factor warehouse covers 18 source-observed series against 108 public definitions. Funding regressions remain **associational research** with zero global Holm-surviving candidates in the audited original 96-family. Provider-first-publication PIT, redistribution rights and event-specific causal effect validation remain separate release gates.
+A successful database connection with SELECT-restricted application queries does not make every observation a verified event nor validate the institutional factor model. Captured market/question node counts differ from unique independent economic events; the historical factor warehouse covers 18 source-observed series against 108 public definitions. Funding regressions remain **associational research** with zero global Holm-surviving candidates in the audited original 96-family. Provider-first-publication PIT, redistribution rights and event-specific causal effect validation remain separate release gates.
 
 **Institutional Phase I** is preserved in its own `main` branch and Railway deployment. The former Preview MVP remains an independently pinned prior iteration; it is not renamed, replaced or merged into Phase I.
 
@@ -69,7 +71,7 @@ The warehouse database and protected `/data` administrative explorer are **backe
 
 ### What the owner must configure (privately)
 
-In MotherDuck, **create a dedicated service account and issue a Read Scaling Token**, granting it access only to the approved EventRisk research data/approved share. The connected MotherDuck research plugin can query the account but does not offer durable token creation. In Railway's **eventrisk-research → eventrisk-research-web → Variables**, set `MOTHERDUCK_TOKEN` (the database token, private), `EVENTRISK_ANALYST_KEY` (a new strong password for the closed API audience), and only if admin table inspection is needed `EVENTRISK_DATA_ADMIN_KEY` (different and restricted). Do not put MotherDuck tokens or admin keys into GitHub, browser scripts or this chat.
+In MotherDuck, **create an isolated research identity, using a Read Scaling Token if available or an internally controlled standard PAT on Lite**, granting it access only to the approved EventRisk research data/approved share. The connected MotherDuck research plugin can query the account but does not offer durable token creation. In Railway's **eventrisk-research → eventrisk-research-web → Variables**, set `MOTHERDUCK_TOKEN` (the database token, private), `EVENTRISK_ANALYST_KEY` (a new strong password for the closed API audience), and only if admin table inspection is needed `EVENTRISK_DATA_ADMIN_KEY` (different and restricted). Do not put MotherDuck tokens or admin keys into GitHub, browser scripts or this chat.
 
 Data-owner approvals are **separate from database connectivity**. Enable `EVENTRISK_SOURCE_REDISPLAY_APPROVED` only after documenting legal rights to display source question names and records. Enable `EVENTRISK_DERIVED_RESEARCH_APPROVED` only after documenting rights to distribute derived financial model/factor records. Without these approvals, the website may show its public repo seed graph, but protected records stay unavailable.
 
