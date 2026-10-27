@@ -75,6 +75,15 @@
      addRow(host,"Capture timestamp verified",n.capture_time_verified===true?"Yes":"Not verified");
      addRow(host,"Provider freshness verified",n.provider_quote_freshness_verified===true?"Yes":"Not verified");
      addRow(host,"Original PIT released",n.historical_point_in_time_released===true?"Yes":"No");
+     if(Array.isArray(n.probabilityHistory)&&n.probabilityHistory.length){
+       host.append(mk("h3","Captured probability history"));
+       for(const p of n.probabilityHistory.slice(0,8)){
+         const prob=typeof p.probability==="number"?(p.probability*100).toFixed(1)+"%":"n/a";
+         addRow(host,p.observed_date,prob+" · "+
+           (typeof p.probability_delta_pp==="number"?
+             (p.probability_delta_pp>=0?"+":"")+p.probability_delta_pp.toFixed(2)+" pp":"no prior delta"));
+       }
+     }
      host.append(mk("p","Captured quote, not necessarily a current tradable price or the probability of the normalized event. Market prices and probabilities differ by contract structure.","note"));
    }
    if(n.type==="contract"&&!n.market_id)addRow(host,"Market probability","Not available: this is a synthetic demonstration, not a real exchange contract.");
@@ -228,6 +237,13 @@
        encodeURIComponent(n.provider)+"&market_id="+encodeURIComponent(n.market_id));
      if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTE")throw Error("Invalid quote contract");
      if(d.record){
+       try{
+         const hist=await request("/api/v1/research/market-history?venue="+
+           encodeURIComponent(n.provider)+"&market_id="+encodeURIComponent(n.market_id)+
+           "&limit=8");
+         if(hist.mode==="LICENSE_GATED_CAPTURED_MARKET_HISTORY")
+           n.probabilityHistory=hist.rows||[];
+       }catch(_){n.probabilityHistory=[];}
        Object.assign(n,d.record);
        n.probability=d.record.probability;
        if(state.selected===id){detail(id);browse();}
