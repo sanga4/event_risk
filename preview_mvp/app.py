@@ -57,6 +57,7 @@ FILES = {"/": "viewer.html", "/previous-explorer": "marco.html",
          "/assets/data.css":"assets/data.css", "/assets/data.js":"assets/data.js",
          "/excel/taskpane.html":"excel/taskpane.html",
          "/excel/taskpane.js":"excel/taskpane.js",
+         "/excel/live-coverage.js":"excel/live-coverage.js",
          "/excel/taskpane.css":"excel/taskpane.css",
          "/excel/manifest.xml":"excel/manifest.xml"}
 FACTOR_CATALOG_VERSION = "2026-10-20.1"
