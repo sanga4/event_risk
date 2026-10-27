@@ -176,6 +176,20 @@ class PreviewMVPAcceptance(TestCase):
         self.assertIn("LIVE_MOTHERDUCK_ADMIN_READ_ONLY_PAGE",js)
         self.assertNotIn("localStorage",js)
 
+    def test_factor_history_sql_quotes_value_and_uses_observed_date(self):
+        observed=[]
+        def source_query(sql,params=()):
+            observed.append((sql,params))
+            return []
+        with mock.patch.object(app,"bool_flag",return_value=True), \
+             mock.patch.object(app,"_db_query",side_effect=source_query):
+            outcome=app.research("/api/v1/research/factor-series",
+                                 {"factor_id":["DGS10"],"limit":["3"]})
+        self.assertTrue(outcome["no_first_publication_claim"])
+        self.assertIn('arg_max("value",availability_at) AS "value"',observed[0][0])
+        self.assertEqual(observed[0][1],("DGS10",3))
+        self.assertTrue(app._assert_read_query(observed[0][0]))
+
     def test_warehouse_dataset_request_preserves_source_rights(self):
         rows=[{"name":"lab_factor_catalog","columns":[{"name":"factor_id","type":"VARCHAR"}],
                "kind":"FACTOR_METADATA"}]
