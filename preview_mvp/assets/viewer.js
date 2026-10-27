@@ -5,6 +5,8 @@
 */
 (()=>{
  const $=id=>document.getElementById(id);
+ const SESSION_KEY="eventriskResearchAnalystKey";
+ function savedKey(){try{return sessionStorage.getItem(SESSION_KEY)||""}catch(_){return ""}}
  const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"events",reverseByNode:new Map(),
               key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],sourceEvents:[],sourcePropositions:[],marketOffset:0,network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
@@ -306,11 +308,55 @@
    $("caption").textContent=nodes.length+" nodes · "+edges.length+" source/reference edges";
    requestAnimationFrame(()=>state.network.fit({animation:false}));
  }
+ async function loadReverse(id){
+   const n=state.nodes.get(id);
+   if(!n||!state.key||!["entity","security","factor","question","proposition"].includes(n.type))return;
+   const kind=n.type;
+   const nodeId=kind==="security"?"sec:"+(n.ticker||id.split(":").pop()):
+     kind==="entity"&&id.startsWith("entity:Q")?"wd:"+id.slice(7):id;
+   try{
+     const data=await request("/api/v1/research/reverse?kind="+encodeURIComponent(kind)+
+       "&node_id="+encodeURIComponent(nodeId)+"&limit=40");
+     if(data.mode!=="ENTITLED_REVERSE_GRAPH_TO_CAPTURED_CONTRACTS")throw Error("Unexpected reverse lookup");
+     state.reverseByNode.set(id,data.rows||[]);
+     const sig=new Set(state.edges.map(e=>[e.src,e.dst,e.type].join("|")));
+     for(const q of data.rows||[]){
+       if(!q.venue||!q.market_id)continue;
+       const marketId="market:"+q.venue+":"+q.market_id;
+       state.nodes.set(marketId,{id:marketId,type:"market",name:q.contract_question,
+         provider:q.venue,market_id:q.market_id,event_id:q.event_id,
+         probability:q.probability,previous_probability:q.previous_probability,
+         probability_delta_pp:q.probability_delta_pp,quote_basis:q.quote_basis,
+         observed_at:q.observed_at,known_at:q.known_at,liveWarehouse:true,
+         provider_quote_freshness_verified:q.provider_quote_freshness_verified,
+         historical_point_in_time_released:q.historical_point_in_time_released,
+         review_status:"Sampled captured quote; event relevance is a research hypothesis"});
+       const link={src:id,dst:marketId,type:"reverse_research_candidate_not_causal",
+         review_status:"SOURCE_GRAPH_PATH_NOT_A_SECURITY_EVENT_BETA"};
+       const key=[link.src,link.dst,link.type].join("|");
+       if(!sig.has(key)){state.edges.push(link);sig.add(key)}
+       if(q.event_id){
+         const evId="venue-event:"+q.venue+":"+q.event_id;
+         if(!state.nodes.has(evId))state.nodes.set(evId,{id:evId,type:"event",
+           name:q.event_title||q.question_name||q.event_id,source_event:true,
+           provider:q.venue,native_event_id:q.event_id,
+           review_status:"NATIVE_PROVIDER_GROUP_NOT_CANONICAL_EVENT"});
+         const evLink={src:evId,dst:marketId,type:"native_provider_event_grouping"};
+         const k=[evLink.src,evLink.dst,evLink.type].join("|");
+         if(!sig.has(k)){state.edges.push(evLink);sig.add(k)}
+       }
+     }
+     if(state.selected===id){reindex();detail(id);graph(id);browse();}
+     $("live-status").textContent=(data.rows||[]).length+" reverse contract-path records loaded; event links unreviewed.";
+   }catch(e){$("live-status").textContent="Reverse lookup unavailable: "+e.message+
+     ". Captured market values require independent source-use approval."}
+ }
  async function select(id){
    if(!state.nodes.has(id))return;
    state.selected=id;browse();detail(id);graph(id);
    if(state.nodes.get(id).type==="market"&&state.key)await loadMarketValue(id);
    else if(state.nodes.get(id).liveWarehouse&&!state.nodes.get(id).source_event&&state.key)await loadNeighbors(id);
+   if(state.key)await loadReverse(id);
  }
  async function request(path){
    const headers={"X-Analyst-Key":state.key};
@@ -456,19 +502,20 @@
    }catch(e){$("live-status").textContent="Live neighborhood unavailable: "+e.message}
  }
  async function connect(){
-   state.key=$("analyst-key").value.trim();state.ownerKey=$("owner-key").value.trim();
-   $("analyst-key").value="";$("owner-key").value="";
+   state.key=$("analyst-key").value.trim()||savedKey();state.ownerKey="";
+   $("analyst-key").value="";
    if(!state.key){$("live-status").textContent="Enter your issued analyst API key.";return;}
    try{
      const d=await request("/api/v1/research/coverage");
      if(d.mode!=="LIVE_DATABASE_COUNT_ONLY")throw Error("Unexpected source contract");
+     try{sessionStorage.setItem(SESSION_KEY,state.key)}catch(_){}
      state.tab="markets";
      for(const b of document.querySelectorAll(".tabs button"))
        b.setAttribute("aria-selected",String(b.dataset.tab==="markets"));
-     $("live-status").textContent=state.ownerKey?"Private inspection enabled (not redistribution)":
-       "Analyst connection verified; private source inspection also requires data-admin key.";
+     $("live-status").textContent="Analyst authentication verified. Captured quote redisplay remains separately permission-gated.";
      await searchMarkets();
-   }catch(e){state.key="";state.ownerKey="";$("live-status").textContent="Warehouse unlock failed: "+e.message;
+   }catch(e){state.key="";state.ownerKey="";try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
+     $("live-status").textContent="Analyst connection failed: "+e.message;
      browse();}
  }
  function wire(){
@@ -490,6 +537,14 @@
    $("depth").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("show-factors").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("connect").addEventListener("click",connect);
+   $("sign-out").addEventListener("click",()=>{
+      state.key="";state.ownerKey="";state.reverseByNode.clear();
+      try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
+      state.tab="events";for(const b of document.querySelectorAll(".tabs button"))
+        b.setAttribute("aria-selected",String(b.dataset.tab==="events"));
+      $("live-status").textContent="Public reference mode; analyst key forgotten for this tab.";
+      browse();if(state.selected)detail(state.selected);
+   });
    $("market-venue").addEventListener("change",()=>{state.marketOffset=0;
       if(state.tab==="markets")searchMarkets()});
    $("market-prev").addEventListener("click",()=>{state.marketOffset=Math.max(0,state.marketOffset-50);searchMarkets()});
@@ -522,15 +577,17 @@
        throw Error("Unexpected research graph provenance");
      for(const n of g.nodes)state.nodes.set(n.id,n);
      state.edges=g.edges;state.runtime=r;reindex();
+     state.key=savedKey();
      $("live-status").textContent=r.connection_tested?
        "Server queried MotherDuck · sign in to load source questions.":
        r.database_credentials_present?"Warehouse configured; not yet verified for this session.":
        "Not connected: Railway MOTHERDUCK_TOKEN is not configured.";
      state.network=createLocalGraph($("graph"));
      browse();
-     const first=state.nodes.has("contract:illustrative:data_center_power")?"contract:illustrative:data_center_power":
+     const first=[...state.nodes.values()].find(n=>n.type==="event"&&!n.source_event)?.id||
        [...state.nodes.values()].find(n=>n.type==="entity")?.id;
      if(first)select(first);
+     if(state.key){$("live-status").textContent="Analyst session restored; actual source records still require redistribution authorization.";}
    }catch(e){$("empty").textContent="Source unavailable: "+e.message;
      $("live-status").textContent="Graph unavailable";}
  }
