@@ -9,6 +9,8 @@
 <h3>Available endpoints</h3>
 <table class="rungs" style="width:100%"><tr><th>Resource</th><th>Purpose</th></tr>
 <tr><td><a href="/api/v1/live-coverage">/api/v1/live-coverage</a></td><td>Cached, aggregated live MotherDuck counts of captured Kalshi/Polymarket market IDs and observed factors; no contract text, market quotes, or source redisplay permission implied</td></tr>
+<tr><td>/api/v1/research/markets?venue=kalshi&amp;limit=25</td><td>Authenticated, source-rights-gated captured market quote discovery; YES probability, prior capture, change and timestamps. Not real-time executable prices.</td></tr>
+<tr><td>/api/v1/research/market-quote?venue=polymarket&amp;market_id=...</td><td>One clicked contract's captured price and provenance; real-source permission is required, independently of database connectivity.</td></tr>
 <tr><td><a href="/api/v1/runtime">/api/v1/runtime</a></td><td>Actual live-connection configuration and last successful SELECT; a configured token does not prove connectivity</td></tr>
 <tr><td><a href="/api/v1/catalog">/api/v1/catalog</a></td><td>Repository reference securities (543), factor definitions (108), economic-channel labels</td></tr>
 <tr><td><a href="/api/v1/graph">/api/v1/graph</a></td><td>Public source seed links; hypothetical transmission links labeled noncausal</td></tr>
