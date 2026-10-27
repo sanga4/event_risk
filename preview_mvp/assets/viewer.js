@@ -6,7 +6,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
-              key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],network:null,runtime:null};
+              key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],sourceEvents:[],marketOffset:0,network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
  const mk=(tag,text,cls)=>{const e=document.createElement(tag);
@@ -20,7 +20,7 @@
      state.adj.get(id).push(e);
    }
  }
- function nodeType(n){return n.type==="market"?"Captured market contract":n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
+ function nodeType(n){return n.source_event?"Native provider event (not canonical)":n.type==="market"?"Captured market contract":n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
    n.type==="factor"?"Factor definition":n.type==="channel"?"Economic channel":n.type==="security"?"Security":"Entity";}
  function graphNeighbors(id){
    return (state.adj.get(id)||[]).map(edge=>({edge,other:edge.src===id?edge.dst:edge.src}))
@@ -66,6 +66,9 @@
    if(n.type==="market"){
      const pct=v=>typeof v==="number"&&Number.isFinite(v)?(v*100).toFixed(1)+"%":"Not captured";
      const percentage=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+" pp":"Not captured";
+     const hero=mk("div",undefined,"hero");
+     hero.append(mk("b",pct(n.probability)),mk("span","captured YES price · "+n.provider));
+     host.append(hero);
      addRow(host,"YES implied market price",pct(n.probability));
      addRow(host,"Previous capture",pct(n.previous_probability));
      addRow(host,"Change from prior capture",percentage(n.probability_delta_pp));
@@ -75,6 +78,9 @@
      addRow(host,"Capture timestamp verified",n.capture_time_verified===true?"Yes":"Not verified");
      addRow(host,"Provider freshness verified",n.provider_quote_freshness_verified===true?"Yes":"Not verified");
      addRow(host,"Original PIT released",n.historical_point_in_time_released===true?"Yes":"No");
+     addRow(host,"Native provider event ID",n.event_id||"Not supplied");
+     addRow(host,"Resolution terms","Verify at the venue; this normalized quote view does not certify them.");
+     addRow(host,"Canonical event mapping","UNREVIEWED: provider grouping is not verified real-world event identity.");
      if(Array.isArray(n.probabilityHistory)&&n.probabilityHistory.length){
        host.append(mk("h3","Captured probability history"));
        for(const p of n.probabilityHistory.slice(0,8)){
@@ -87,9 +93,9 @@
      host.append(mk("p","Captured quote, not necessarily a current tradable price or the probability of the normalized event. Market prices and probabilities differ by contract structure.","note"));
    }
    if(n.type==="contract"&&!n.market_id)addRow(host,"Market probability","Not available: this is a synthetic demonstration, not a real exchange contract.");
-   if(n.provider)addRow(host,"Provider status",n.provider);
+   if(n.provider)addRow(host,"Venue / provider",n.provider);
    if(n.historical_series_validated===false)addRow(host,"Observed factor series","NOT VERIFIED");
-   addRow(host,"Source",n.liveWarehouse?"MotherDuck / graph_nodes":
+   addRow(host,"Source",n.type==="market"?"MotherDuck / lab_live_market_latest_v1":n.source_event?"MotherDuck native provider event":n.liveWarehouse?"MotherDuck / graph_nodes":
      n.type==="contract"?"SYNTHETIC NAVIGATION EXAMPLE / NOT AN EXCHANGE CONTRACT":
      n.type==="security"?"Repository / securities.csv":
      n.type==="factor"?"Repository / factors.json":
@@ -271,14 +277,16 @@
    $("live-status").textContent="Looking up captured "+venue+" market values…";
    try{
      const d=await request("/api/v1/research/markets?venue="+encodeURIComponent(venue)+
-       "&limit=40&q="+encodeURIComponent(query));
+       "&limit=50&offset="+state.marketOffset+"&q="+encodeURIComponent(query));
      if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTES")throw Error("Unexpected quote source");
-     for(const n of state.sourceMarkets)state.nodes.delete(n.id);
-     state.sourceMarkets=[];
+     for(const n of [...state.sourceMarkets,...state.sourceEvents])state.nodes.delete(n.id);
+     state.sourceMarkets=[];state.sourceEvents=[];
+     state.edges=state.edges.filter(e=>!e.ownerMarketGrouping);
+     const sourceGroupIds=new Set();
      for(const m of d.rows||[]){
        const n={id:"market:"+m.venue+":"+m.market_id,type:"market",
          name:m.question||m.event_title||m.market_id,
-         provider:m.venue,market_id:m.market_id,liveWarehouse:true,
+         provider:m.venue,market_id:m.market_id,event_id:m.event_id,event_title:m.event_title,liveWarehouse:true,
          probability:m.probability,previous_probability:m.previous_probability,
          probability_delta_pp:m.probability_delta_pp,quote_basis:m.quote_basis,
          known_at:m.known_at,observed_at:m.observed_at,
@@ -287,10 +295,27 @@
          historical_point_in_time_released:m.historical_point_in_time_released,
          review_status:"Captured warehouse quote; venue freshness and original PIT unverified"};
        state.nodes.set(n.id,n);state.sourceMarkets.push(n);
+       if(m.event_id){
+         const groupId="venue-event:"+m.venue+":"+m.event_id;
+         if(!sourceGroupIds.has(groupId)){
+           sourceGroupIds.add(groupId);
+           const eventNode={id:groupId,name:m.event_title||m.event_id,type:"event",
+             source_event:true,native_event_id:m.event_id,provider:m.venue,liveWarehouse:true,
+             review_status:"SOURCE_PROVIDER_EVENT_GROUP_NOT_CANONICAL"};
+           state.nodes.set(groupId,eventNode);state.sourceEvents.push(eventNode);
+         }
+         state.edges.push({src:n.id,dst:groupId,type:"native_provider_event_grouping",
+           ownerMarketGrouping:true,review_status:"OBSERVED_PROVIDER_GROUPING_NO_CANONICAL_MAPPING"});
+       }
      }
-     browse();
-     $("live-status").textContent=state.sourceMarkets.length+" captured "+venue+
-       " contracts. Select one for probability, change, timestamps, and quote basis.";
+     reindex();browse();
+     if(state.sourceMarkets.length)select(state.sourceMarkets[0].id);
+     $("live-status").textContent=state.sourceMarkets.length+" "+venue+
+       " captured contracts; rows "+(state.marketOffset+1)+"–"+
+       (state.marketOffset+state.sourceMarkets.length)+
+       ". Select one for captured YES price, history and provenance.";
+     $("market-prev").disabled=state.marketOffset===0;
+     $("market-next").disabled=state.sourceMarkets.length<50;
    }catch(e){
      $("live-status").textContent="Market values unavailable: "+e.message+
        ". Owner inspection requires both keys; public redistribution remains separately gated.";
@@ -384,19 +409,23 @@
        state.tab=button.dataset.tab;
        for(const b of document.querySelectorAll(".tabs button"))
          b.setAttribute("aria-selected",String(b===button));
-       $("search").value="";
+       $("search").value="";state.marketOffset=0;
        if(state.tab==="questions")searchQuestions();else if(state.tab==="markets")searchMarkets();else browse();
      });
    });
    let debounce;
    $("search").addEventListener("input",()=>{
      if(state.tab!=="questions"&&state.tab!=="markets")return browse();
-     clearTimeout(debounce);debounce=setTimeout(state.tab==="markets"?searchMarkets:searchQuestions,350);
+     state.marketOffset=0;
+      clearTimeout(debounce);debounce=setTimeout(state.tab==="markets"?searchMarkets:searchQuestions,350);
    });
    $("depth").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("show-factors").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("connect").addEventListener("click",connect);
-   $("market-venue").addEventListener("change",()=>state.tab==="markets"&&searchMarkets());
+   $("market-venue").addEventListener("change",()=>{state.marketOffset=0;
+      if(state.tab==="markets")searchMarkets()});
+   $("market-prev").addEventListener("click",()=>{state.marketOffset=Math.max(0,state.marketOffset-50);searchMarkets()});
+   $("market-next").addEventListener("click",()=>{state.marketOffset+=50;searchMarkets()});
    const root=document.documentElement.style;
    document.querySelectorAll(".split").forEach(handle=>{
      const side=handle.dataset.side;let dragging=false;
