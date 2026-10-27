@@ -29,8 +29,9 @@ try:
     assert b"data-side=\"left\"" in home
     assert b"data-side=\"right\"" in home
     _,lab=call("/lab")
-    assert b"EventRisk API" in lab and b"No claim" in lab
-    assert b"/api/v1/research/funding-diagnostics" in lab
+    assert b"id=\"factor-chart\"" in lab and b"id=\"run-regression\"" in lab
+    _,api_doc=call("/api")
+    assert b"/api/v1/research/funding-diagnostics" in api_doc
     csp=response.headers.get("Content-Security-Policy","")
     assert "https://unpkg.com" in csp
     assert "frame-ancestors 'none'" in csp
@@ -45,6 +46,16 @@ try:
     assert len(c["channels"])==22
     _,raw=call("/api/v1/graph")
     graph=json.loads(raw); ids={n["id"] for n in graph["nodes"]}
+    _,directional=call("/api/v1/graph-paths")
+    paths=json.loads(directional)
+    assert paths["mode"]=="PUBLIC_REFERENCE_PLUS_EXPLICIT_SYNTHETIC_PATH_EXAMPLE"
+    assert paths["contract_count_verified"]==0
+    path_ids={n["id"] for n in paths["nodes"]}
+    assert "contract:illustrative:data_center_power" in path_ids
+    assert "event:data_center_demand" in path_ids
+    assert "security:EQIX" in path_ids
+    assert "factor:PROPOSED.REAL_ESTATE.DC_REIT" in path_ids
+
     assert len(graph["nodes"])==len(ids) and len(ids)>680
     assert all(e["src"] in ids and e["dst"] in ids for e in graph["edges"])
     assert all(e["review_status"]=="RESEARCH_ONLY_NOT_APPROVED" for e in graph["edges"])
