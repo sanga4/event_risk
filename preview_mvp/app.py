@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
 import warehouse
 from pathways import graph_paths
 from factor_universe import factor_proposals
+from reverse import reverse_source, reverse_reference
 DATA = ROOT / "data"
 MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
@@ -43,13 +44,14 @@ CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset
                  ".js": "text/javascript; charset=utf-8", ".png": "image/png",
                  ".xml":"application/xml; charset=utf-8"}
 FILES = {"/": "viewer.html", "/previous-explorer": "marco.html",
-         "/lab": "lab.html", "/api": "api.html",
+         "/lab": "factor-research.html", "/attribution": "attribution.html", "/api": "api.html",
          "/legacy-lab": "lab.html", "/data": "data.html",
          "/assets/styles.css": "assets/styles.css", "/assets/app.js": "assets/app.js",
          "/assets/mvp.css": "assets/mvp.css", "/assets/marco.css": "assets/marco.css",
          "/assets/marco.js": "assets/marco.js",
          "/assets/viewer.css": "assets/viewer.css",
          "/assets/viewer.js": "assets/viewer.js",
+         "/assets/research-tabs.js": "assets/research-tabs.js",
          "/assets/live-coverage.js": "assets/live-coverage.js",
          "/assets/attribution-core.js":"assets/attribution-core.js",
          "/assets/lab.css": "assets/lab.css",
@@ -104,7 +106,7 @@ ALLOW_ROUTES = {
     "/api/v1/research/graph-neighbors",
     "/api/v1/research/funding-diagnostics",
     "/api/v1/research/markets", "/api/v1/research/market-quote",
-    "/api/v1/research/market-history",
+    "/api/v1/research/market-history", "/api/v1/research/reverse",
     "/api/v1/research/datasets", "/api/v1/research/columns",
     "/api/v1/research/table",
 }
@@ -304,6 +306,13 @@ def research(route,q,owner_private=False):
         return warehouse.explore(_db_query,operation,q,
             source_approved=bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
             derived_approved=bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"))
+    if route=="/api/v1/research/reverse":
+        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+            raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
+        kind=_one(q,"kind",20)
+        node_id=_one(q,"node_id",128)
+        limit=_int_arg(q,"limit",40,75) or 40
+        return reverse_source(_db_query,kind,node_id,limit)
     if route=="/api/v1/research/coverage":
         rows=_db_query("""SELECT 'graph_question_nodes' AS metric,count(DISTINCT node_id) AS "value" FROM main.graph_nodes WHERE node_type='question'
  UNION ALL SELECT 'graph_security_nodes',count(DISTINCT node_id) FROM main.graph_nodes WHERE node_type='security'
@@ -682,6 +691,14 @@ class Server(BaseHTTPRequestHandler):
             except (OSError,ValueError,KeyError):
                 return self.send(503,{"error":"DATED_SOURCE_INVENTORY_UNAVAILABLE"},method=method)
 
+        if route=="/api/v1/reference/reverse":
+            try:
+                q=parse_qs(path.query,keep_blank_values=True)
+                node_id=_one(q,"node_id",128)
+                limit=_int_arg(q,"limit",30,75) or 30
+                return self.send(200,reverse_reference(public_graph(),node_id,limit),method=method)
+            except ValueError as ex:
+                return self.send(400,{"error":str(ex)},method=method)
         if route=="/api/v1/catalog":
             try:return self.send(200,catalog(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"CATALOG_UNAVAILABLE"},method=method)
