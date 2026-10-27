@@ -49,6 +49,19 @@ class LiveCoverageTests(unittest.TestCase):
              mock.patch.object(app,"_db_query",return_value=[{"captured_kalshi_market_ids":-1}]):
             with self.assertRaises(ValueError):
                 app.live_public_coverage()
+    def test_excel_workbook_import_uses_only_public_aggregates(self):
+        root=Path(__file__).resolve().parents[1]
+        pane=(root/"excel/taskpane.html").read_text()
+        script=(root/"excel/live-coverage.js").read_text()
+        self.assertIn('id="live-coverage-import"',pane)
+        self.assertIn("/excel/live-coverage.js",pane)
+        self.assertEqual(app.FILES["/excel/live-coverage.js"],"excel/live-coverage.js")
+        self.assertIn("/api/v1/live-coverage",script)
+        self.assertIn('ER_LiveCoverage',script)
+        self.assertNotIn("MOTHERDUCK_TOKEN",script)
+        self.assertNotIn("X-Analyst-Key",script)
+        self.assertNotIn("localStorage",script)
+
     def test_frontend_is_static_without_any_embedded_token(self):
         html=(Path(__file__).resolve().parents[1]/"viewer.html").read_text()
         script=(Path(__file__).resolve().parents[1]/"assets/live-coverage.js").read_text()
