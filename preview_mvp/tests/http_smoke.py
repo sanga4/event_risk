@@ -20,7 +20,7 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/previous-explorer","/lab","/api","/data","/assets/viewer.css","/assets/viewer.js","/assets/live-coverage.js","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
+    for route in ("/","/previous-explorer","/lab","/attribution","/api","/data","/assets/research-tabs.js","/assets/viewer.css","/assets/viewer.js","/assets/live-coverage.js","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
@@ -29,7 +29,11 @@ try:
     assert b"data-side=\"left\"" in home
     assert b"data-side=\"right\"" in home
     _,lab=call("/lab")
-    assert b"id=\"factor-chart\"" in lab and b"id=\"run-regression\"" in lab
+    assert b"id=\"reference-factor\"" in lab and b"id=\"load-factor\"" in lab
+    _,attr=call("/attribution")
+    assert b"id=\"node-select\"" in attr and b"id=\"scenario-result\"" in attr
+    _,rev=call("/api/v1/reference/reverse?node_id=security:TSM")
+    assert json.loads(rev)["quotes_included"] is False
     _,api_doc=call("/api")
     assert b"/api/v1/research/funding-diagnostics" in api_doc
     csp=response.headers.get("Content-Security-Policy","")
