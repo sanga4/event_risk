@@ -104,6 +104,7 @@ ALLOW_ROUTES = {
     "/api/v1/research/graph-neighbors",
     "/api/v1/research/funding-diagnostics",
     "/api/v1/research/markets", "/api/v1/research/market-quote",
+    "/api/v1/research/market-history",
     "/api/v1/research/datasets", "/api/v1/research/columns",
     "/api/v1/research/table",
 }
@@ -360,6 +361,31 @@ def research(route,q):
             "historical_pit_not_certified":True,
             "source":"MotherDuck lab_live_market_latest_v1",
             "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED"}
+    if route=="/api/v1/research/market-history":
+        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+            raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
+        venue=_one(q,"venue",20).lower().strip()
+        market_id=_one(q,"market_id",180).strip()
+        if venue not in ("kalshi","polymarket"):
+            raise ValueError("INVALID_MARKET_VENUE")
+        if not re.fullmatch(r"[A-Za-z0-9._:-]{1,180}",market_id):
+            raise ValueError("INVALID_MARKET_ID")
+        limit=_int_arg(q,"limit",60,365) or 60
+        rows=_db_query("""SELECT CAST(observed_date AS VARCHAR) AS observed_date,
+          probability,probability_delta_pp,
+          CAST(previous_observed_date AS VARCHAR) AS previous_observed_date,
+          CAST(last_quote_at AS VARCHAR) AS last_quote_at,
+          snapshot_count,snapshot_source,observation_provenance,
+          point_in_time_verified
+          FROM main.lab_market_daily_historical_v1
+          WHERE lower(venue)=? AND market_id=?
+          ORDER BY observed_date DESC LIMIT ?""",(venue,market_id,limit))
+        return {"mode":"LICENSE_GATED_CAPTURED_MARKET_HISTORY",
+                "venue":venue,"market_id":market_id,"rows":rows,
+                "historical_snapshot_not_original_publication_pit":True,
+                "not_calibrated_event_probability":True,
+                "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED",
+                "source":"MotherDuck lab_market_daily_historical_v1"}
     if route=="/api/v1/research/factor-catalog":
         rows=_db_query("""SELECT factor_id,name,family,unit,license_class,active
                          FROM main.lab_factor_catalog ORDER BY factor_id LIMIT 150""")
