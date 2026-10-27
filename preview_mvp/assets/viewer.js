@@ -5,7 +5,7 @@
 */
 (()=>{
  const $=id=>document.getElementById(id);
- const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
+ const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"events",reverseByNode:new Map(),
               key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],sourceEvents:[],sourcePropositions:[],marketOffset:0,network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
@@ -62,6 +62,13 @@
    addRow(host,"ID",id);
    if(n.ticker)addRow(host,"Ticker",n.ticker);
    if(n.subtitle)addRow(host,"Category",n.subtitle);
+   if(n.country)addRow(host,"Country",n.country);
+   if(n.sector)addRow(host,"Sector",n.sector);
+   if(n.asset_class)addRow(host,"Asset class",n.asset_class);
+   if(n.role)addRow(host,"Reference role",n.role);
+   if(n.factor_id)addRow(host,"Factor ID",n.factor_id);
+   if(n.family)addRow(host,"Factor family",n.family);
+   if(n.reference)addRow(host,"Factor reference",n.reference);
    if(n.description)addRow(host,"Description",n.description);
    if(n.last_recorded_at)addRow(host,"Warehouse recorded",n.last_recorded_at);
    if(n.native_event_id)addRow(host,"Native provider event ID",n.native_event_id);
@@ -108,6 +115,7 @@
      host.append(mk("p","Captured quote, not necessarily a current tradable price or the probability of the normalized event. Market prices and probabilities differ by contract structure.","note"));
    }
    if(n.type==="contract"&&!n.market_id)addRow(host,"Market probability","Not available: this is a synthetic demonstration, not a real exchange contract.");
+   if(n.type==="event"&&!n.source_event)addRow(host,"Observed event probability","Not available: public scenarios are illustrative, not verified market events.");
    if(n.provider)addRow(host,"Venue / provider",n.provider);
    if(n.historical_series_validated===false)addRow(host,"Observed factor series","NOT VERIFIED");
    addRow(host,"Source",n.type==="market"?"MotherDuck / lab_live_market_latest_v1":n.source_event?"MotherDuck native provider event":n.liveWarehouse?"MotherDuck / graph_nodes":
@@ -117,6 +125,36 @@
      n.type==="entity"?"Repository / exposures.csv":"Repository research references");
    addRow(host,"Status",n.review_status||
       (n.liveWarehouse?"Raw source observation, original first-publication not verified":"Reference only"));
+   const quoteLinks=graphNeighbors(id).filter(x=>state.nodes.get(x.other)?.type==="market");
+   const reversed=state.reverseByNode.get(id);
+   if(quoteLinks.length||reversed){
+     host.append(mk("h3","Relevant event contracts and captured YES prices"));
+     if(reversed){
+       host.append(mk("p","Graph relevance is an unreviewed research link, not a validated issuer risk beta. Contracts have distinct settlement terms.","note"));
+       for(const r of reversed.slice(0,40)){
+         const marketId=r.venue&&r.market_id?"market:"+r.venue+":"+r.market_id:null;
+         const btn=mk("button",r.contract_question||r.proposition_id,"detail-link");btn.type="button";
+         const p=Number.isFinite(r.probability)?(r.probability*100).toFixed(1)+"% captured YES":"Price not captured";
+         const delta=Number.isFinite(r.probability_delta_pp)?
+            " · "+(r.probability_delta_pp>=0?"+":"")+r.probability_delta_pp.toFixed(2)+" pp from previous capture":"";
+         btn.append(mk("div",p+delta+" · "+(r.venue||"source")+" · "+(r.observed_at||"date unknown"),"meta"));
+         btn.append(mk("div",r.question_name||"No reviewed canonical event name","meta"));
+         btn.addEventListener("click",()=>marketId&&state.nodes.has(marketId)?select(marketId):null);
+         host.append(btn);
+       }
+     }else{
+       for(const {other} of quoteLinks.slice(0,40)){
+         const market=state.nodes.get(other),btn=mk("button",market.name,"detail-link");btn.type="button";
+         btn.append(mk("div",(Number.isFinite(market.probability)?(market.probability*100).toFixed(1)+"% captured YES":"Unpriced")+
+            " · "+(market.observed_at||"unknown timestamp")+" · "+(market.provider||""),"meta"));
+         btn.addEventListener("click",()=>select(other));host.append(btn);
+       }
+     }
+   }else if(["event","question","entity","factor","security"].includes(n.type)){
+     host.append(mk("h3","Event contracts and probabilities"));
+     host.append(mk("p",state.key?"Select or wait for the entitled reverse event lookup; recorded quotes require source approval.":
+       "No live market probability in the public reference graph. Enter an analyst key once to request entitled captured contracts.","note"));
+   }
    const links=graphNeighbors(id).sort((a,b)=>(Number(b.edge.weight)||0)-(Number(a.edge.weight)||0));
    host.append(mk("h3","Relationships ("+links.length+")"));
    if(!links.length)host.append(mk("p","No connected source edges in this loaded graph.","note"));
