@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Factor Research · Event Risk Graph</title><link rel="stylesheet" href="/assets/viewer.css">
+<style>
+body{display:block;height:auto;min-height:100vh}header{position:sticky;top:0;background:var(--page);z-index:3}
+.research-page{display:block;max-width:1100px;margin:auto;padding:20px 24px 60px}
+.cols{display:grid;grid-template-columns:minmax(255px,325px) 1fr;gap:20px}
+article{background:var(--surface);border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:14px}
+article h2{font-size:17px;margin:0 0 8px}article h3{font-size:14px;margin:5px 0 9px}
+.field{display:block;font-size:13px;margin:12px 0}.field input,.field select{display:block;width:100%;margin-top:5px}
+.btn{cursor:pointer;margin:6px 4px 4px 0;padding:8px 12px}
+.subtle{font-size:12px;color:var(--ink-2)}.series-plot{width:100%;height:260px;border:1px solid var(--hairline);background:var(--page)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px;border-bottom:1px solid var(--hairline);overflow-wrap:anywhere}
+@media(max-width:750px){.cols{grid-template-columns:1fr}.research-page{padding:14px}}
+</style><script defer src="/assets/research-tabs.js"></script></head>
+<body data-research-page="factors">
+<header><h1>Event Risk Graph</h1><nav aria-label="Tools"><a href="/">Explore</a><a href="/attribution">Attribution</a><a href="/lab" aria-current="page">Factor research</a><a href="/api">API</a><a href="/excel/manifest.xml">Excel</a></nav></header>
+<div class="research-page"><h2>Factor Research</h2>
+<p class="subtle">A financial-factor research workspace. Public definitions are not observed values. The data below come from actual entitled warehouse queries, never invented histories or regression coefficients.</p>
+<div class="cols"><section>
+<article><h3>01 · Financial factor</h3>
+<label class="field">Published observed factor <select id="factor-id"><option>Loading factor catalog…</option></select></label>
+<button id="load-factor" type="button" class="btn">Load observed history</button>
+<p id="catalog-note" class="subtle"></p></article>
+<article><h3>02 · Security funding-factor research</h3>
+<label class="field">Ticker <input id="ticker" type="text" maxlength="25" value="TSM" placeholder="e.g. TSM"></label>
+<button id="load-model" type="button" class="btn">Load fitted model diagnostics</button>
+<p class="subtle">Source model coverage is limited to 48 public securities. This is associational research, not an event-driven return forecast.</p></article>
+<article><h3>Research access</h3>
+<label class="field">Analyst access key <input id="research-key" type="password" autocomplete="off" placeholder="Only when source rights allow"></label>
+<button id="save-key" type="button" class="btn">Use key for this session</button><button id="clear-key" type="button" class="btn">Clear</button>
+<p id="access-status" class="subtle" role="status">Catalog available without a key.</p></article></section>
+<section><article><h3>Observed factor history</h3><p id="series-status" class="subtle" role="status">Select an observed factor to request dated values.</p>
+<div id="factor-results"></div></article>
+<article><h3>Funding regression diagnostics</h3><p id="model-status" class="subtle" role="status">Choose a ticker to retrieve original fitted coefficients.</p><div id="model-results"></div></article>
+<article><h3>Research limitations</h3><p class="subtle">The 108 public factor definitions are not 108 financial-factor histories. The 22 original warehouse catalog rows contain approximately 18 observed series, mainly rates and related measures. Original publisher first-known timing, vendor rights, issuer adjustments and event-causal beta validity require independent review.</p></article></section></div>
+</div></body></html>
