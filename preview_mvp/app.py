@@ -356,6 +356,15 @@ def research(route,q,owner_private=False):
           released_for_historical_backtesting
           FROM main.lab_live_market_latest_v1
           WHERE lower(venue)=? AND market_id=? LIMIT 1""",(venue,market_id))
+        capture=_db_query("""SELECT status,yes_bid,yes_ask,last_price,
+          CAST(provider_quote_at AS VARCHAR) AS provider_quote_at,
+          CAST(capture_received_at AS VARCHAR) AS capture_received_at,
+          source_url,source_record_sha256,data_use_class
+          FROM main.lab_live_market_captures_v1
+          WHERE lower(venue)=? AND market_id=?
+          ORDER BY capture_received_at DESC LIMIT 1""",(venue,market_id))
+        if rows and capture:
+            rows[0]["capture_record"]=capture[0]
         return {"mode":"LICENSE_GATED_CAPTURED_MARKET_QUOTE",
             "venue":venue,"market_id":market_id,
             "record":rows[0] if rows else None,
