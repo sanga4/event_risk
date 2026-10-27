@@ -8,14 +8,16 @@
 </head><body>
 <header>
   <h1>Event Risk Graph</h1>
-  <nav aria-label="Tools"><a href="/api">API</a> <a href="/excel/manifest.xml">Excel add-in</a></nav>
-  <label>Depth <select id="depth"><option selected>1</option><option>2</option></select></label>
+  <nav aria-label="Tools"><a href="/lab">Factor research</a> <a href="/api">API</a> <a href="/excel/manifest.xml">Excel add-in</a></nav>
+  <label>Depth <select id="depth"><option>1</option><option selected>2</option><option>4</option></select></label>
   <label><input type="checkbox" id="show-factors" checked> Factors</label>
 </header>
 <main>
   <aside>
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="entities" aria-selected="true">Entities</button>
+      <button type="button" role="tab" data-tab="contracts" aria-selected="true">Contracts</button>
+      <button type="button" role="tab" data-tab="events">Events</button>
+      <button type="button" role="tab" data-tab="entities">Entities</button>
       <button type="button" role="tab" data-tab="securities">Securities</button>
       <button type="button" role="tab" data-tab="factors">Factors</button>
       <button type="button" role="tab" data-tab="questions">Questions</button>
@@ -35,8 +37,9 @@
     <div id="graph"></div>
     <div class="caption" id="caption" hidden></div>
     <div class="empty" id="empty">Select a node on the left.</div>
+    <p id="path-notice" class="note" style="position:absolute;top:8px;left:12px;z-index:3;max-width:65%;background:var(--page);padding:4px 7px">Illustrative contract example · NOT an actual exchange listing. No measured event betas.</p>
     <div class="legend">
-      <span><i class="swatch question"></i>Question*</span>
+      <span><i class="swatch question"></i>Contract / event</span>
       <span><i class="swatch entity"></i>Entity</span>
       <span><i class="swatch security"></i>Security</span>
       <span><i class="swatch factor"></i>Factor definition</span>
