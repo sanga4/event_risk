@@ -162,6 +162,49 @@
         ". No original publisher first-release timing or event surprise inferred.");
     }catch(e){status("Factor source access denied/unavailable: "+e.message);}
   }
+  async function importExtended(){
+    if(!inExcel)return;
+    status("Loading proposed (unmeasured) factor definitions and a clearly artificial five-stage path...");
+    try{
+      const [factors,paths]=await Promise.all([
+        api("/api/v1/factor-proposals"),api("/api/v1/graph-paths")]);
+      if(factors.mode!=="PROPOSED_UNMEASURED_FACTOR_TAXONOMY"||
+         factors.validated_series_count!==0||
+         paths.mode!=="PUBLIC_REFERENCE_PLUS_EXPLICIT_SYNTHETIC_PATH_EXAMPLE"||
+         paths.contract_count_verified!==0)
+        throw Error("Unexpected contract or factor validation claim");
+      const syntheticNodes=paths.nodes.filter(n=>
+        n.type==="contract"||n.id==="event:data_center_demand"||
+        n.id==="entity:theme:data_center_infrastructure"||
+        n.id.startsWith("factor:PROPOSED."));
+      const demoIds=new Set(syntheticNodes.map(n=>n.id));
+      const securityIds=new Set(paths.edges.filter(e=>
+        e.type==="proposed_thematic_relevance").map(e=>e.dst));
+      for(const n of paths.nodes)if(securityIds.has(n.id))demoIds.add(n.id);
+      await Excel.run(async c=>{
+        await writeSheet(c,"ER_ProposedFactors",[
+          ["Factor ID","Definition","Family","Observed series validated","Original PIT verified","Market rights verified","Release status"],
+          ...factors.factors.map(p=>[p.factor_id,p.name,p.family,
+            p.validated_observation_series,p.original_publication_pit_verified,
+            p.market_data_rights_verified,p.release_status])
+        ]);
+        await writeSheet(c,"ER_FiveStageNodes",[
+          ["Node ID","Node type","Name","Source / review status","Exchange verified"],
+          ...paths.nodes.filter(n=>demoIds.has(n.id)).map(n=>[
+             n.id,n.type,n.name,n.review_status||"",false])
+        ]);
+        await writeSheet(c,"ER_FiveStageEdges",[
+          ["Source node","Target node","Relationship","Review state","Causal coefficient estimated"],
+          ...paths.edges.filter(e=>demoIds.has(e.src)&&demoIds.has(e.dst)&&
+            e.source_kind==="EXPLICIT_ILLUSTRATIVE_HYPOTHESIS").map(e=>[
+              e.src,e.dst,e.type,e.review_status,false])
+        ]);
+        await c.sync();
+      });
+      status("Inserted "+factors.count+" unmeasured proposed factors and synthetic contract pathway. "+
+        "No actual Kalshi/Polymarket contract, verified series, or security return beta was claimed.");
+    }catch(e){status("Extended factor/pathway import failed: "+e.message);}
+  }
   async function init(){
     try{
       const [c,g,i]=await Promise.all([
@@ -180,13 +223,14 @@
     Office.onReady(info=>{
       if(info.host!==Office.HostType.Excel){status("This taskpane must run inside Microsoft Excel.");return;}
       inExcel=true;
-      for(const id of ["reference","graph","regression","series"])$(id).disabled=false;
+      for(const id of ["reference","graph","extended","regression","series"])$(id).disabled=false;
       status("Connected to Microsoft Excel. Public catalogs are ready; real warehouse regressions and factor data require separate analyst/source authorization.");
     });
   }
   document.addEventListener("DOMContentLoaded",()=>{
     $("reference").addEventListener("click",importReference);
     $("graph").addEventListener("click",importGraph);
+    $("extended").addEventListener("click",importExtended);
     $("regression").addEventListener("click",importModels);
     $("series").addEventListener("click",importSeries);
     init();
