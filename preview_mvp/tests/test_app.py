@@ -116,26 +116,51 @@ class PreviewMVPAcceptance(TestCase):
                     app.research("/api/v1/research/funding-diagnostics",{"ticker":["AAPL';DROP"]})
                 q.assert_not_called()
 
-    def test_new_research_desk_static_assets(self):
-        lab=(ROOT/"lab.html").read_text()
-        js=(ROOT/"assets"/"lab.js").read_text()
-        for term in ('id="case"','id="ticker"','id="factor"','id="model-body"',
-                     'id="factor-chart"','id="export"'):
+    def test_rebuilt_research_and_attribution_tabs(self):
+        lab=(ROOT/"factor-research.html").read_text()
+        attr=(ROOT/"attribution.html").read_text()
+        script=(ROOT/"assets"/"research-tabs.js").read_text()
+        for term in ('id="factor-id"', 'id="ticker"', 'id="reference-factor"',
+                     'id="model-results"', 'id="factor-results"'):
             self.assertIn(term,lab)
-        for fn in ("function renderModels","function renderSeries",
-                   "function renderCase","function exportLoaded"):
-            self.assertIn(fn,js)
-        self.assertNotIn("Math.random",js)
-        self.assertIn("/lab",app.FILES)
-        self.assertIn("/assets/lab.js",app.FILES)
-        self.assertIn("/assets/lab.css",app.FILES)
+        for term in ('id="lookup"', 'id="node-select"', 'id="scenario-result"',
+                     'id="exposure-results"'):
+            self.assertIn(term,attr)
+        self.assertIn("/api/v1/research/reverse",script)
+        self.assertIn("/api/v1/reference/reverse",script)
+        self.assertNotIn("Math.random",script)
+        self.assertEqual(app.FILES["/lab"],"factor-research.html")
+        self.assertEqual(app.FILES["/attribution"],"attribution.html")
+        self.assertEqual(app.FILES["/assets/research-tabs.js"],"assets/research-tabs.js")
+
+    def test_reverse_source_gated_and_parameterized(self):
+        with mock.patch.dict(os.environ,{"EVENTRISK_SOURCE_REDISPLAY_APPROVED":"false"}):
+            with self.assertRaisesRegex(PermissionError,"SOURCE_REDISPLAY"):
+                app.research("/api/v1/research/reverse",
+                             {"kind":["security"],"node_id":["sec:TSM"]})
+        with mock.patch.dict(os.environ,{"EVENTRISK_SOURCE_REDISPLAY_APPROVED":"true"}):
+            with mock.patch.object(app,"_db_query",return_value=[]) as query:
+                result=app.research("/api/v1/research/reverse",
+                                    {"kind":["security"],"node_id":["sec:TSM"]})
+        self.assertEqual(result["mode"],"ENTITLED_REVERSE_GRAPH_TO_CAPTURED_CONTRACTS")
+        self.assertEqual(query.call_args.args[1],("sec:TSM",40))
+        self.assertTrue(app._assert_read_query(query.call_args.args[0]))
+        self.assertNotIn("estimated_return",str(result))
+        for bad in ("sec:TSM'; DROP TABLE x;--",""):
+            with self.assertRaises(ValueError):
+                app.reverse_source(lambda *args: [],"security",bad)
+
+    def test_public_reverse_has_no_source_quotes(self):
+        result=app.reverse_reference(app.public_graph(),"security:TSM")
+        self.assertFalse(result["quotes_included"])
+        self.assertEqual(result["node_id"],"security:TSM")
 
     def test_raw_marco_site_is_just_a_graph_viewer(self):
         html=(ROOT/"viewer.html").read_text()
         css=(ROOT/"assets"/"viewer.css").read_text()
         script=(ROOT/"assets"/"viewer.js").read_text()
         self.assertEqual(app.FILES["/"],"viewer.html")
-        self.assertEqual(app.FILES["/lab"],"lab.html")
+        self.assertEqual(app.FILES["/lab"],"factor-research.html")
         self.assertEqual(app.FILES["/api"],"api.html")
         self.assertIn("/api/v1/graph-paths",(ROOT/"app.py").read_text())
         self.assertEqual(app.FILES["/previous-explorer"],"marco.html")
