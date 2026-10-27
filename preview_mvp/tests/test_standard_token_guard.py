@@ -17,8 +17,8 @@ class StandardMotherDuckTokenGuardTests(unittest.TestCase):
                FROM information_schema.columns
                WHERE table_catalog=current_database() AND table_schema='main'
                LIMIT 4000""",
-            """SELECT 'graph_question_nodes' metric, COUNT(*) value FROM main.graph_nodes
-               UNION ALL SELECT 'graph_edges_versioned_records' metric, COUNT(*) value
+            """SELECT 'graph_question_nodes' metric, COUNT(*) AS "value" FROM main.graph_nodes
+               UNION ALL SELECT 'graph_edges_versioned_records' metric, COUNT(*) AS "value"
                FROM main.graph_edges""",
         ]
         for sql in statements:
