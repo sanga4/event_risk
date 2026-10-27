@@ -3,7 +3,6 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Event Risk Graph</title>
 <link rel="stylesheet" href="/assets/viewer.css">
-<script defer src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <script defer src="/assets/viewer.js"></script>
 <script defer src="/assets/live-coverage.js"></script>
 </head><body>
@@ -17,7 +16,7 @@
   <aside>
     <div class="tabs" role="tablist">
       <button type="button" role="tab" data-tab="contracts" aria-selected="true">Contracts</button>
-      <button type="button" role="tab" data-tab="markets">Live market values</button>
+      <button type="button" role="tab" data-tab="markets">Markets &amp; odds</button>
       <button type="button" role="tab" data-tab="events">Events</button>
       <button type="button" role="tab" data-tab="entities">Entities</button>
       <button type="button" role="tab" data-tab="securities">Securities</button>
@@ -30,11 +29,16 @@
     </p>
     <ul id="list"></ul>
     <details style="padding:8px 12px;border-top:1px solid var(--hairline)">
-      <summary>MotherDuck</summary>
-      <p class="note" id="live-status">Checking live data connection…</p>
+      <summary>Private research access</summary>
+      <p class="note">Public reference nodes and illustrative pathways are visible without a key. To inspect your warehouse's actual captured contracts, odds and histories, use both your analyst key and your private data-admin key. Neither is saved in this browser.</p>
+      <p class="note" id="live-status" role="status">Checking MotherDuck connection…</p>
       <label for="market-venue">Market venue</label><select id="market-venue"><option value="kalshi">Kalshi</option><option value="polymarket">Polymarket</option></select>
-      <input id="analyst-key" type="password" autocomplete="off" placeholder="Analyst API key" aria-label="Analyst API key" style="width:100%">
-      <button type="button" id="connect">Connect / load questions</button>
+      <label for="analyst-key">Analyst API key</label>
+      <input id="analyst-key" type="password" autocomplete="off" placeholder="EVENTRISK_ANALYST_KEY" aria-label="Analyst API key" style="width:100%">
+      <label for="owner-key">Private data-admin key</label>
+      <input id="owner-key" type="password" autocomplete="off" placeholder="EVENTRISK_DATA_ADMIN_KEY" aria-label="Private data-admin key" style="width:100%">
+      <button type="button" id="connect">Unlock my warehouse</button>
+      <p class="note">Find or set these two keys privately in Railway → eventrisk-research → eventrisk-research-web → Variables. The MotherDuck token is already on the server and is never entered here. Owner inspection does not grant public redistribution rights.</p>
     </details>
     <p class="note" id="list-info" style="padding:0 12px"></p>
   </aside>
@@ -43,7 +47,7 @@
     <div id="graph"></div>
     <div class="caption" id="caption" hidden></div>
     <div class="empty" id="empty">Select a node on the left.</div>
-    <p id="path-notice" class="note" style="position:absolute;top:8px;left:12px;z-index:3;max-width:65%;background:var(--page);padding:4px 7px">Illustrative contract example · NOT an actual exchange listing. No measured event betas.</p>
+    <p id="path-notice" class="note" style="position:absolute;top:8px;left:12px;z-index:3;max-width:65%;background:var(--page);padding:4px 7px">Reference graph is public. Real captured market odds require private research access. The example contract is synthetic; no event betas.</p>
     <div class="legend">
       <span><i class="swatch question"></i>Contract / event</span>
       <span><i class="swatch entity"></i>Entity</span>
@@ -53,6 +57,6 @@
     </div>
   </section>
   <div class="split" data-side="right" role="separator" aria-orientation="vertical" aria-label="Resize detail panel" tabindex="0"></div>
-  <section id="detail"><p class="note">Select a node to see its source properties and links.</p></section>
+  <section id="detail"><p class="note">Select a node to inspect probability, provenance, economic links and history where available.</p></section>
 </main>
 </body></html>
