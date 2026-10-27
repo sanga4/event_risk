@@ -57,6 +57,10 @@ async function viewer(width,height,dir){
  await page.locator('.tabs [data-tab="factors"]').click();
  await page.locator("#search").fill("10Y");
  assert.ok((await page.locator("#list li[data-id]").count())>0);
+ assert.equal(await page.locator('.tabs [data-tab="markets"]').count(),1);
+ await page.locator('.tabs [data-tab="markets"]').click();
+ assert.ok((await page.locator("#live-status").textContent()).includes("source redisplay rights"));
+ assert.equal(await page.locator("#market-venue").count(),1);
  await page.locator('.tabs [data-tab="questions"]').click();
  assert.ok((await page.locator("#list-info").innerText()).includes("require MotherDuck"));
  await page.locator("aside details summary").click();
