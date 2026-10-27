@@ -1,7 +1,7 @@
 import sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-import app, pathways, market_providers
+import app, pathways, market_providers, factor_universe
 
 class PathwayGraphTests(unittest.TestCase):
     @classmethod
@@ -40,6 +40,19 @@ class PathwayGraphTests(unittest.TestCase):
         self.assertEqual(len(demo),1)
         self.assertIn("SYNTHETIC",demo[0]["review_status"])
         self.assertFalse(any("yes_bid" in node or "implied_probability" in node for node in demo))
+
+class ExpandedFactorUniverseTests(unittest.TestCase):
+    def test_cross_asset_taxonomy_is_proposed_only(self):
+        factors=factor_universe.factor_proposals()
+        ids=[f["factor_id"] for f in factors]
+        self.assertEqual(len(ids),len(set(ids)))
+        self.assertGreaterEqual(len(ids),140)
+        families={f["family"] for f in factors}
+        for fam in ("electricity","credit","rates","fx","volatility","macro_growth",
+                    "funding","supply_chain","climate_water","semiconductors"):
+            self.assertIn(fam,families)
+        self.assertTrue(all(f["validated_observation_series"] is False for f in factors))
+        self.assertTrue(all(f["market_data_rights_verified"] is False for f in factors))
 
 class ProviderCatalogTests(unittest.TestCase):
     def test_kalshi_cursor_and_stable_native_ids(self):
