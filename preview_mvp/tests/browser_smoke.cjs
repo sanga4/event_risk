@@ -87,7 +87,7 @@ async function documents(dir){
  await page.locator("#reference-factor-run").click();
  await page.locator("#reference-factor-results h3").first().waitFor({timeout:12000});
  await page.goto(URL+"/attribution",{waitUntil:"domcontentloaded"});
- await page.locator("#node-select option").nth(1).waitFor({timeout:12000});
+ await page.waitForFunction(()=>document.querySelector("#node-select")?.options.length>1,null,{timeout:12000});
  await page.locator("#lookup-run").click();
  await page.locator("#exposure-results h3").first().waitFor({timeout:12000});
  assert.equal(await page.locator("#scenario-result").count(),1);
