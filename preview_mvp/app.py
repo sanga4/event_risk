@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
 import warehouse
 from pathways import graph_paths
+from factor_universe import factor_proposals
 DATA = ROOT / "data"
 MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
@@ -519,6 +520,12 @@ class Server(BaseHTTPRequestHandler):
         if route=="/api/v1/catalog":
             try:return self.send(200,catalog(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"CATALOG_UNAVAILABLE"},method=method)
+        if route=="/api/v1/factor-proposals":
+            proposals=factor_proposals()
+            return self.send(200,{"mode":"PROPOSED_UNMEASURED_FACTOR_TAXONOMY",
+                "validated_series_count":0,"count":len(proposals),
+                "factors":proposals,
+                "note":"These are candidate research definitions, not validated data series, betas, or independently estimated factor shocks."},method=method)
         if route=="/api/v1/graph-paths":
             try:return self.send(200,graph_paths(public_graph()),method=method)
             except (OSError,ValueError,KeyError) as ex:
