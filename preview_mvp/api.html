@@ -5,16 +5,17 @@
 </head><body style="display:block;height:auto;padding:18px;max-width:1000px;margin:auto">
 <h2>EventRisk API &amp; Excel add-in</h2>
 <p><a href="/">← Event Risk Graph</a></p>
-<p>The graph page is a simple visual inspection tool. The API and Excel add-in are the research interfaces. There is no public Research Lab dashboard.</p>
+<p>The graph page is a simple visual inspection tool. The API and Excel add-in are the research interfaces. The <a href="/lab">Research Lab</a> displays public hypotheses; recorded coefficients and factor histories require authenticated owner inspection or separately approved redistribution rights.</p>
 <h3>Available endpoints</h3>
 <table class="rungs" style="width:100%"><tr><th>Resource</th><th>Purpose</th></tr>
 <tr><td><a href="/api/v1/live-coverage">/api/v1/live-coverage</a></td><td>Cached, aggregated live MotherDuck counts of captured Kalshi/Polymarket market IDs and observed factors; no contract text, market quotes, or source redisplay permission implied</td></tr>
-<tr><td>/api/v1/research/markets?venue=kalshi&amp;limit=25</td><td>Authenticated, source-rights-gated captured market quote discovery; YES probability, prior capture, change and timestamps. Not real-time executable prices.</td></tr>
-<tr><td>/api/v1/research/market-quote?venue=polymarket&amp;market_id=...</td><td>One clicked contract's captured price and provenance; real-source permission is required, independently of database connectivity.</td></tr>
+<tr><td>/api/v1/research/markets?venue=kalshi&amp;limit=25</td><td>Captured YES prices, previous captures, changes, and timestamps. Requires analyst authentication plus a personal data-admin key for owner-only viewing, or independently approved source redisplay.</td></tr>
+<tr><td>/api/v1/research/market-quote?venue=polymarket&amp;market_id=...</td><td>One contract's captured price and provenance. Private owner access is not public redisplay approval.</td></tr>
 <tr><td><a href="/api/v1/runtime">/api/v1/runtime</a></td><td>Actual live-connection configuration and last successful SELECT; a configured token does not prove connectivity</td></tr>
 <tr><td><a href="/api/v1/catalog">/api/v1/catalog</a></td><td>Repository reference securities (543), factor definitions (108), economic-channel labels</td></tr>
 <tr><td><a href="/api/v1/graph">/api/v1/graph</a></td><td>Public source seed links; hypothetical transmission links labeled noncausal</td></tr>
 <tr><td><a href="/api/v1/inventory">/api/v1/inventory</a></td><td>Dated warehouse audit, not live market data</td></tr>
+<tr><td>/api/v1/research/market-history?venue=kalshi&amp;market_id=...</td><td>Captured dated YES-price history; not verified original publication-time vintages. Private owner authentication or separate rights approval required.</td></tr>
 <tr><td>/api/v1/research/coverage</td><td>Authenticated live MotherDuck SELECT of source counts</td></tr>
 <tr><td>/api/v1/research/events</td><td>Authorized source question IDs/names with pagination</td></tr>
 <tr><td>/api/v1/research/graph-neighbors</td><td>Authenticated versioned graph neighbor relationships</td></tr>
@@ -26,7 +27,7 @@
 <p><a href="/excel/manifest.xml">Excel taskpane sideload manifest</a> · <a href="/excel/taskpane.html">Excel taskpane</a></p>
 <p>After sideloading the manifest inside Excel, use the taskpane to import source catalog worksheets, reference priors, lookup formulas and—if separately entitled—actual funding regressions and observed factor history. Installation in a real Excel client has not yet been independently accepted.</p>
 <h3>Connecting MotherDuck</h3>
-<p>Set a dedicated read-only <code>MOTHERDUCK_TOKEN</code> and strong <code>EVENTRISK_ANALYST_KEY</code> in the Railway service's private Variables. The database token must not be pasted into the website. For row-level admin exploration also set <code>EVENTRISK_DATA_ADMIN_KEY</code>; data-use rights must be approved independently.</p>
-<p>Authentication uses the <code>X-Analyst-Key</code> request header on protected endpoints. A successful <code>coverage</code> response, not a public page loading, proves the live warehouse connection.</p>
+<p>In the private Railway project <code>eventrisk-research</code> → service <code>eventrisk-research-web</code> → <strong>Variables</strong>, set a strong <code>EVENTRISK_ANALYST_KEY</code> and separate <code>EVENTRISK_DATA_ADMIN_KEY</code>. Their values are your personal research login secrets; if lost, rotate them privately. <code>MOTHERDUCK_TOKEN</code> is already configured server-side and must never be pasted into the viewer or Excel. A standard token may have underlying write privileges; application queries are restricted to fixed SELECT statements. Owner-only inspection is not approval to publicly redistribute third-party data.</p>
+<p>Authentication uses <code>X-Analyst-Key</code> on protected endpoints; private owner research additionally requires <code>X-Data-Admin-Key</code>. Public redisplay rights remain separate. A successful <code>coverage</code> response, not a public page loading, proves the live warehouse connection.</p>
 <p><strong>No claim:</strong> original publisher first-release times, event surprises, event-specific causal returns, licensed quotes or globally approved investment betas.</p>
 </body></html>
