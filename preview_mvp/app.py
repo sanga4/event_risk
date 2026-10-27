@@ -547,10 +547,29 @@ class Server(BaseHTTPRequestHandler):
                 return self.send(503,{"error":"LIVE_RESEARCH_SOURCE_UNAVAILABLE"},method=method)
         return self.send(404,{"error":"NOT_FOUND"},method=method)
 
+def startup_database_probe():
+    """One bounded SELECT on startup, so /api/v1/runtime proves DB connectivity.
+
+    This runs once per app process, not on each public HTTP request. It does not
+    reveal database contents, credentials or application authorization keys.
+    """
+    if not os.getenv("MOTHERDUCK_TOKEN"):
+        return False
+    try:
+        rows=_db_query("SELECT 1 AS connection_ok")
+        success=bool(rows and rows[0].get("connection_ok")==1)
+        print("MotherDuck startup SELECT verified =",success,flush=True)
+        return success
+    except Exception as error:
+        print("MotherDuck startup SELECT unavailable:",type(error).__name__,flush=True)
+        return False
+
+
 if __name__=="__main__":
     # Fail closed if an analyst key is configured without database credentials?
     # Public static catalog remains useful, while restricted queries return 503.
     host=os.getenv("HOST","0.0.0.0")
     port=int(os.getenv("PORT","8080"))
     print("EventRisk Research server starting. Dynamic DB configured =",bool(os.getenv("MOTHERDUCK_TOKEN")),flush=True)
+    startup_database_probe()
     ThreadingHTTPServer((host,port),Server).serve_forever()
