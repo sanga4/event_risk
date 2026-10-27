@@ -17,6 +17,7 @@
   <aside>
     <div class="tabs" role="tablist">
       <button type="button" role="tab" data-tab="contracts" aria-selected="true">Contracts</button>
+      <button type="button" role="tab" data-tab="markets">Live market values</button>
       <button type="button" role="tab" data-tab="events">Events</button>
       <button type="button" role="tab" data-tab="entities">Entities</button>
       <button type="button" role="tab" data-tab="securities">Securities</button>
@@ -31,6 +32,7 @@
     <details style="padding:8px 12px;border-top:1px solid var(--hairline)">
       <summary>MotherDuck</summary>
       <p class="note" id="live-status">Checking live data connection…</p>
+      <label for="market-venue">Market venue</label><select id="market-venue"><option value="kalshi">Kalshi</option><option value="polymarket">Polymarket</option></select>
       <input id="analyst-key" type="password" autocomplete="off" placeholder="Analyst API key" aria-label="Analyst API key" style="width:100%">
       <button type="button" id="connect">Connect / load questions</button>
     </details>
