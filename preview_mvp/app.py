@@ -180,10 +180,15 @@ def public_graph():
     for r in securities:
         nodes.append({"id":"security:"+r["ticker"],"type":"security","name":r["name"],
                       "ticker":r["ticker"],"subtitle":r.get("country",""),
-                      "description":r.get("sector",""),"review_status":"PUBLIC_REFERENCE_NOT_APPROVED"})
+                      "description":r.get("sector",""),"country":r.get("country",""),
+                      "sector":r.get("sector",""),"asset_class":r.get("asset_class",""),
+                      "role":r.get("role",""),"review_status":"PUBLIC_REFERENCE_NOT_APPROVED"})
     for f in factors:
         nodes.append({"id":"factor:"+f["id"],"type":"factor","name":f["name"],
                       "subtitle":f.get("family",""),"description":f.get("definition",""),
+                      "family":f.get("family",""),"factor_id":f.get("id",""),
+                      "reference":f.get("reference",""),
+                      "historical_series_validated":False,
                       "review_status":"CATALOG_DEFINITION_NOT_MEASURED_EXPOSURE"})
     for ch, name, families in CHANNELS:
         nodes.append({"id":"channel:"+ch, "type":"channel","name":name,
