@@ -183,7 +183,37 @@ async function loadModel(){
      " · issuer point-in-time verified: "+String(fit.issuer_pit_verified),"subtle"));
  }catch(e){$("model-status").textContent="Regression unavailable: "+e.message+". No estimated coefficients substituted."}
 }
+async function referenceFactor(){
+ const id=$("reference-factor").value,host=$("reference-factor-results");
+ host.replaceChildren();$("reference-factor-status").textContent="Resolving published factor pathways…";
+ try{
+   const d=await call("/api/v1/reference/reverse?node_id="+encodeURIComponent(id));
+   host.append(el("h3",d.node.name));
+   if(!d.events.length)host.append(el("p","No scenario connected by the existing seed graph; this is not proof of no event exposure.","subtle"));
+   for(const ev of d.events){
+     const block=el("div",undefined,"result");
+     block.append(el("strong",ev.name));
+     block.append(el("p","Illustrative reference path: "+ev.path.join(" → "),"subtle"));host.append(block);
+   }
+   if(analyst()){
+     try{
+       const real=await call("/api/v1/research/reverse?kind=factor&node_id="+
+           encodeURIComponent(id)+"&limit=40",true);
+       const section=el("div");section.append(el("h3","Entitled market contracts ("+real.rows.length+")"));
+       renderQuotes(section,real.rows);host.prepend(section);
+       $("reference-factor-status").textContent="Research graph query complete; individual quote publication times unverified.";
+     }catch(e){host.prepend(el("p","Source contracts restricted: "+e.message,"subtle"))}
+   }else host.prepend(el("p","Actual contract prices require a session key and independently approved source use.","subtle"));
+   $("reference-factor-status").textContent="Public reference pathway search complete.";
+ }catch(e){$("reference-factor-status").textContent="Reverse factor lookup unavailable: "+e.message}
+}
 async function factorResearch(){
+ const catalog=await call("/api/v1/catalog");
+ const ref=$("reference-factor");ref.replaceChildren();
+ for(const factor of catalog.factors){
+   const opt=el("option",factor.name+" · "+factor.family);opt.value=factor.id;ref.append(opt);
+ }
+ $("reference-factor-run").addEventListener("click",referenceFactor);
  const select=$("factor-id");
  const pre=[["DGS2","2Y U.S. Treasury yield"],["DGS10","10Y U.S. Treasury yield"],
    ["DGS5","5Y U.S. Treasury yield"],["DGS10R","10Y real rate"],
