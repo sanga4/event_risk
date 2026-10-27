@@ -445,7 +445,8 @@ def research(route,q):
 
 def runtime_status():
     return {"product":"EventRisk Research","mode":SCHEMA,
-            "research_access":"AUTHENTICATED_READ_ONLY",
+            "research_access":"AUTHENTICATED_SELECT_ONLY_APPLICATION_LAYER",
+            "database_credential_read_only_guaranteed":False,
             "full_database_explorer":"ADMIN_ONLY_WITH_ENTITLEMENTS",
             "admin_key_configured":bool(os.getenv("EVENTRISK_DATA_ADMIN_KEY")),
             "generated_at_utc":utc_now(),
@@ -462,7 +463,7 @@ def runtime_status():
             "last_successful_authenticated_query_at_utc":
                 DB_CONNECTION.get("last_success_utc"),
             "institutional_model_approved":False,
-            "note":"A configured token is not a tested connection. Authenticated /research/coverage verifies live SELECT."}
+            "note":"The server restricts calls to app-defined SELECTs. Underlying PAT may be read/write. A startup SELECT verifies connectivity, not publisher rights or institutional model approval."}
 
 class Server(BaseHTTPRequestHandler):
     server_version="EventRiskResearch/1.0"
