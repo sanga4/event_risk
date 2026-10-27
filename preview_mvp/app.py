@@ -30,6 +30,9 @@ MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
 SESSION_LOCK = threading.RLock()
 DB_CONNECTION = {"conn": None, "last_success_utc": None}
+LIVE_COVERAGE = {"as_of_utc": None, "checked_monotonic": 0.0, "metrics": None, "error": None}
+COVERAGE_LOCK = threading.Lock()
+COVERAGE_CACHE_SECONDS = 900
 RATE_LOCK = threading.Lock()
 RATE_BY_SESSION = defaultdict(deque)
 RATE_WINDOW_SECONDS = 60
@@ -445,6 +448,71 @@ def research(route,q):
                 "factor_id":f,"rows":list(reversed(rows)), "no_first_publication_claim":True}
     raise ValueError("UNKNOWN_RESOURCE")
 
+def live_public_coverage():
+    """Aggregate-only live MotherDuck telemetry for the graph website.
+
+    No market names, questions, probabilities, quotes, raw rows, factor values,
+    account metadata, or server credentials are made public. Contract totals
+    represent only the bounded warehouse snapshot, NEVER provider-wide census.
+    A TTL cache prevents every public page load from opening a warehouse query.
+    """
+    now=time.monotonic()
+    with COVERAGE_LOCK:
+        if LIVE_COVERAGE["metrics"] is not None and (
+            now-LIVE_COVERAGE["checked_monotonic"]<COVERAGE_CACHE_SECONDS
+        ):
+            metrics=LIVE_COVERAGE["metrics"]
+            return {"mode":"LIVE_AGGREGATE_MOTHERDUCK_NO_SOURCE_REDISPLAY",
+                    "as_of_utc":LIVE_COVERAGE["as_of_utc"],
+                    "cache_ttl_seconds":COVERAGE_CACHE_SECONDS,
+                    "database_connected":True,"metrics":metrics,
+                    "coverage_claim":"CAPTURED_WAREHOUSE_SAMPLE_NOT_ALL_PROVIDER_CONTRACTS",
+                    "market_quotes_included":False,"raw_contracts_included":False,
+                    "source_rights_approved":bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
+                    "factor_history_rights_approved":bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED")}
+        if not os.getenv("MOTHERDUCK_TOKEN"):
+            raise RuntimeError("DATABASE_CREDENTIAL_NOT_CONFIGURED")
+        try:
+            rows=_db_query("""SELECT
+             (SELECT COUNT(DISTINCT node_id) FROM main.graph_nodes WHERE node_type='question')
+                AS question_node_ids,
+             (SELECT COUNT(DISTINCT node_id) FROM main.graph_nodes WHERE node_type='entity')
+                AS entity_node_ids,
+             (SELECT COUNT(DISTINCT market_id) FROM main.lab_live_market_latest_v1
+                WHERE lower(venue)='kalshi') AS captured_kalshi_market_ids,
+             (SELECT COUNT(DISTINCT market_id) FROM main.lab_live_market_latest_v1
+                WHERE lower(venue)='polymarket') AS captured_polymarket_market_ids,
+             (SELECT COUNT(DISTINCT factor_id) FROM main.lab_factor_observations)
+                AS observed_factor_series,
+             (SELECT COUNT(*) FROM main.lab_factor_catalog) AS warehouse_factor_definitions,
+             (SELECT COUNT(DISTINCT ticker) FROM main.lab_joint_security_funding_models_v1)
+                AS securities_with_funding_models,
+             (SELECT CAST(MAX(observed_date_utc) AS VARCHAR) FROM main.lab_live_market_latest_v1)
+                AS latest_captured_observed_date""")
+            if len(rows)!=1:raise RuntimeError("AGGREGATE_SHAPE_INVALID")
+            metrics={}
+            for k,v in rows[0].items():
+                if k=="latest_captured_observed_date":
+                    metrics[k]=str(v) if v is not None else None
+                else:
+                    n=int(v)
+                    if n<0:raise ValueError("NEGATIVE_AGGREGATE")
+                    metrics[k]=n
+            LIVE_COVERAGE.update({"as_of_utc":utc_now(),"checked_monotonic":now,
+                                  "metrics":metrics,"error":None})
+            return {"mode":"LIVE_AGGREGATE_MOTHERDUCK_NO_SOURCE_REDISPLAY",
+                    "as_of_utc":LIVE_COVERAGE["as_of_utc"],
+                    "cache_ttl_seconds":COVERAGE_CACHE_SECONDS,
+                    "database_connected":True,"metrics":metrics,
+                    "coverage_claim":"CAPTURED_WAREHOUSE_SAMPLE_NOT_ALL_PROVIDER_CONTRACTS",
+                    "market_quotes_included":False,"raw_contracts_included":False,
+                    "source_rights_approved":bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
+                    "factor_history_rights_approved":bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED")}
+        except Exception as exc:
+            LIVE_COVERAGE["error"]=type(exc).__name__
+            raise
+
+
 def runtime_status():
     return {"product":"EventRisk Research","mode":SCHEMA,
             "research_access":"AUTHENTICATED_SELECT_ONLY_APPLICATION_LAYER",
@@ -507,6 +575,11 @@ class Server(BaseHTTPRequestHandler):
             file=(ROOT / FILES[route]).resolve()
             if not file.is_file() or ROOT not in file.parents:return self.send(404,{"error":"NOT_FOUND"},method=method)
             return self.send(200,file.read_bytes(),ctype=CONTENT_TYPES.get(file.suffix,"application/octet-stream"),method=method)
+        if route=="/api/v1/live-coverage":
+            try:return self.send(200,live_public_coverage(),method=method)
+            except Exception as exc:
+                print("EventRisk aggregate source unavailable:",type(exc).__name__,flush=True)
+                return self.send(503,{"error":"LIVE_WAREHOUSE_AGGREGATE_UNAVAILABLE"},method=method)
         if route=="/api/v1/runtime":return self.send(200,runtime_status(),method=method)
         if route=="/api/v1/inventory":
             try:
