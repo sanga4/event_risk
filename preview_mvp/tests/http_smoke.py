@@ -20,7 +20,7 @@ try:
             if proc.poll() is not None:raise RuntimeError("server exited")
             time.sleep(.2)
     else:raise RuntimeError("server failed readiness")
-    for route in ("/","/previous-explorer","/lab","/api","/data","/assets/viewer.css","/assets/viewer.js","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
+    for route in ("/","/previous-explorer","/lab","/api","/data","/assets/viewer.css","/assets/viewer.js","/assets/live-coverage.js","/assets/data.css","/assets/data.js","/assets/marco.css","/assets/marco.js","/assets/attribution-core.js","/assets/styles.css","/assets/mvp.css","/assets/app.js","/assets/lab.css","/assets/lab.js","/excel/taskpane.html","/excel/taskpane.css","/excel/taskpane.js","/excel/manifest.xml"):
         r,data=call(route)
         assert r.status==200 and data,(route,r.status)
         assert r.headers.get("Access-Control-Allow-Origin") is None,route
@@ -79,6 +79,13 @@ try:
     status=json.loads(raw)
     assert status["direct_database_queries_enabled"] is False
     assert status["institutional_model_approved"] is False
+    try:
+        call("/api/v1/live-coverage")
+        raise AssertionError("No DB token: live coverage must fail closed")
+    except urllib.error.HTTPError as err:
+        assert err.code==503,err.code
+        assert json.loads(err.read())["error"]=="LIVE_WAREHOUSE_AGGREGATE_UNAVAILABLE"
+
     try:
         call("/api/v1/research/datasets")
         raise AssertionError("Admin database schema should require configured credentials")
