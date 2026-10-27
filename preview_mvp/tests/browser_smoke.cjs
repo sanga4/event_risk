@@ -39,7 +39,7 @@ async function viewer(width,height,dir){
  await page.locator('[data-id="contract:illustrative:data_center_power"]').waitFor();
  await page.locator('[data-id="contract:illustrative:data_center_power"]').click();
  assert.ok((await page.locator("#detail").textContent()).includes("NOT_AN_ACTUAL_LISTING"));
- assert.ok((await page.locator("#path-notice").textContent()).includes("NOT an actual exchange listing"));
+ assert.ok((await page.locator("#path-notice").textContent()).includes("example contract is synthetic"));
 
  assert.equal(await page.locator('a[href="/excel/manifest.xml"]').count(),1);
  assert.ok(!(await page.locator("body").innerText()).includes("Event Attribution"));
