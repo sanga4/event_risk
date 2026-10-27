@@ -231,13 +231,13 @@ def _assert_read_query(sql):
     parsed=duckdb.extract_statements(sql)
     if len(parsed)!=1 or parsed[0].type!=duckdb.StatementType.SELECT:
         raise ValueError("ONLY_SINGLE_SELECT_ALLOWED")
-    if not re.match(r"^\\s*(?:WITH|SELECT)\\b", sql, flags=re.I):
+    if not re.match(r"^\s*(?:WITH|SELECT)\b", sql, flags=re.I):
         raise ValueError("ONLY_SINGLE_SELECT_ALLOWED")
     if re.search(
-        r"\\b(?:read_csv(?:_auto)?|read_parquet|read_json(?:_auto)?|"
+        r"\b(?:read_csv(?:_auto)?|read_parquet|read_json(?:_auto)?|"
         r"read_text|read_blob|sqlite_scan|postgres_scan|"
         r"query|query_table|query_data|getenv|current_setting|"
-        r"external_file_cache|http_get|http_post|secret|pragma)\\s*\\(",
+        r"external_file_cache|http_get|http_post|secret|pragma)\s*\(",
         sql, flags=re.I,
     ):
         raise ValueError("EXTERNAL_OR_DYNAMIC_QUERY_NOT_ALLOWED")
