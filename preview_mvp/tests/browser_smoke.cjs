@@ -39,7 +39,7 @@ async function viewer(width,height,dir){
  await page.locator('[data-id="contract:illustrative:data_center_power"]').waitFor();
  await page.locator('[data-id="contract:illustrative:data_center_power"]').click();
  assert.ok((await page.locator("#detail").textContent()).includes("NOT_AN_ACTUAL_LISTING"));
- assert.ok((await page.locator("#path-notice").textContent()).includes("example contract is synthetic"));
+ assert.ok((await page.locator("#path-notice").textContent()).includes("Actual YES prices require entitled source access"));
 
  assert.equal(await page.locator('a[href="/excel/manifest.xml"]').count(),1);
  assert.ok(!(await page.locator("body").innerText()).includes("Event Attribution"));
@@ -64,13 +64,13 @@ async function viewer(width,height,dir){
  assert.ok((await page.locator("#live-status").textContent()).includes("private warehouse"));
  assert.equal(await page.locator("#market-venue").count(),1);
   assert.equal(await page.locator("#market-next").count(),1);
-  assert.equal(await page.locator("#owner-key").count(),1);
+  assert.equal(await page.locator("#sign-out").count(),1);
  await page.locator('.tabs [data-tab="questions"]').click();
  assert.ok((await page.locator("#list-info").innerText()).includes("require MotherDuck"));
  await page.locator("aside details summary").click();
  await page.locator("#analyst-key").fill("not-a-real-analyst-key");
  await page.locator("#connect").click();
- await page.getByText("Warehouse unlock failed",{exact:false}).waitFor({timeout:9000});
+ await page.getByText("Analyst connection failed",{exact:false}).waitFor({timeout:9000});
  await page.screenshot({path:path.join(dir,"marco-raw-graph-"+width+".png"),fullPage:true});
  assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
  await page.close();console.log("MARCO_RAW_SOURCE_GRAPH_BROWSER=PASS",width,height);
@@ -80,11 +80,17 @@ async function documents(dir){
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
  const response=await page.goto(URL+"/lab",{waitUntil:"domcontentloaded"});
  assert.equal(response.status(),200);
- await page.locator("#case-title").waitFor({timeout:12000});
- assert.equal(await page.locator("#factor-chart").count(),1,"Historical factor chart must be present and access-gated");
- assert.equal(await page.locator("#run-regression").count(),1);
- assert.equal(await page.locator("#load-series").count(),1);
- assert.ok((await page.locator("#warehouse-connection").textContent()).length>2);
+ await page.locator("#factor-id").waitFor({timeout:12000});
+ assert.equal(await page.locator("#reference-factor").count(),1);
+ assert.equal(await page.locator("#load-factor").count(),1);
+ assert.equal(await page.locator("#load-model").count(),1);
+ await page.locator("#reference-factor-run").click();
+ await page.locator("#reference-factor-results h3").first().waitFor({timeout:12000});
+ await page.goto(URL+"/attribution",{waitUntil:"domcontentloaded"});
+ await page.locator("#node-select option").nth(1).waitFor({timeout:12000});
+ await page.locator("#lookup-run").click();
+ await page.locator("#exposure-results h3").first().waitFor({timeout:12000});
+ assert.equal(await page.locator("#scenario-result").count(),1);
  await page.goto(URL+"/api",{waitUntil:"domcontentloaded"});
  assert.ok((await page.locator("h2").innerText()).includes("EventRisk API"));
  assert.ok((await page.locator('a[href="/excel/manifest.xml"]').count())>0);
