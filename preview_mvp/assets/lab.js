@@ -10,7 +10,7 @@
     return n;
   };
   const state={graph:null,catalog:null,runtime:null,
-    key:window.sessionStorage.getItem("eventrisk_analyst_key")||"",
+    key:"",
     caseId:"inflation",loadedModels:[],loadedSeries:[],loadedFactor:null,
     fetchedModelTicker:null};
   const CASES={
@@ -262,7 +262,7 @@
     $("set-key").addEventListener("click",()=>{
       const value=$("key").value.trim();
       if(!value){$("auth-message").textContent="No key entered; source queries remain locked.";return;}
-      state.key=value;window.sessionStorage.setItem("eventrisk_analyst_key",value);
+      state.key=value;
       $("key").value="";$("auth-message").textContent="Key saved only for this browser tab. No database credential is exposed; source permission remains independent.";
     });
     $("export").addEventListener("click",exportLoaded);
@@ -276,8 +276,17 @@
       $("security-count").textContent=catalog.securities_count.toLocaleString("en-US");
       $("factor-count").textContent=catalog.factors_count;
       $("channel-count").textContent=catalog.channels.length;
-      $("warehouse-connection").textContent=runtime.direct_database_queries_enabled?"Configured*":"Setup required";
-      $("status").textContent=runtime.direct_database_queries_enabled?"WAREHOUSE KEY CONFIGURED*":"WAREHOUSE SETUP REQUIRED";
+      $("warehouse-connection").textContent=runtime.connection_tested?
+        (runtime.derived_research_distribution_approved?"Connected · entitled":"Connected · restricted"):
+        "Database unavailable";
+      $("status").textContent=runtime.connection_tested?
+        (runtime.derived_research_distribution_approved?"LIVE DB · RESEARCH ACCESS":"LIVE DB · DERIVED DATA GATED"):
+        "NO VERIFIED WAREHOUSE CONNECTION";
+      $("auth-message").textContent=runtime.connection_tested?
+        (runtime.derived_research_distribution_approved?
+          "Historical models and factor series require an issued analyst key; coefficients remain noncausal.":
+          "Database is live, but derived research redistribution is not authorized. Public scenario pathways work; historical model and factor endpoints correctly return 403.") :
+        "Historical queries require a successful MotherDuck connection, an analyst key, and approved data-use rights.";
       for(const sec of catalog.securities){
         const option=element("option");option.value=sec.ticker;
         option.label=sec.name;
