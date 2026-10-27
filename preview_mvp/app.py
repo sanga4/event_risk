@@ -23,6 +23,7 @@ import sys
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
 import warehouse
+from pathways import graph_paths
 DATA = ROOT / "data"
 MOTHERDUCK_DB = "eventrisk_factor_lab"
 REFRESH_TTL_SECONDS = 300
@@ -518,6 +519,10 @@ class Server(BaseHTTPRequestHandler):
         if route=="/api/v1/catalog":
             try:return self.send(200,catalog(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"CATALOG_UNAVAILABLE"},method=method)
+        if route=="/api/v1/graph-paths":
+            try:return self.send(200,graph_paths(public_graph()),method=method)
+            except (OSError,ValueError,KeyError) as ex:
+                return self.send(503,{"error":"PATHWAYS_UNAVAILABLE"},method=method)
         if route=="/api/v1/graph":
             try:return self.send(200,public_graph(),method=method)
             except (OSError,ValueError,KeyError) as ex:return self.send(503,{"error":"GRAPH_UNAVAILABLE"},method=method)
