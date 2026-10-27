@@ -326,7 +326,7 @@ def research(route,q,owner_private=False):
             search=_one(q,"q",80).strip().lower()
             limit=_int_arg(q,"limit",25,50) or 25
             offset=_int_arg(q,"offset",0,10000)
-            rows=_db_query("""SELECT venue,market_id,event_id,event_title,question,
+            rows=_db_query("""SELECT proposition_id,venue,market_id,event_id,event_title,question,
               probability,previous_probability,probability_delta_pp,quote_basis,
               CAST(known_at AS VARCHAR) AS known_at,
               CAST(observed_at AS VARCHAR) AS observed_at,
@@ -346,7 +346,7 @@ def research(route,q,owner_private=False):
         market_id=_one(q,"market_id",180).strip()
         if not re.fullmatch(r"[A-Za-z0-9._:-]{1,180}",market_id):
             raise ValueError("INVALID_MARKET_ID")
-        rows=_db_query("""SELECT venue,market_id,event_id,event_title,question,
+        rows=_db_query("""SELECT proposition_id,venue,market_id,event_id,event_title,question,
           probability,previous_probability,probability_delta_pp,quote_basis,
           CAST(known_at AS VARCHAR) AS known_at,
           CAST(observed_at AS VARCHAR) AS observed_at,
@@ -387,7 +387,7 @@ def research(route,q,owner_private=False):
                 "venue":venue,"market_id":market_id,"rows":rows,
                 "historical_snapshot_not_original_publication_pit":True,
                 "not_calibrated_event_probability":True,
-                "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED",
+                "rights_scope":"OWNER_PRIVATE_RESEARCH_NOT_PUBLIC_REDISPLAY" if owner_private else "APPROVED_SOURCE_REDISPLAY_REQUIRED",
                 "source":"MotherDuck lab_market_daily_historical_v1",
                 "owner_private_research":owner_private}
     if route=="/api/v1/research/factor-catalog":
