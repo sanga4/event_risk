@@ -103,6 +103,7 @@ ALLOW_ROUTES = {
     "/api/v1/research/factor-series", "/api/v1/research/factor-catalog",
     "/api/v1/research/graph-neighbors",
     "/api/v1/research/funding-diagnostics",
+    "/api/v1/research/markets", "/api/v1/research/market-quote",
     "/api/v1/research/datasets", "/api/v1/research/columns",
     "/api/v1/research/table",
 }
@@ -309,6 +310,56 @@ def research(route,q):
         return {"mode":"LIVE_DATABASE_COUNT_ONLY","generated_at_utc":utc_now(),
                 "database":MOTHERDUCK_DB,"coverage":rows,
                 "license_notice":"Counts do not confer permission to redistribute underlying contract data."}
+    if route in ("/api/v1/research/markets","/api/v1/research/market-quote"):
+        # The public viewer may use count aggregates, but contract-level
+        # prices/questions require source redistribution authorization.
+        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+            raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
+        venue=_one(q,"venue",20).lower().strip()
+        if venue not in ("kalshi","polymarket"):
+            raise ValueError("INVALID_MARKET_VENUE")
+        if route.endswith("/markets"):
+            search=_one(q,"q",80).strip().lower()
+            limit=_int_arg(q,"limit",25,50) or 25
+            offset=_int_arg(q,"offset",0,10000)
+            rows=_db_query("""SELECT venue,market_id,event_id,event_title,question,
+              probability,previous_probability,probability_delta_pp,quote_basis,
+              CAST(known_at AS VARCHAR) AS known_at,
+              CAST(observed_at AS VARCHAR) AS observed_at,
+              capture_time_verified,provider_quote_freshness_verified,
+              historical_point_in_time_released
+              FROM main.lab_live_market_latest_v1
+              WHERE lower(venue)=? AND
+                (lower(question) LIKE ? OR lower(event_title) LIKE ? OR lower(market_id) LIKE ?)
+              ORDER BY known_at DESC,market_id LIMIT ? OFFSET ?""",
+                (venue,)+("%"+search.replace("%","\\%").replace("_","\\_")+"%",)*3+(limit,offset))
+            return {"mode":"LICENSE_GATED_CAPTURED_MARKET_QUOTES","venue":venue,
+                "rows":rows,"limit":limit,"offset":offset,
+                "market_quote_is_not_an_event_probability":True,
+                "freshness_unverified_cannot_assume_current":True,
+                "source":"MotherDuck lab_live_market_latest_v1",
+                "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED"}
+        market_id=_one(q,"market_id",180).strip()
+        if not re.fullmatch(r"[A-Za-z0-9._:-]{1,180}",market_id):
+            raise ValueError("INVALID_MARKET_ID")
+        rows=_db_query("""SELECT venue,market_id,event_id,event_title,question,
+          probability,previous_probability,probability_delta_pp,quote_basis,
+          CAST(known_at AS VARCHAR) AS known_at,
+          CAST(observed_at AS VARCHAR) AS observed_at,
+          CAST(previous_capture_at AS VARCHAR) AS previous_capture_at,
+          capture_time_verified,provider_quote_freshness_verified,
+          historical_point_in_time_released,
+          released_for_historical_backtesting
+          FROM main.lab_live_market_latest_v1
+          WHERE lower(venue)=? AND market_id=? LIMIT 1""",(venue,market_id))
+        return {"mode":"LICENSE_GATED_CAPTURED_MARKET_QUOTE",
+            "venue":venue,"market_id":market_id,
+            "record":rows[0] if rows else None,
+            "quote_not_event_probability":True,
+            "current_orderbook_or_freshness_not_guaranteed":True,
+            "historical_pit_not_certified":True,
+            "source":"MotherDuck lab_live_market_latest_v1",
+            "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED"}
     if route=="/api/v1/research/factor-catalog":
         rows=_db_query("""SELECT factor_id,name,family,unit,license_class,active
                          FROM main.lab_factor_catalog ORDER BY factor_id LIMIT 150""")
