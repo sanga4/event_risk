@@ -6,7 +6,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
-              key:"",sourceQuestions:[],network:null,runtime:null};
+              key:"",sourceQuestions:[],sourceMarkets:[],network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
  const mk=(tag,text,cls)=>{const e=document.createElement(tag);
@@ -20,7 +20,7 @@
      state.adj.get(id).push(e);
    }
  }
- function nodeType(n){return n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
+ function nodeType(n){return n.type==="market"?"Captured market contract":n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
    n.type==="factor"?"Factor definition":n.type==="channel"?"Economic channel":n.type==="security"?"Security":"Entity";}
  function graphNeighbors(id){
    return (state.adj.get(id)||[]).map(edge=>({edge,other:edge.src===id?edge.dst:edge.src}))
@@ -28,7 +28,7 @@
  }
  function browse(){
    const ids=[...state.nodes.values()].filter(n=>state.tab==="questions"?
-     n.type==="question":n.type==={contracts:"contract",events:"event",entities:"entity",securities:"security",factors:"factor"}[state.tab]);
+     n.type==="question":n.type==={markets:"market",contracts:"contract",events:"event",entities:"entity",securities:"security",factors:"factor"}[state.tab]);
    const q=$("search").value.trim().toLowerCase();
    const rows=(q?ids.filter(n=>[n.name,n.ticker,n.description,n.subtitle,n.id]
       .some(v=>String(v||"").toLowerCase().includes(q))):ids)
@@ -39,7 +39,7 @@
      if(n.id===state.selected)li.setAttribute("aria-current","true");
      li.append(mk("i",null,"swatch "+(typeColor[n.type]||"factor")));
      li.append(mk("span",(n.ticker?n.ticker+" · ":"")+n.name,"name"));
-     li.append(mk("span",n.type==="security"?n.subtitle||"":n.type==="factor"?n.subtitle||"":n.type==="question"?"DB":"", "num"));
+     li.append(mk("span",n.type==="security"?n.subtitle||"":n.type==="factor"?n.subtitle||"":n.type==="question"?"DB":n.type==="market"&&Number.isFinite(n.probability)?Math.round(n.probability*1000)/10+"%":"", "num"));
      li.addEventListener("click",()=>select(n.id));
      li.addEventListener("keydown",e=>{if(e.key==="Enter")select(n.id);});
      list.append(li);
@@ -63,6 +63,21 @@
    if(n.subtitle)addRow(host,"Category",n.subtitle);
    if(n.description)addRow(host,"Description",n.description);
    if(n.last_recorded_at)addRow(host,"Warehouse recorded",n.last_recorded_at);
+   if(n.type==="market"){
+     const pct=v=>typeof v==="number"&&Number.isFinite(v)?(v*100).toFixed(1)+"%":"Not captured";
+     const percentage=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+" pp":"Not captured";
+     addRow(host,"YES implied market price",pct(n.probability));
+     addRow(host,"Previous capture",pct(n.previous_probability));
+     addRow(host,"Change from prior capture",percentage(n.probability_delta_pp));
+     addRow(host,"Quote basis",n.quote_basis||"Unspecified");
+     addRow(host,"Captured at",n.observed_at||"Unknown");
+     addRow(host,"Known to warehouse",n.known_at||"Unknown");
+     addRow(host,"Capture timestamp verified",n.capture_time_verified===true?"Yes":"Not verified");
+     addRow(host,"Provider freshness verified",n.provider_quote_freshness_verified===true?"Yes":"Not verified");
+     addRow(host,"Original PIT released",n.historical_point_in_time_released===true?"Yes":"No");
+     host.append(mk("p","Captured quote, not necessarily a current tradable price or the probability of the normalized event. Market prices and probabilities differ by contract structure.","note"));
+   }
+   if(n.type==="contract"&&!n.market_id)addRow(host,"Market probability","Not available: this is a synthetic demonstration, not a real exchange contract.");
    if(n.provider)addRow(host,"Provider status",n.provider);
    if(n.historical_series_validated===false)addRow(host,"Observed factor series","NOT VERIFIED");
    addRow(host,"Source",n.liveWarehouse?"MotherDuck / graph_nodes":
@@ -160,13 +175,64 @@
  async function select(id){
    if(!state.nodes.has(id))return;
    state.selected=id;browse();detail(id);graph(id);
-   if(state.nodes.get(id).liveWarehouse&&state.key)await loadNeighbors(id);
+   if(state.nodes.get(id).type==="market"&&state.key)await loadMarketValue(id);
+   else if(state.nodes.get(id).liveWarehouse&&state.key)await loadNeighbors(id);
  }
  async function request(path){
    const r=await fetch(path,{cache:"no-store",headers:{"X-Analyst-Key":state.key}});
    let data;try{data=await r.json()}catch(_){throw Error("Invalid server response");}
    if(!r.ok)throw Error(data.error||"HTTP "+r.status);
    return data;
+ }
+ async function searchMarkets(){
+   if(!state.key){
+     $("live-status").textContent="Actual market odds require an authorized analyst key and source redisplay rights.";
+     browse();return;
+   }
+   const venue=$("market-venue").value;
+   const query=$("search").value.trim();
+   $("live-status").textContent="Looking up captured "+venue+" market values…";
+   try{
+     const d=await request("/api/v1/research/markets?venue="+encodeURIComponent(venue)+
+       "&limit=40&q="+encodeURIComponent(query));
+     if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTES")throw Error("Unexpected quote source");
+     for(const n of state.sourceMarkets)state.nodes.delete(n.id);
+     state.sourceMarkets=[];
+     for(const m of d.rows||[]){
+       const n={id:"market:"+m.venue+":"+m.market_id,type:"market",
+         name:m.question||m.event_title||m.market_id,
+         provider:m.venue,market_id:m.market_id,liveWarehouse:true,
+         probability:m.probability,previous_probability:m.previous_probability,
+         probability_delta_pp:m.probability_delta_pp,quote_basis:m.quote_basis,
+         known_at:m.known_at,observed_at:m.observed_at,
+         capture_time_verified:m.capture_time_verified,
+         provider_quote_freshness_verified:m.provider_quote_freshness_verified,
+         historical_point_in_time_released:m.historical_point_in_time_released,
+         review_status:"Captured warehouse quote; venue freshness and original PIT unverified"};
+       state.nodes.set(n.id,n);state.sourceMarkets.push(n);
+     }
+     browse();
+     $("live-status").textContent=state.sourceMarkets.length+" captured "+venue+
+       " contracts. Select one for probability, change, timestamps, and quote basis.";
+   }catch(e){
+     $("live-status").textContent="Market values unavailable: "+e.message+
+       ". Source redistribution requires a separate authorization.";
+     browse();
+   }
+ }
+ async function loadMarketValue(id){
+   const n=state.nodes.get(id);
+   if(!n||!n.market_id||!state.key)return;
+   try{
+     const d=await request("/api/v1/research/market-quote?venue="+
+       encodeURIComponent(n.provider)+"&market_id="+encodeURIComponent(n.market_id));
+     if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_QUOTE")throw Error("Invalid quote contract");
+     if(d.record){
+       Object.assign(n,d.record);
+       n.probability=d.record.probability;
+       if(state.selected===id){detail(id);browse();}
+     }
+   }catch(e){$("live-status").textContent="Market detail unavailable: "+e.message;}
  }
  async function searchQuestions(){
    if(!state.key){browse();return}
@@ -219,7 +285,7 @@
      const d=await request("/api/v1/research/coverage");
      if(d.mode!=="LIVE_DATABASE_COUNT_ONLY")throw Error("Unexpected source contract");
      $("live-status").textContent="Live MotherDuck SELECT verified · source-question display may require separate rights.";
-     await searchQuestions();
+     if(state.tab==="markets")await searchMarkets();else if(state.tab==="questions")await searchQuestions();
    }catch(e){state.key="";$("live-status").textContent="Live MotherDuck unavailable: "+e.message;
      browse();}
  }
@@ -230,17 +296,18 @@
        for(const b of document.querySelectorAll(".tabs button"))
          b.setAttribute("aria-selected",String(b===button));
        $("search").value="";
-       if(state.tab==="questions")searchQuestions();else browse();
+       if(state.tab==="questions")searchQuestions();else if(state.tab==="markets")searchMarkets();else browse();
      });
    });
    let debounce;
    $("search").addEventListener("input",()=>{
-     if(state.tab!=="questions")return browse();
-     clearTimeout(debounce);debounce=setTimeout(searchQuestions,300);
+     if(state.tab!=="questions"&&state.tab!=="markets")return browse();
+     clearTimeout(debounce);debounce=setTimeout(state.tab==="markets"?searchMarkets:searchQuestions,350);
    });
    $("depth").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("show-factors").addEventListener("change",()=>state.selected&&graph(state.selected));
    $("connect").addEventListener("click",connect);
+   $("market-venue").addEventListener("change",()=>state.tab==="markets"&&searchMarkets());
    const root=document.documentElement.style;
    document.querySelectorAll(".split").forEach(handle=>{
      const side=handle.dataset.side;let dragging=false;
