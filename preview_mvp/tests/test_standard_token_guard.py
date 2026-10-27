@@ -57,7 +57,7 @@ class StandardMotherDuckTokenGuardTests(unittest.TestCase):
         ]
         for sql in statements:
             with self.subTest(sql=sql):
-with self.assertRaises(Exception):
+                with self.assertRaises(Exception):
                     app._assert_read_query(sql)
 
     def test_error_before_any_query_or_connection(self):
