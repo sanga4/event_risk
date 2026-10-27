@@ -8,21 +8,21 @@
 </head><body>
 <header>
   <h1>Event Risk Graph</h1>
-  <nav aria-label="Tools"><a href="/lab">Factor research</a> <a href="/api">API</a> <a href="/excel/manifest.xml">Excel add-in</a></nav>
+  <nav aria-label="Tools"><a href="/" aria-current="page">Explore</a> <a href="/attribution">Attribution</a> <a href="/lab">Factor research</a> <a href="/api">API</a> <a href="/excel/manifest.xml">Excel add-in</a></nav>
   <label>Depth <select id="depth"><option>1</option><option selected>2</option><option>4</option></select></label>
   <label><input type="checkbox" id="show-factors" checked> Factors</label>
 </header>
 <main>
   <aside>
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="contracts" aria-selected="true">Contracts</button>
+      <button type="button" role="tab" data-tab="questions" aria-selected="true">Questions</button>
+      <button type="button" role="tab" data-tab="contracts">Contracts</button>
       <button type="button" role="tab" data-tab="markets">Markets &amp; odds</button>
       <button type="button" role="tab" data-tab="events">Events</button>
       <button type="button" role="tab" data-tab="entities">Entities</button>
       <button type="button" role="tab" data-tab="securities">Securities</button>
       <button type="button" role="tab" data-tab="factors">Factors</button>
-      <button type="button" role="tab" data-tab="questions">Questions</button>
-    </div>
+      </div>
     <input id="search" type="search" placeholder="Search">
     <p class="note" id="warehouse-summary" role="status" style="padding:3px 12px 0;margin:5px 0;font-size:11px">
       Checking warehouse counts…
@@ -33,16 +33,15 @@
       <button type="button" id="market-next" disabled>Next 50</button>
     </div>
     <details style="padding:8px 12px;border-top:1px solid var(--hairline)">
-      <summary>Private research access</summary>
-      <p class="note">Public reference nodes and illustrative pathways are visible without a key. To inspect your warehouse's actual captured contracts, odds and histories, use both your analyst key and your private data-admin key. Neither is saved in this browser.</p>
+      <summary>Analyst access · one-time sign-in</summary>
+      <p class="note">Public research references need no key. Enter an issued analyst key once per browser tab session for entitled captured market quotes and factor research. An analyst key does not grant provider redisplay rights.</p>
       <p class="note" id="live-status" role="status">Checking MotherDuck connection…</p>
       <label for="market-venue">Market venue</label><select id="market-venue"><option value="kalshi">Kalshi</option><option value="polymarket">Polymarket</option></select>
       <label for="analyst-key">Analyst API key</label>
       <input id="analyst-key" type="password" autocomplete="off" placeholder="EVENTRISK_ANALYST_KEY" aria-label="Analyst API key" style="width:100%">
-      <label for="owner-key">Private data-admin key</label>
-      <input id="owner-key" type="password" autocomplete="off" placeholder="EVENTRISK_DATA_ADMIN_KEY" aria-label="Private data-admin key" style="width:100%">
-      <button type="button" id="connect">Unlock my warehouse</button>
-      <p class="note">Find or set these two keys privately in Railway → eventrisk-research → eventrisk-research-web → Variables. The MotherDuck token is already on the server and is never entered here. Owner inspection does not grant public redistribution rights.</p>
+      <button type="button" id="connect">Connect analyst session</button>
+      <button type="button" id="sign-out">Forget session key</button>
+      <p class="note">An EventRisk administrator privately issues an analyst key. The MotherDuck token never belongs in the browser. Provider-origin data are only displayed when their data-use permissions allow it.</p>
     </details>
     <p class="note" id="list-info" style="padding:0 12px"></p>
   </aside>
@@ -50,8 +49,8 @@
   <section id="canvas-wrap">
     <div id="graph"></div>
     <div class="caption" id="caption" hidden></div>
-    <div class="empty" id="empty">Select a node on the left.</div>
-    <p id="path-notice" class="note" style="position:absolute;top:8px;left:12px;z-index:3;max-width:65%;background:var(--page);padding:4px 7px">Reference graph is public. Real captured market odds require private research access. The example contract is synthetic; no event betas.</p>
+    <div class="empty" id="empty">Pick an event or question to inspect its probabilities and contracts.</div>
+    <p id="path-notice" class="note" style="position:absolute;top:8px;left:12px;z-index:3;max-width:65%;background:var(--page);padding:4px 7px">Original event-first graph. Actual YES prices require entitled source access; public scenarios have no probability. Historical captures are not live order books.</p>
     <div class="legend">
       <span><i class="swatch question"></i>Contract / event</span>
       <span><i class="swatch entity"></i>Entity</span>
@@ -61,6 +60,6 @@
     </div>
   </section>
   <div class="split" data-side="right" role="separator" aria-orientation="vertical" aria-label="Resize detail panel" tabindex="0"></div>
-  <section id="detail"><p class="note">Select a node to inspect probability, provenance, economic links and history where available.</p></section>
+  <section id="detail"><p class="note">Select an event, contract, security, entity or factor to inspect linked contract prices where available.</p></section>
 </main>
 </body></html>
