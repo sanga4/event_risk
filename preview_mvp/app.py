@@ -293,7 +293,7 @@ def research(route,q):
             source_approved=bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"),
             derived_approved=bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"))
     if route=="/api/v1/research/coverage":
-        rows=_db_query("""SELECT 'graph_question_nodes' metric,count(DISTINCT node_id) value FROM main.graph_nodes WHERE node_type='question'
+        rows=_db_query("""SELECT 'graph_question_nodes' AS metric,count(DISTINCT node_id) AS "value" FROM main.graph_nodes WHERE node_type='question'
  UNION ALL SELECT 'graph_security_nodes',count(DISTINCT node_id) FROM main.graph_nodes WHERE node_type='security'
  UNION ALL SELECT 'factor_catalog_rows',count(*) FROM main.lab_factor_catalog
  UNION ALL SELECT 'graph_edges_versioned_records',count(*) FROM main.graph_edges
