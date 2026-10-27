@@ -1,0 +1,23 @@
+body{display:block;height:auto;min-height:100vh}header{position:sticky;top:0;background:var(--page);z-index:3}
+.research-page{display:block;max-width:1100px;margin:auto;padding:20px 24px 60px}
+.cols{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:22px}
+article{background:var(--surface);border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:14px}
+article h2{font-size:18px;margin:0 0 7px}article h3{font-size:14px;margin:5px 0 9px}
+.field{display:block;margin:14px 0;font-size:13px}.field input,.field select{display:block;width:100%;margin-top:5px}
+.btn{cursor:pointer;margin:8px 6px 2px 0;padding:8px 11px}.subtle{font-size:12px;color:var(--ink-2)}
+.result{padding:10px 0;border-bottom:1px solid var(--hairline)}.result button{border:0;background:none;padding:0;text-align:left;text-decoration:underline;cursor:pointer}
+.big{font-size:27px;font-weight:650;margin:5px 0}.badge-plain{font:11px system-ui;color:var(--ink-2);border:1px solid var(--hairline);border-radius:4px;padding:2px 6px}
+@media(max-width:750px){.cols{grid-template-columns:1fr}.research-page{padding:14px}}
+
+/* Factor research and attribution share compact Marco patterns. */
+
+body{display:block;height:auto;min-height:100vh}header{position:sticky;top:0;background:var(--page);z-index:3}
+.research-page{display:block;max-width:1100px;margin:auto;padding:20px 24px 60px}
+.cols{display:grid;grid-template-columns:minmax(255px,325px) 1fr;gap:20px}
+article{background:var(--surface);border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:14px}
+article h2{font-size:17px;margin:0 0 8px}article h3{font-size:14px;margin:5px 0 9px}
+.field{display:block;font-size:13px;margin:12px 0}.field input,.field select{display:block;width:100%;margin-top:5px}
+.btn{cursor:pointer;margin:6px 4px 4px 0;padding:8px 12px}
+.subtle{font-size:12px;color:var(--ink-2)}.series-plot{width:100%;height:260px;border:1px solid var(--hairline);background:var(--page)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px;border-bottom:1px solid var(--hairline);overflow-wrap:anywhere}
+@media(max-width:750px){.cols{grid-template-columns:1fr}.research-page{padding:14px}}
