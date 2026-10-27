@@ -432,8 +432,9 @@ def research(route,q):
         if not FACTOR_PATTERN.fullmatch(f):raise ValueError("INVALID_FACTOR")
         n=_int_arg(q,"limit",120,365)
         if n<1:n=120
-        rows=_db_query("""SELECT CAST(observed_date AS VARCHAR) observed_date,
-          arg_max(value,availability_at) value, arg_max(unit,availability_at) unit,
+        rows=_db_query("""SELECT CAST(observed_date AS VARCHAR) AS observed_date,
+          arg_max("value",availability_at) AS "value",
+          arg_max(unit,availability_at) AS unit,
           strftime(max(availability_at),'%Y-%m-%dT%H:%M:%SZ') available_at,
           arg_max(availability_basis,availability_at) availability_basis
           FROM main.lab_factor_observations WHERE factor_id=?
