@@ -41,6 +41,9 @@
       <h3>02 / Live analyst authorization</h3>
       <label for="key">Analyst key (issued separately)</label>
       <input type="password" id="key" placeholder="Optional for public hypothesis cases" autocomplete="off">
+      <label for="owner-key">Private data-admin key (for your own research)</label>
+      <input type="password" id="owner-key" placeholder="EVENTRISK_DATA_ADMIN_KEY" autocomplete="off">
+      <p class="helper">Both keys are configured privately in Railway. The data-admin key permits owner-only read access; it is not approval to redistribute third-party records.</p>
       <button type="button" id="set-key">Authorize session</button>
       <p class="helper" id="auth-message">Public reference cases need no credentials. Source data queries require a scoped backend token, a research key, and data-use authorization.</p>
       <h3>03 / Source regression</h3>
