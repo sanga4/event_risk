@@ -235,6 +235,35 @@
     }catch(e){status("Market odds import unavailable: "+e.message+
       ". Requires a valid analyst key and independent source redisplay authorization.");}
   }
+  async function importMarketHistory(){
+    if(!inExcel)return;
+    status("Loading captured contract probability history...");
+    try{
+      if(!$("key").value.trim())throw Error("Issued analyst key is required");
+      const venue=$("venue").value,marketId=$("market-id").value.trim();
+      if(!/^[A-Za-z0-9._:-]{1,180}$/.test(marketId))throw Error("Enter a valid native market ID");
+      const d=await api("/api/v1/research/market-history?venue="+
+        encodeURIComponent(venue)+"&market_id="+encodeURIComponent(marketId)+"&limit=180",true);
+      if(d.mode!=="LICENSE_GATED_CAPTURED_MARKET_HISTORY"||
+         d.market_id!==marketId||d.venue!==venue)
+        throw Error("Unexpected historical source contract");
+      await Excel.run(async c=>{
+        await writeSheet(c,"ER_MarketHistory",[
+          ["Venue","Native contract ID","Observation date","Captured YES %","Change pp",
+           "Previous observed date","Last quote captured at","Snapshot count",
+           "Snapshot source","Observation provenance","Original PIT verified"],
+          ...d.rows.map(m=>[venue,marketId,m.observed_date,
+            typeof m.probability==="number"?100*m.probability:"",
+            m.probability_delta_pp,m.previous_observed_date,m.last_quote_at,
+            m.snapshot_count,m.snapshot_source,m.observation_provenance,
+            m.point_in_time_verified])
+        ]);
+        await c.sync();
+      });
+      status("Imported "+d.rows.length+" captured daily values; this is not a certified originally published PIT history.");
+    }catch(e){status("Probability history unavailable: "+e.message+
+      ". Separate analyst authorization and source data-use rights are required.");}
+  }
   async function init(){
     try{
       const [c,g,i]=await Promise.all([
@@ -253,7 +282,7 @@
     Office.onReady(info=>{
       if(info.host!==Office.HostType.Excel){status("This taskpane must run inside Microsoft Excel.");return;}
       inExcel=true;
-      for(const id of ["reference","graph","extended","regression","series","market-values"])$(id).disabled=false;
+      for(const id of ["reference","graph","extended","regression","series","market-values","market-history"])$(id).disabled=false;
       status("Connected to Microsoft Excel. Public catalogs are ready; real warehouse regressions and factor data require separate analyst/source authorization.");
     });
   }
@@ -262,6 +291,7 @@
     $("graph").addEventListener("click",importGraph);
     $("extended").addEventListener("click",importExtended);
     $("market-values").addEventListener("click",importMarkets);
+    $("market-history").addEventListener("click",importMarketHistory);
     $("regression").addEventListener("click",importModels);
     $("series").addEventListener("click",importSeries);
     init();
