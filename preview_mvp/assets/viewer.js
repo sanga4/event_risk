@@ -27,6 +27,7 @@
      .filter(x=>state.nodes.has(x.other));
  }
  function browse(){
+   $("market-pagination").hidden=state.tab!=="markets";
    const ids=[...state.nodes.values()].filter(n=>state.tab==="questions"?
      n.type==="question":n.type==={markets:"market",contracts:"contract",events:"event",entities:"entity",securities:"security",factors:"factor"}[state.tab]);
    const q=$("search").value.trim().toLowerCase();
@@ -63,6 +64,7 @@
    if(n.subtitle)addRow(host,"Category",n.subtitle);
    if(n.description)addRow(host,"Description",n.description);
    if(n.last_recorded_at)addRow(host,"Warehouse recorded",n.last_recorded_at);
+   if(n.native_event_id)addRow(host,"Native provider event ID",n.native_event_id);
    if(n.type==="market"){
      const pct=v=>typeof v==="number"&&Number.isFinite(v)?(v*100).toFixed(1)+"%":"Not captured";
      const percentage=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+" pp":"Not captured";
@@ -114,7 +116,7 @@
      b.addEventListener("click",()=>select(other));host.append(b);
    }
    if(links.length>35)host.append(mk("p","+"+(links.length-35)+" more connections; search/select to explore.","note"));
-   host.append(mk("p","Contract and data-center links in this view are illustrative hypotheses, NOT actual Kalshi/Polymarket listings or fitted security return betas.","note"));
+   host.append(mk("p","The data-center demonstration is hypothetical. Source-native venue groupings do not prove verified canonical events, company exposure, or security return betas.","note"));
  }
  function visible(id){
    const depth=Number($("depth").value)||1,seen=new Map([[id,0]]);
@@ -257,7 +259,7 @@
    if(!state.nodes.has(id))return;
    state.selected=id;browse();detail(id);graph(id);
    if(state.nodes.get(id).type==="market"&&state.key)await loadMarketValue(id);
-   else if(state.nodes.get(id).liveWarehouse&&state.key)await loadNeighbors(id);
+   else if(state.nodes.get(id).liveWarehouse&&!state.nodes.get(id).source_event&&state.key)await loadNeighbors(id);
  }
  async function request(path){
    const headers={"X-Analyst-Key":state.key};
