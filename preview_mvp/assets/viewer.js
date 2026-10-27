@@ -6,7 +6,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
-              key:"",sourceQuestions:[],sourceMarkets:[],network:null,runtime:null};
+              key:"",ownerKey:"",sourceQuestions:[],sourceMarkets:[],network:null,runtime:null};
  const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
  const mk=(tag,text,cls)=>{const e=document.createElement(tag);
@@ -147,6 +147,72 @@
    }
    return new Set(ordered.filter(id=>state.nodes.has(id)));
  }
+ function createLocalGraph(host){
+   // Local SVG; no third-party script can inspect private keys.
+   const ns="http://www.w3.org/2000/svg",element=(tag,attrs={})=>{
+     const e=document.createElementNS(ns,tag);
+     for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));
+     return e;
+   };
+   let data={nodes:[],edges:[]};
+   function draw(){
+     host.replaceChildren();
+     const buckets=Array.from({length:5},()=>[]);
+     const types={market:0,contract:0,question:1,event:1,entity:2,security:3,channel:4,factor:4};
+     for(const n of data.nodes){
+       const original=state.nodes.get(n.id),bucket=types[original?.type]??2;
+       buckets[bucket].push(n);
+     }
+     const rows=Math.max(1,...buckets.map(a=>a.length));
+     const H=Math.max(440,Math.min(2500,(rows+1)*60)),W=1100;
+     const root=element("svg",{viewBox:"0 0 "+W+" "+H,role:"img",
+       "aria-label":"EventRisk contract to factor network"});
+     const pos=new Map();
+     buckets.forEach((b,i)=>b.forEach((n,j)=>pos.set(n.id,{x:90+i*225,y:(j+1)*H/(b.length+1)})));
+     const defs=element("defs"),m=element("marker",{id:"arrow-eventrisk",viewBox:"0 0 10 10",
+       refX:8,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"});
+     m.append(element("path",{d:"M0 1 L9 5 L0 9 z",fill:"var(--axis)"}));
+     defs.append(m);root.append(defs);
+     for(const e of data.edges){
+       const a=pos.get(e.from),b=pos.get(e.to);if(!a||!b)continue;
+       root.append(element("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"var(--axis)",
+         "stroke-width":1.4,"marker-end":"url(#arrow-eventrisk)"}));
+     }
+     for(const n of data.nodes){
+       const p=pos.get(n.id),item=state.nodes.get(n.id),type=item?.type;
+       if(!p)continue;
+       const group=element("g",{role:"button",tabindex:0,"aria-label":item?.name||n.id});
+       const fill=n.color?.background||"var(--question)";
+       const shape=type==="market"||type==="contract"?
+         element("path",{d:"M"+p.x+" "+(p.y-12)+" l12 21 h-24 z",fill}):
+         type==="security"?element("rect",{x:p.x-10,y:p.y-10,width:20,height:20,rx:2,fill}):
+         type==="entity"?element("path",{d:"M"+p.x+" "+(p.y-12)+" l12 12 -12 12 -12 -12 z",fill}):
+         element("circle",{cx:p.x,cy:p.y,r:n.id===state.selected?12:10,fill});
+       shape.setAttribute("stroke",n.id===state.selected?"var(--ink)":"var(--page)");
+       shape.setAttribute("stroke-width",n.id===state.selected?3:1);
+       group.append(shape);
+       const label=element("text",{x:p.x,y:p.y+29,"text-anchor":"middle",fill:"var(--ink)",
+         "font-size":13});
+       const name=item?.ticker||item?.name||n.id;
+       label.textContent=name.length>29?name.slice(0,28)+"…":name;
+       group.append(label);
+       if(type==="market"&&Number.isFinite(item?.probability)){
+         const sub=element("text",{x:p.x,y:p.y+46,"text-anchor":"middle",
+           fill:"var(--ink-2)","font-size":12});
+         sub.textContent=(item.probability*100).toFixed(1)+"% YES";
+         group.append(sub);
+       }
+       const title=element("title");title.textContent=item?.name||n.id;group.append(title);
+       group.addEventListener("click",()=>select(n.id));
+       group.addEventListener("keydown",e=>{
+         if(e.key==="Enter"||e.key===" "){e.preventDefault();select(n.id);}
+       });
+       group.style.cursor="pointer";root.append(group);
+     }
+     host.append(root);
+   }
+   return {setData(next){data=next;draw()},setOptions(){},fit(){},redraw(){draw()}};
+ }
  function graph(id){
    if(!state.network){
      $("empty").textContent="Graph unavailable: original vis-network library could not load.";
@@ -188,14 +254,16 @@
    else if(state.nodes.get(id).liveWarehouse&&state.key)await loadNeighbors(id);
  }
  async function request(path){
-   const r=await fetch(path,{cache:"no-store",headers:{"X-Analyst-Key":state.key}});
+   const headers={"X-Analyst-Key":state.key};
+   if(state.ownerKey)headers["X-Data-Admin-Key"]=state.ownerKey;
+   const r=await fetch(path,{cache:"no-store",headers});
    let data;try{data=await r.json()}catch(_){throw Error("Invalid server response");}
    if(!r.ok)throw Error(data.error||"HTTP "+r.status);
    return data;
  }
  async function searchMarkets(){
    if(!state.key){
-     $("live-status").textContent="Actual market odds require an authorized analyst key and source redisplay rights.";
+     $("live-status").textContent="Unlock your private warehouse with both keys to inspect captured odds.";
      browse();return;
    }
    const venue=$("market-venue").value;
@@ -225,7 +293,7 @@
        " contracts. Select one for probability, change, timestamps, and quote basis.";
    }catch(e){
      $("live-status").textContent="Market values unavailable: "+e.message+
-       ". Source redistribution requires a separate authorization.";
+       ". Owner inspection requires both keys; public redistribution remains separately gated.";
      browse();
    }
  }
@@ -295,14 +363,19 @@
    }catch(e){$("live-status").textContent="Live neighborhood unavailable: "+e.message}
  }
  async function connect(){
-   state.key=$("analyst-key").value.trim();$("analyst-key").value="";
+   state.key=$("analyst-key").value.trim();state.ownerKey=$("owner-key").value.trim();
+   $("analyst-key").value="";$("owner-key").value="";
    if(!state.key){$("live-status").textContent="Enter your issued analyst API key.";return;}
    try{
      const d=await request("/api/v1/research/coverage");
      if(d.mode!=="LIVE_DATABASE_COUNT_ONLY")throw Error("Unexpected source contract");
-     $("live-status").textContent="Live MotherDuck SELECT verified · source-question display may require separate rights.";
-     if(state.tab==="markets")await searchMarkets();else if(state.tab==="questions")await searchQuestions();
-   }catch(e){state.key="";$("live-status").textContent="Live MotherDuck unavailable: "+e.message;
+     state.tab="markets";
+     for(const b of document.querySelectorAll(".tabs button"))
+       b.setAttribute("aria-selected",String(b.dataset.tab==="markets"));
+     $("live-status").textContent=state.ownerKey?"Private inspection enabled (not redistribution)":
+       "Analyst connection verified; private source inspection also requires data-admin key.";
+     await searchMarkets();
+   }catch(e){state.key="";state.ownerKey="";$("live-status").textContent="Warehouse unlock failed: "+e.message;
      browse();}
  }
  function wire(){
@@ -356,16 +429,7 @@
        "Server queried MotherDuck · sign in to load source questions.":
        r.database_credentials_present?"Warehouse configured; not yet verified for this session.":
        "Not connected: Railway MOTHERDUCK_TOKEN is not configured.";
-     if(typeof vis!=="undefined"&&vis.Network){
-       state.network=new vis.Network($("graph"),{nodes:[],edges:[]},{
-         physics:{solver:"forceAtlas2Based",forceAtlas2Based:{gravitationalConstant:-75,
-           springLength:140,avoidOverlap:.5},stabilization:{iterations:100}},
-         interaction:{hover:true,tooltipDelay:100},
-         nodes:{borderWidth:2},edges:{smooth:true}});
-       state.network.on("stabilizationIterationsDone",()=>state.network.setOptions({physics:false}));
-       state.network.on("click",p=>{if(p.nodes.length)select(p.nodes[0])});
-       new ResizeObserver(()=>state.network.redraw()).observe($("canvas-wrap"));
-     }
+     state.network=createLocalGraph($("graph"));
      browse();
      const first=state.nodes.has("contract:illustrative:data_center_power")?"contract:illustrative:data_center_power":
        [...state.nodes.values()].find(n=>n.type==="entity")?.id;
