@@ -15,7 +15,7 @@ class MarketProbabilityCompatibilityTests(unittest.TestCase):
         excel=(root/"excel/taskpane.js").read_text()
         ui=(root/"viewer.html").read_text()
         js=(root/"assets/viewer.js").read_text()
-        for s in ("importReference","importGraph","importModels","importSeries","importExtended","importMarkets"):
+        for s in ("importReference","importGraph","importModels","importSeries","importExtended","importMarkets","importMarketHistory"):
             self.assertIn(s,excel)
         self.assertIn('id="market-values"',(root/"excel/taskpane.html").read_text())
         self.assertIn('data-tab="markets"',ui)
@@ -55,6 +55,27 @@ class MarketProbabilityCompatibilityTests(unittest.TestCase):
         self.assertTrue(d["historical_pit_not_certified"])
         self.assertEqual(d["record"]["probability"],.42)
         self.assertEqual(db.call_args.args[1],("polymarket","123"))
+    def test_historical_probabilities_are_source_permissioned(self):
+        with mock.patch.object(app,"bool_flag",return_value=False):
+            with mock.patch.object(app,"_db_query") as db:
+                with self.assertRaisesRegex(PermissionError,"MARKET_SOURCE_REDISPLAY_NOT_APPROVED"):
+                    app.research("/api/v1/research/market-history",
+                        {"venue":["kalshi"],"market_id":["KX-ABC"]})
+                db.assert_not_called()
+        captured=[{"observed_date":"2026-10-26",
+                  "probability":.37,"probability_delta_pp":-2.5,
+                  "point_in_time_verified":False}]
+        with mock.patch.object(app,"bool_flag",return_value=True),mock.patch.object(
+            app,"_db_query",return_value=captured) as db:
+            result=app.research("/api/v1/research/market-history",
+                {"venue":["polymarket"],"market_id":["123"],"limit":["8"]})
+        self.assertEqual(result["mode"],"LICENSE_GATED_CAPTURED_MARKET_HISTORY")
+        self.assertTrue(result["historical_snapshot_not_original_publication_pit"])
+        self.assertEqual(result["rows"][0]["probability_delta_pp"],-2.5)
+        sql,params=db.call_args.args
+        self.assertTrue(app._assert_read_query(sql))
+        self.assertEqual(params,("polymarket","123",8))
+
     def test_market_id_and_venue_validation(self):
         with mock.patch.object(app,"bool_flag",return_value=True):
             for venue in ("","invalid","ALL"):
