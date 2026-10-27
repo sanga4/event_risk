@@ -30,6 +30,22 @@ class MarketProbabilityCompatibilityTests(unittest.TestCase):
                     app.research("/api/v1/research/market-quote",
                         {"venue":["polymarket"],"market_id":["123"]})
                 db.assert_not_called()
+    def test_owner_private_research_with_two_keys_is_not_public_redistribution(self):
+        # HTTP layer verifies the separately configured data-admin key in addition
+        # to the analyst key before passing owner_private=True.
+        captured=[{"venue":"kalshi","market_id":"EXAMPLE","probability":.43}]
+        with mock.patch.object(app,"bool_flag",return_value=False), \
+             mock.patch.object(app,"_db_query",return_value=captured) as db:
+            with self.assertRaises(PermissionError):
+                app.research("/api/v1/research/markets",{"venue":["kalshi"]})
+            private=app.research("/api/v1/research/markets",
+                                 {"venue":["kalshi"]},owner_private=True)
+            self.assertEqual(private["rows"][0]["probability"],.43)
+            self.assertEqual(private["rights_scope"],
+                             "OWNER_PRIVATE_RESEARCH_NOT_PUBLIC_REDISPLAY")
+            self.assertTrue(private["freshness_unverified_cannot_assume_current"])
+            self.assertEqual(db.call_count,1)
+
     def test_auth_market_list_uses_fixed_bound_source_sql(self):
         sample={"venue":"kalshi","market_id":"KTICK","question":"Example","event_title":"Example",
                 "probability":.42,"previous_probability":.4,"probability_delta_pp":2.0,
