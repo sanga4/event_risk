@@ -34,7 +34,7 @@
     const cells=rectangular(rows);
     const target=sheet.getRangeByIndexes(0,0,cells.length,cells[0].length);
     target.values=cells;
-    sheet.getRangeByIndexes(0,0,1,cells[0].length).format.fill="#153b40";
+    sheet.getRangeByIndexes(0,0,1,cells[0].length).format.fill.color="#153b40";
     sheet.getRangeByIndexes(0,0,1,cells[0].length).format.font.color="#ffffff";
     sheet.getRangeByIndexes(0,0,1,cells[0].length).format.font.bold=true;
     target.format.columnWidth=135;
