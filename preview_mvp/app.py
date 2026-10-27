@@ -217,10 +217,43 @@ def public_graph():
             "source_reference":"Repo security and factor seed catalog, analyst exposure CSV",
             "disclaimer":"Do not treat connectivity, factor family, or seed prior as price beta, observed event, licensed market quote, causal effect or institutional approval."}
 
+def _assert_read_query(sql):
+    """Fail closed even when the installed MotherDuck PAT has write capability.
+
+    DuckDB parses the exact statement; do not attempt to detect SQL structure
+    using only a leading SELECT regex or accept browser-provided SQL text.
+    SELECT on its own does not mean arbitrary side-effecting table functions
+    are safe, so deny external readers, dynamic query helpers and token access.
+    """
+    import duckdb
+    if not isinstance(sql, str) or len(sql)>25000:
+        raise ValueError("ONLY_BOUNDED_READ_QUERIES_ALLOWED")
+    parsed=duckdb.extract_statements(sql)
+    if len(parsed)!=1 or parsed[0].type!=duckdb.StatementType.SELECT:
+        raise ValueError("ONLY_SINGLE_SELECT_ALLOWED")
+    if not re.match(r"^\\s*(?:WITH|SELECT)\\b", sql, flags=re.I):
+        raise ValueError("ONLY_SINGLE_SELECT_ALLOWED")
+    if re.search(
+        r"\\b(?:read_csv(?:_auto)?|read_parquet|read_json(?:_auto)?|"
+        r"read_text|read_blob|sqlite_scan|postgres_scan|"
+        r"query|query_table|query_data|getenv|current_setting|"
+        r"external_file_cache|http_get|http_post|secret|pragma)\\s*\\(",
+        sql, flags=re.I,
+    ):
+        raise ValueError("EXTERNAL_OR_DYNAMIC_QUERY_NOT_ALLOWED")
+    return True
+
+
 def _db_query(sql,params=()):
-    """Fixed allowlisted SELECT statements only. Read-only database grants required."""
+    """Execute only compiled, single SELECTs (app code, never user SQL).
+
+    A standard MotherDuck PAT can authenticate a connection even on Lite;
+    this application-layer guard limits API execution, but it does NOT turn
+    the underlying write-capable credential into a read-only credential.
+    """
     if not os.getenv("MOTHERDUCK_TOKEN"):
         raise RuntimeError("DATABASE_CREDENTIAL_NOT_CONFIGURED")
+    _assert_read_query(sql)
     with SESSION_LOCK:
         import duckdb
         conn=DB_CONNECTION["conn"]
