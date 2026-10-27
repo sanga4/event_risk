@@ -70,7 +70,7 @@ async function viewer(width,height,dir){
  await page.locator("aside details summary").click();
  await page.locator("#analyst-key").fill("not-a-real-analyst-key");
  await page.locator("#connect").click();
- await page.getByText("Live MotherDuck unavailable",{exact:false}).waitFor({timeout:9000});
+ await page.getByText("Warehouse unlock failed",{exact:false}).waitFor({timeout:9000});
  await page.screenshot({path:path.join(dir,"marco-raw-graph-"+width+".png"),fullPage:true});
  assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
  await page.close();console.log("MARCO_RAW_SOURCE_GRAPH_BROWSER=PASS",width,height);
