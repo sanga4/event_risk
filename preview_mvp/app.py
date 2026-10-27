@@ -293,7 +293,10 @@ def _one(q,key,maximum=100):
     if len(value)>maximum:raise ValueError("BAD_"+key.upper())
     return value
 
-def research(route,q):
+def research(route,q,owner_private=False):
+    # Owner-only internal inspection is distinct from public/source redistribution.
+    # An issued data-admin credential AND analyst key are required in the HTTP layer.
+    # This does not certify publisher rights, original PIT, or permission to resell.
     # Only fixed SELECT and parameterized WHEREs; no arbitrary SQL, no bulk extraction.
     if route not in ALLOW_ROUTES: raise ValueError("UNSUPPORTED_RESOURCE")
     if route in ADMIN_ROUTES:
@@ -314,7 +317,7 @@ def research(route,q):
     if route in ("/api/v1/research/markets","/api/v1/research/market-quote"):
         # The public viewer may use count aggregates, but contract-level
         # prices/questions require source redistribution authorization.
-        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED")):
             raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
         venue=_one(q,"venue",20).lower().strip()
         if venue not in ("kalshi","polymarket"):
@@ -339,7 +342,7 @@ def research(route,q):
                 "market_quote_is_not_an_event_probability":True,
                 "freshness_unverified_cannot_assume_current":True,
                 "source":"MotherDuck lab_live_market_latest_v1",
-                "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED"}
+                "rights_scope":"OWNER_PRIVATE_RESEARCH_NOT_PUBLIC_REDISPLAY" if owner_private else "APPROVED_SOURCE_REDISPLAY_REQUIRED"}
         market_id=_one(q,"market_id",180).strip()
         if not re.fullmatch(r"[A-Za-z0-9._:-]{1,180}",market_id):
             raise ValueError("INVALID_MARKET_ID")
@@ -360,9 +363,9 @@ def research(route,q):
             "current_orderbook_or_freshness_not_guaranteed":True,
             "historical_pit_not_certified":True,
             "source":"MotherDuck lab_live_market_latest_v1",
-            "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED"}
+            "rights_scope":"OWNER_PRIVATE_RESEARCH_NOT_PUBLIC_REDISPLAY" if owner_private else "APPROVED_SOURCE_REDISPLAY_REQUIRED"}
     if route=="/api/v1/research/market-history":
-        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED")):
             raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
         venue=_one(q,"venue",20).lower().strip()
         market_id=_one(q,"market_id",180).strip()
@@ -385,14 +388,15 @@ def research(route,q):
                 "historical_snapshot_not_original_publication_pit":True,
                 "not_calibrated_event_probability":True,
                 "rights_scope":"APPROVED_SOURCE_REDISPLAY_REQUIRED",
-                "source":"MotherDuck lab_market_daily_historical_v1"}
+                "source":"MotherDuck lab_market_daily_historical_v1",
+                "owner_private_research":owner_private}
     if route=="/api/v1/research/factor-catalog":
         rows=_db_query("""SELECT factor_id,name,family,unit,license_class,active
                          FROM main.lab_factor_catalog ORDER BY factor_id LIMIT 150""")
         return {"mode":"LIVE_DATABASE_FACTOR_METADATA","rows":rows,
                 "note":"Warehouse catalog can be smaller than 108 Git-defined factor definitions."}
     if route in ("/api/v1/research/events","/api/v1/research/graph-nodes"):
-        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED")):
             raise PermissionError("MARKET_SOURCE_REDISPLAY_NOT_APPROVED")
         node_type="question" if route.endswith("/events") else _one(q,"type",20)
         if node_type not in ALLOW_TYPES:raise ValueError("INVALID_NODE_TYPE")
@@ -418,7 +422,7 @@ def research(route,q):
                 "quote_pit_verified":False,
                 "rights_scope":"OWNER_REDISPLAY_ACK_REQUIRED_NOT_A_LEGAL_DETERMINATION"}
     if route=="/api/v1/research/graph-neighbors":
-        if not bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_SOURCE_REDISPLAY_APPROVED")):
             raise PermissionError("SOURCE_GRAPH_REDISPLAY_NOT_APPROVED")
         node_id=_one(q,"node_id",128)
         if not re.fullmatch(r"[A-Za-z0-9:._=/-]{1,128}",node_id):
@@ -453,7 +457,7 @@ def research(route,q):
                 "review_status":"SOURCE_RELATIONS_UNREVIEWED_NOT_CAUSAL",
                 "no_original_pit_or_licensing_claim":True}
     if route=="/api/v1/research/models":
-        if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED")):
             raise PermissionError("DERIVED_RESEARCH_DISTRIBUTION_NOT_APPROVED")
         ticker=_one(q,"ticker",25).upper()
         if not TICKER_PATTERN.fullmatch(ticker):raise ValueError("INVALID_TICKER")
@@ -470,7 +474,7 @@ def research(route,q):
         return {"mode":"NONCAUSAL_EX_POST_RESEARCH","ticker":ticker,"rows":rows,
                 "warning":"SPY/Treasury/funding coefficients are exploratory; no institutional issuer PIT, adjustments/rights or event-causality approval. Compare source-built variants and separate Holm correction."}
     if route=="/api/v1/research/funding-diagnostics":
-        if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED")):
             raise PermissionError("DERIVED_RESEARCH_DISTRIBUTION_NOT_APPROVED")
         ticker=_one(q,"ticker",25).upper()
         if not TICKER_PATTERN.fullmatch(ticker):
@@ -510,7 +514,7 @@ def research(route,q):
                 "research_warning":
                 "Coefficients estimate exploratory market/Treasury/funding associations, not the causal effect of any particular geopolitical or macro event. Original issuer PIT and vendor adjustments/rights remain unapproved."}
     if route=="/api/v1/research/factor-series":
-        if not bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED"):
+        if not (owner_private or bool_flag("PREVIEW_MVP_DERIVED_RESEARCH_APPROVED")):
             raise PermissionError("FACTOR_SERIES_DISTRIBUTION_NOT_APPROVED")
         f=_one(q,"factor_id",100)
         if not FACTOR_PATTERN.fullmatch(f):raise ValueError("INVALID_FACTOR")
@@ -692,17 +696,23 @@ class Server(BaseHTTPRequestHandler):
             provided=self.headers.get("X-Analyst-Key","")
             if not provided or not hmac.compare_digest(provided,key):
                 return self.send(401,{"error":"ANALYST_AUTHENTICATION_REQUIRED"},method=method)
-            if route in ADMIN_ROUTES:
-                admin=os.getenv("EVENTRISK_DATA_ADMIN_KEY","")
-                supplied=self.headers.get("X-Data-Admin-Key","")
-                if not admin or not supplied or not hmac.compare_digest(supplied,admin):
-                    return self.send(403,{"error":"DATABASE_ADMIN_AUTHORIZATION_REQUIRED"},method=method)
+            # The user may inspect their own warehouse privately without claiming
+            # rights to publish provider-sourced records to public-site visitors.
+            # Both independently issued keys are needed; never expose either key.
+            supplied_owner=self.headers.get("X-Data-Admin-Key","")
+            owner_key=os.getenv("EVENTRISK_DATA_ADMIN_KEY","")
+            owner_private=bool(owner_key and supplied_owner and
+                               hmac.compare_digest(supplied_owner,owner_key))
+            if supplied_owner and not owner_private:
+                return self.send(403,{"error":"DATABASE_ADMIN_AUTHORIZATION_REQUIRED"},method=method)
+            if route in ADMIN_ROUTES and not owner_private:
+                return self.send(403,{"error":"DATABASE_ADMIN_AUTHORIZATION_REQUIRED"},method=method)
             # Rate limit the expensive MotherDuck SELECT endpoints. This is
             # intentionally conservative while no per-user SSO exists.
             if not within_analyst_budget(key):
                 return self.send(429,{"error":"RESEARCH_QUERY_RATE_LIMITED"},method=method)
             try:
-                return self.send(200,research(route,parse_qs(path.query,keep_blank_values=True)),method=method)
+                return self.send(200,research(route,parse_qs(path.query,keep_blank_values=True),owner_private=owner_private),method=method)
             except PermissionError as e:
                 return self.send(403,{"error":str(e)},method=method)
             except ValueError as e:
