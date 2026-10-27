@@ -5,9 +5,9 @@
 */
 (()=>{
  const $=id=>document.getElementById(id);
- const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"entities",
+ const state={nodes:new Map(),edges:[],adj:new Map(),selected:null,tab:"contracts",
               key:"",sourceQuestions:[],network:null,runtime:null};
- const typeColor={question:"question",entity:"entity",security:"security",factor:"factor",
+ const typeColor={contract:"question",event:"question",question:"question",entity:"entity",security:"security",factor:"factor",
                   channel:"factor",event:"question",market:"market",proposition:"proposition"};
  const mk=(tag,text,cls)=>{const e=document.createElement(tag);
    if(text!==undefined&&text!==null)e.textContent=String(text);
@@ -20,7 +20,7 @@
      state.adj.get(id).push(e);
    }
  }
- function nodeType(n){return n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
+ function nodeType(n){return n.type==="contract"?"Illustrative demo contract":n.type==="question"?"Source question":n.type==="event"?"Hypothetical scenario":
    n.type==="factor"?"Factor definition":n.type==="channel"?"Economic channel":n.type==="security"?"Security":"Entity";}
  function graphNeighbors(id){
    return (state.adj.get(id)||[]).map(edge=>({edge,other:edge.src===id?edge.dst:edge.src}))
@@ -28,7 +28,7 @@
  }
  function browse(){
    const ids=[...state.nodes.values()].filter(n=>state.tab==="questions"?
-     n.type==="question":n.type==={entities:"entity",securities:"security",factors:"factor"}[state.tab]);
+     n.type==="question":n.type==={contracts:"contract",events:"event",entities:"entity",securities:"security",factors:"factor"}[state.tab]);
    const q=$("search").value.trim().toLowerCase();
    const rows=(q?ids.filter(n=>[n.name,n.ticker,n.description,n.subtitle,n.id]
       .some(v=>String(v||"").toLowerCase().includes(q))):ids)
@@ -63,7 +63,10 @@
    if(n.subtitle)addRow(host,"Category",n.subtitle);
    if(n.description)addRow(host,"Description",n.description);
    if(n.last_recorded_at)addRow(host,"Warehouse recorded",n.last_recorded_at);
+   if(n.provider)addRow(host,"Provider status",n.provider);
+   if(n.historical_series_validated===false)addRow(host,"Observed factor series","NOT VERIFIED");
    addRow(host,"Source",n.liveWarehouse?"MotherDuck / graph_nodes":
+     n.type==="contract"?"SYNTHETIC NAVIGATION EXAMPLE / NOT AN EXCHANGE CONTRACT":
      n.type==="security"?"Repository / securities.csv":
      n.type==="factor"?"Repository / factors.json":
      n.type==="entity"?"Repository / exposures.csv":"Repository research references");
@@ -81,7 +84,7 @@
      b.addEventListener("click",()=>select(other));host.append(b);
    }
    if(links.length>35)host.append(mk("p","+"+(links.length-35)+" more connections; search/select to explore.","note"));
-   host.append(mk("p","References are not validated causal impact, return betas or trading recommendations.","note"));
+   host.append(mk("p","Contract and data-center links in this view are illustrative hypotheses, NOT actual Kalshi/Polymarket listings or fitted security return betas.","note"));
  }
  function visible(id){
    const depth=Number($("depth").value)||1,seen=new Map([[id,0]]);
@@ -100,18 +103,39 @@
    ids.sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]));
    return new Set(ids.slice(0,85).map(x=>x[0]));
  }
+ function demoPathIds(){
+   // Explicitly small complete contract -> event -> entity -> securities -> factors.
+   const ordered=[
+    "contract:illustrative:data_center_power",
+    "event:data_center_demand",
+    "entity:theme:data_center_infrastructure",
+   ];
+   const watch=["EQIX","VRT","MSFT","CEG","NVDA"];
+   for(const ticker of watch){
+     const sec="security:"+ticker;
+     if(!state.nodes.has(sec))continue;
+     ordered.push(sec);
+     for(const edge of state.edges){
+       if(edge.src===sec&&edge.type==="proposed_security_factor_exposure" &&
+          state.nodes.has(edge.dst)&&!ordered.includes(edge.dst))
+         ordered.push(edge.dst);
+     }
+   }
+   return new Set(ordered.filter(id=>state.nodes.has(id)));
+ }
  function graph(id){
    if(!state.network){
      $("empty").textContent="Graph unavailable: original vis-network library could not load.";
      return;
    }
-   const ids=visible(id);
+   const isDemo=id==="contract:illustrative:data_center_power";
+   const ids=isDemo?demoPathIds():visible(id);
    const getColor=n=>getComputedStyle(document.documentElement)
      .getPropertyValue("--"+(typeColor[n.type]||"factor")).trim()||"#888";
    const nodes=[...ids].map(key=>{
      const n=state.nodes.get(key),type=n.type;
      return {id:key,label:(n.ticker||n.name).slice(0,38),
-       shape:type==="security"?"square":type==="entity"?"diamond":type==="factor"?"box":"dot",
+       shape:type==="contract"?"triangle":type==="event"?"dot":type==="security"?"square":type==="entity"?"diamond":type==="factor"?"box":"dot",
        size:key===id?19:10,
        color:{background:getColor(n),border:key===id?"#111":getColor(n)},
        font:{size:12,color:getComputedStyle(document.documentElement).getPropertyValue("--ink").trim(),
@@ -124,6 +148,10 @@
      dashes:e.type.startsWith("hypothetical"),
      width:Math.max(.6,Math.min(2,Number(e.weight)||1)),
      title:e.type}));
+   state.network.setOptions(isDemo?
+    {physics:false,layout:{hierarchical:{enabled:true,direction:"LR",sortMethod:"directed",levelSeparation:165,nodeSpacing:95}},
+     edges:{smooth:{type:"cubicBezier",forceDirection:"horizontal"}}}:
+    {layout:{hierarchical:{enabled:false}},physics:false});
    state.network.setData({nodes,edges});
    $("empty").hidden=true;$("caption").hidden=false;
    $("caption").textContent=nodes.length+" nodes · "+edges.length+" source/reference edges";
@@ -234,10 +262,10 @@
    wire();
    try{
      const [g,r]=await Promise.all([
-       fetch("/api/v1/graph",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Graph HTTP "+r.status);return r.json()}),
+       fetch("/api/v1/graph-paths",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Graph HTTP "+r.status);return r.json()}),
        fetch("/api/v1/runtime",{cache:"no-store"}).then(r=>r.json())
      ]);
-     if(g.mode!=="PUBLIC_CATALOG_PLUS_HYPOTHETICAL_TRANSMISSION_NOT_LIVE")
+     if(g.mode!=="PUBLIC_REFERENCE_PLUS_EXPLICIT_SYNTHETIC_PATH_EXAMPLE")
        throw Error("Unexpected research graph provenance");
      for(const n of g.nodes)state.nodes.set(n.id,n);
      state.edges=g.edges;state.runtime=r;reindex();
@@ -256,7 +284,7 @@
        new ResizeObserver(()=>state.network.redraw()).observe($("canvas-wrap"));
      }
      browse();
-     const first=state.nodes.has("entity:Q865")?"entity:Q865":
+     const first=state.nodes.has("contract:illustrative:data_center_power")?"contract:illustrative:data_center_power":
        [...state.nodes.values()].find(n=>n.type==="entity")?.id;
      if(first)select(first);
    }catch(e){$("empty").textContent="Source unavailable: "+e.message;
