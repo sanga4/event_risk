@@ -33,6 +33,14 @@ async function viewer(width,height,dir){
  assert.equal(await page.locator("#graph").count(),1);
  assert.equal(await page.locator('main .split').count(),2);
  assert.equal(await page.locator('a[href="/api"]').count(),1);
+ assert.equal(await page.locator('.tabs [data-tab="contracts"]').count(),1);
+ assert.equal(await page.locator('.tabs [data-tab="events"]').count(),1);
+ await page.locator('.tabs [data-tab="contracts"]').click();
+ await page.locator('[data-id="contract:illustrative:data_center_power"]').waitFor();
+ await page.locator('[data-id="contract:illustrative:data_center_power"]').click();
+ assert.ok((await page.locator("#detail").textContent()).includes("NOT_AN_ACTUAL_LISTING"));
+ assert.ok((await page.locator("#path-notice").textContent()).includes("NOT an actual exchange listing"));
+
  assert.equal(await page.locator('a[href="/excel/manifest.xml"]').count(),1);
  assert.ok(!(await page.locator("body").innerText()).includes("Event Attribution"));
  assert.ok((await page.locator("#live-status").textContent()).length>5);
@@ -64,9 +72,13 @@ async function documents(dir){
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
  const response=await page.goto(URL+"/lab",{waitUntil:"domcontentloaded"});
  assert.equal(response.status(),200);
+ await page.locator("#case-title").waitFor({timeout:12000});
+ assert.equal(await page.locator("#factor-chart").count(),1,"Historical factor chart must be present and access-gated");
+ assert.equal(await page.locator("#run-regression").count(),1);
+ assert.equal(await page.locator("#load-series").count(),1);
+ assert.ok((await page.locator("#warehouse-connection").textContent()).length>2);
+ await page.goto(URL+"/api",{waitUntil:"domcontentloaded"});
  assert.ok((await page.locator("h2").innerText()).includes("EventRisk API"));
- assert.ok((await page.locator("body").innerText()).includes("regression"));
- assert.equal(await page.locator("#factor-chart").count(),0,"No fake nonworking regression lab");
  assert.ok((await page.locator('a[href="/excel/manifest.xml"]').count())>0);
  await page.goto(URL+"/data",{waitUntil:"domcontentloaded"});
  assert.equal(await page.locator("#table-search").isEnabled(),false);
